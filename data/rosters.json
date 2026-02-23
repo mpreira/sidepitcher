@@ -1,0 +1,53 @@
+{
+  "rosters": [
+    {
+      "id": "3331da7a-7c8c-4d4d-9a28-7e520d0f81d4",
+      "name": "Fake",
+      "teams": [
+        {
+          "name": "Fake",
+          "starters": [
+            {
+              "player": {
+                "id": "31e0e533-2b78-4576-b6ab-051f8d5e83be",
+                "name": "h j"
+              },
+              "number": 1
+            },
+            {
+              "player": {
+                "id": "59ffcc50-b0c1-48b5-883d-3ff051c6ec02",
+                "name": "gffgf hghgh"
+              },
+              "number": 2
+            }
+          ],
+          "substitutes": [
+            {
+              "player": {
+                "id": "1f59ee44-11e5-4fa8-a62d-5e87fa5ed5bd",
+                "name": "esrdydgfgfgfgfg ghghghgjhgh"
+              },
+              "number": 16
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "activeRosterId": "3331da7a-7c8c-4d4d-9a28-7e520d0f81d4",
+  "globalPlayers": [
+    {
+      "id": "31e0e533-2b78-4576-b6ab-051f8d5e83be",
+      "name": "h j"
+    },
+    {
+      "id": "59ffcc50-b0c1-48b5-883d-3ff051c6ec02",
+      "name": "gffgf hghgh"
+    },
+    {
+      "id": "1f59ee44-11e5-4fa8-a62d-5e87fa5ed5bd",
+      "name": "esrdydgfgfgfgfg ghghghgjhgh"
+    }
+  ]
+}

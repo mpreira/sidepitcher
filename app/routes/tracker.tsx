@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import type { Route } from "./+types/tracker";
-import type { Team, Event } from "./tracker.types";
+import type { Event } from "./tracker.types";
 
 import TimerControls from "~/components/TimerControls";
-import RosterManager from "~/components/RosterManager";
 import CommandPanel from "~/components/CommandPanel";
 import EventForm from "~/components/EventForm";
 import EventsList from "~/components/EventsList";
 import Summary from "~/components/Summary";
+import { useTeams } from "~/context/TeamsContext";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Side Pitcher" }];
@@ -28,7 +28,9 @@ export default function Tracker() {
     const [time, setTime] = useState(0);
     const [running, setRunning] = useState(false);
     const [events, setEvents] = useState<Event[]>([]);
-    const [teams, setTeams] = useState<Team[]>([]);
+    const { rosters, activeRosterId } = useTeams();
+    const activeRoster = rosters.find((r) => r.id === activeRosterId) ?? null;
+    const teams = activeRoster?.teams ?? [];
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
 
 // timer interval
@@ -56,10 +58,14 @@ export default function Tracker() {
     }
 
     return (
-        <main className="p-6 space-y-6">
+        <main className="p-6 space-y-6 max-w-screen-md mx-auto px-4">
             <h1 className="text-2xl font-bold">Rugby Match Tracker</h1>
 
-            <RosterManager teams={teams} setTeams={setTeams} />
+            {!activeRoster && (
+                <p className="text-red-600">
+                    Aucun roster actif. Allez sur la page « Rosters » pour en sélectionner un ou en créer un.
+                </p>
+            )}
 
             <TimerControls
                 time={time}

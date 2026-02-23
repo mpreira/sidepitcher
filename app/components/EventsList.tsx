@@ -20,11 +20,11 @@ export default function EventsList({ events, remove }: Props) {
   return (
     <ul className="space-y-1">
       {events.map((e, idx) => (
-        <li key={idx} className="flex items-center justify-between">
+        <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <span>
             {formatTime(e.time)} - {e.type}
             {e.team && ` (${e.team.name})`}
-            {e.player && ` — ${e.player.name}`}
+            {e.player && ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`}
             {e.playerOut && e.playerIn &&
               ` — ${e.playerOut.name} → ${e.playerIn.name}`}
             {e.concussion && " 🚨 commotion"}

@@ -13,7 +13,11 @@ A modern, production-ready template for building full-stack React applications u
 - 🔒 TypeScript by default
 - 🎉 TailwindCSS for styling
 - 📖 [React Router docs](https://reactrouter.com/)
-- 🏉 **Rugby match tracker** – an interactive page (`/tracker`) for journalists to record tries, penalties, conversions, drops, cards and substitutions with timestamps. The tracker now supports team rosters (titulars & remplaçants) import, player selection for each action, and concussion protocol flags.
+- 🏉 **Rugby match tracker** – an interactive page (`/tracker`) for journalists to record tries, penalties, conversions, drops, cards and substitutions with timestamps. The tracker supports player selection, concussion protocol flags, and exporting the summary to clipboard or PDF.
+- 🗂 **Gestion des effectifs** – page `/roster` permet de :
+  1. Constituer un *effectif global* de joueurs (prénom + nom), stocké côté serveur et réutilisable.
+  2. Créer plusieurs rosters de match en sélectionnant des joueurs depuis cet effectif et en leur assignant un numéro de maillot (1‑15 titulaires, 16‑23 remplaçants).
+Les rosters et l’effectif global sont sauvegardés via l’API `/api/rosters` et peuvent être modifiés sans toucher au JSON manuellement.
 
 ## Getting Started
 

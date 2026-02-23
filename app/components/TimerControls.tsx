@@ -24,7 +24,7 @@ export default function TimerControls({
   return (
     <section className="space-y-2">
       <div className="text-xl">Time: {formatTime(time)}</div>
-      <div className="space-x-2">
+      <div className="flex flex-wrap gap-2">
         <button
           className="px-4 py-2 bg-green-500 text-white rounded"
           onClick={onStartStop}

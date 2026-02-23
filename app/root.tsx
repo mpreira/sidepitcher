@@ -41,8 +41,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { TeamsProvider } from "~/context/TeamsContext";
+
 export default function App() {
-  return <Outlet />;
+  return (
+    <TeamsProvider>
+      <header className="p-4 bg-gray-100 dark:bg-gray-800 border-b">
+        <nav className="max-w-screen-md mx-auto flex flex-wrap gap-4">
+          <a href="/tracker" className="text-blue-600 hover:underline">
+            Tracker
+          </a>
+          <a href="/roster" className="text-blue-600 hover:underline">
+            Rosters
+          </a>
+        </nav>
+      </header>
+      <Outlet />
+    </TeamsProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

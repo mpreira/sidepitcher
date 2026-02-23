@@ -30,8 +30,6 @@ export function Welcome() {
                   <a
                     className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
                     href={href}
-                    target="_blank"
-                    rel="noreferrer"
                   >
                     {icon}
                     {text}
@@ -71,6 +69,23 @@ const resources = [
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+      </svg>
+    ),
+  },
+  {
+    href: "/roster",
+    text: "Rosters",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        fill="none"
+        stroke="currentColor"
+        className="stroke-gray-600 group-hover:stroke-current dark:stroke-gray-300"
+      >
+        <circle cx="12" cy="7" r="4" strokeWidth="1.5" />
+        <path d="M5.5 21a6.5 6.5 0 0113 0" strokeWidth="1.5" />
       </svg>
     ),
   },
