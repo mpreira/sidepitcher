@@ -13,7 +13,7 @@ A modern, production-ready template for building full-stack React applications u
 - 🔒 TypeScript by default
 - 🎉 TailwindCSS for styling
 - 📖 [React Router docs](https://reactrouter.com/)
-- 🏉 **Rugby match tracker** – an interactive page (`/tracker`) for journalists to record tries, penalties, conversions, drops and cards with timestamps and export a summary.
+- 🏉 **Rugby match tracker** – an interactive page (`/tracker`) for journalists to record tries, penalties, conversions, drops, cards and substitutions with timestamps. The tracker now supports team rosters (titulars & remplaçants) import, player selection for each action, and concussion protocol flags.
 
 ## Getting Started
 
