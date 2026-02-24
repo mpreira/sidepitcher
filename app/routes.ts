@@ -11,4 +11,5 @@ export default [
     route("/syntheses/:summaryId", "routes/synthese-detail.tsx"),
     route("/api/rosters", "routes/api/rosters.ts"),
     route("/api/summaries", "routes/api/summaries.ts"),
+    route("/api/match-day-teams", "routes/api/match-day-teams.ts"),
 ] satisfies RouteConfig;

@@ -2,6 +2,10 @@ import type { Team, Player, Event } from "~/routes/tracker.types";
 import { jsPDF } from "jspdf";
 import { formatTime } from "./TimeUtils";
 
+function displayTeamName(name: string): string {
+    return name.replace(/\s+J\d+$/, "");
+}
+
 /**
  * Create an event for a player action
  */
@@ -70,7 +74,7 @@ export function exportSummaryToClipboard(
     lines.push("\nEvent timeline:");
     events.forEach((e) => {
         let line = `${formatTime(e.time)} - ${e.type}`;
-        if (e.team) line += ` (${e.team.name})`;
+        if (e.team) line += ` (${displayTeamName(e.team.name)})`;
         if (e.player)
             line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
         if (e.playerOut && e.playerIn)
@@ -109,7 +113,7 @@ export function exportSummaryToPdf(
     
     events.forEach((e) => {
         let line = `${formatTime(e.time)} - ${e.type}`;
-        if (e.team) line += ` (${e.team.name})`;
+        if (e.team) line += ` (${displayTeamName(e.team.name)})`;
         if (e.player)
             line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
         if (e.playerOut && e.playerIn)
@@ -134,4 +138,24 @@ export function buildEventSummary(events: Event[]): Record<string, number> {
         acc[e.type] = (acc[e.type] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
+}
+
+export function buildDetailedEventSummary(events: Event[]): Array<{
+    type: string;
+    team?: string;
+    player?: string;
+    playerNumber?: number;
+    playerOut?: string;
+    playerIn?: string;
+    concussion?: boolean;
+}> {
+    return events.map((e) => ({
+        type: e.type,
+        team: e.team ? displayTeamName(e.team.name) : undefined,
+        player: e.player?.name,
+        playerNumber: e.playerNumber,
+        playerOut: e.playerOut?.name,
+        playerIn: e.playerIn?.name,
+        concussion: e.concussion,
+    }));
 }

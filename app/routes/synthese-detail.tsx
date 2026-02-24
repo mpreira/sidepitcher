@@ -1,8 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { Link, useLoaderData } from "react-router";
+import { useLayoutEffect, useState } from "react";
 import type { Event } from "~/routes/tracker.types";
 import { formatTime } from "~/utils/TimeUtils";
+import { exportSummaryToPdf } from "~/utils/EventUtils";
 
 interface StoredSummary {
     id: string;
@@ -10,6 +12,8 @@ interface StoredSummary {
     currentTime: number;
     summary: Record<string, number>;
     events: Event[];
+    teams?: Array<{ id: string; name: string }>;
+    matchDay?: number;
 }
 
 interface SummariesData {
@@ -37,15 +41,61 @@ export function meta() {
     return [{ title: "Synthese" }];
 }
 
+function FormattedDateTime({ dateString }: { dateString: string }) {
+    const [formatted, setFormatted] = useState("");
+
+    useLayoutEffect(() => {
+        const date = new Date(dateString);
+        setFormatted(date.toLocaleString("fr-FR"));
+    }, [dateString]);
+
+    return <span suppressHydrationWarning>{formatted}</span>;
+}
+
 export default function SyntheseDetailPage() {
     const summary = useLoaderData<typeof loader>();
 
+    const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
+    const getTeamsLabel = () => {
+        const storedTeams: Array<{ id: string; name: string }> = summary.teams || [];
+        let teamsLabel = "";
+        if (storedTeams.length > 0) {
+            const names = storedTeams.map((team) => displayTeamName(team.name));
+            if (names.length >= 2) teamsLabel = `${names[0]} vs ${names[1]}`;
+            else if (names.length === 1) teamsLabel = names[0];
+        } else {
+            const names: string[] = [];
+            for (const event of summary.events) {
+                if (!event.team?.name) continue;
+                const cleaned = displayTeamName(event.team.name);
+                if (!names.includes(cleaned)) {
+                    names.push(cleaned);
+                }
+                if (names.length === 2) break;
+            }
+            if (names.length === 0) teamsLabel = "Match";
+            else if (names.length === 1) teamsLabel = names[0];
+            else teamsLabel = `${names[0]} vs ${names[1]}`;
+        }
+        
+        if (summary.matchDay) {
+            return `J${summary.matchDay} - ${teamsLabel}`;
+        }
+        return teamsLabel;
+    };
+
     return (
         <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
-            <h1 className="text-2xl font-bold">Synthese</h1>
+            <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
             <p className="text-sm text-gray-700">
-                Date: {new Date(summary.createdAt).toLocaleString("fr-FR")}
+                Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
+            <button
+                className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
+                onClick={() => exportSummaryToPdf(summary.events, summary.currentTime, summary.summary)}
+            >
+                Télécharger PDF
+            </button>
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Resume</h2>
@@ -67,10 +117,14 @@ export default function SyntheseDetailPage() {
                 {summary.events.length === 0 ? (
                     <p className="text-sm text-gray-600">Aucun evenement.</p>
                 ) : (
-                    <ul className="space-y-1">
+                    <ul className="space-y-1 text-sm">
                         {summary.events.map((event, index) => (
                             <li key={`${event.time}-${index}`}>
-                                {formatTime(event.time)} - {event.type}
+                                {formatTime(event.time)} - <span className="font-semibold">{event.type}</span>
+                                {event.team && <span> ({displayTeamName(event.team.name)})</span>}
+                                {event.player && <span> — {event.player.name}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
+                                {event.playerOut && event.playerIn && <span> — {event.playerOut.name} → {event.playerIn.name}</span>}
+                                {event.concussion && <span> 🚨 commotion</span>}
                             </li>
                         ))}
                     </ul>

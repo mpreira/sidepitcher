@@ -10,6 +10,8 @@ interface StoredSummary {
     currentTime: number;
     summary: Record<string, number>;
     events: Event[];
+    teams?: Array<{ id: string; name: string }>;
+    matchDay?: number;
 }
 
 interface SummariesData {
@@ -47,6 +49,8 @@ export const action: ActionFunction = async ({ request }) => {
             currentTime: payload.currentTime,
             summary: payload.summary,
             events: payload.events,
+            teams: payload.teams,
+            matchDay: payload.matchDay,
         };
         data.summaries.unshift(summary);
         await writeSummaries(data);

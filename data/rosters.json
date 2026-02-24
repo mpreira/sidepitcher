@@ -26,7 +26,20 @@
     {
       "id": "b584429c-c62c-493d-bac2-57ada4eb423a",
       "name": "Roster 2",
-      "players": [],
+      "players": [
+        {
+          "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+          "name": "Oui Oui"
+        },
+        {
+          "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+          "name": "No No"
+        },
+        {
+          "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+          "name": "Na Na"
+        }
+      ],
       "category": "Top 14"
     },
     {
@@ -49,9 +62,16 @@
       "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
       "starters": [],
       "substitutes": []
+    },
+    {
+      "id": "Roster_2_J13",
+      "name": "Roster 2 J13",
+      "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
+      "starters": [],
+      "substitutes": []
     }
   ],
-  "activeRosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+  "activeRosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
   "matchDay": "13",
   "championship": "Top 14"
 }
