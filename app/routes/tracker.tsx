@@ -41,15 +41,18 @@ export default function Tracker() {
     // compute display times based on current half
     function getDisplayTimes() {
         const HALF_SECONDS = 40 * 60; // 40 minutes
+        const isSecondHalf = currentHalf === 2;
+        
         if (currentHalf === 1) {
             const mainTime = Math.min(time, HALF_SECONDS);
             const secondaryTime = time > HALF_SECONDS ? time - HALF_SECONDS : null;
             return { mainTime, secondaryTime };
         } else {
-            // 2nd half: time continues from 1st half
-            const displayTime = time >= HALF_SECONDS ? time - HALF_SECONDS : 0;
-            const secondaryTime = time > 2 * HALF_SECONDS ? time - 2 * HALF_SECONDS : null;
-            return { mainTime: displayTime, secondaryTime };
+            // 2nd half: main time goes from 40:00 to 80:00, then secondary shows extra time
+            const effectiveTime = time - HALF_SECONDS; // time since start of 2nd half
+            const mainTime = Math.min(effectiveTime, HALF_SECONDS) + HALF_SECONDS; // display from 40:00 to 80:00
+            const secondaryTime = effectiveTime > HALF_SECONDS ? effectiveTime - HALF_SECONDS : null;
+            return { mainTime, secondaryTime };
         }
     }
     const [events, setEvents] = useState<Event[]>([]);
@@ -308,6 +311,7 @@ export default function Tracker() {
                     onClick={() => {
                         setCurrentHalf(1);
                         setTime(0);
+                        setRunning(false);
                     }}
                 >
                     1ère
@@ -320,7 +324,8 @@ export default function Tracker() {
                     }`}
                     onClick={() => {
                         setCurrentHalf(2);
-                        setTime(40 * 60); // start 2nd half at 40:00
+                        setTime(40 * 60); // start 2nd half at 40:00 (80*60 - 40*60 = 40*60)
+                        setRunning(false);
                     }}
                 >
                     2ème
