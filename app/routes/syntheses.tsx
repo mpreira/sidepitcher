@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Link, useLoaderData } from "react-router";
 import { useState, useLayoutEffect } from "react";
+import { useTeams } from "~/context/TeamsContext";
 
 interface StoredSummaryListItem {
     id: string;
@@ -54,6 +55,7 @@ export default function SynthesesPage() {
     const data = useLoaderData<typeof loader>();
     const [summaries, setSummaries] = useState<StoredSummaryListItem[]>(() => data.summaries || []);
     const [deleteMessage, setDeleteMessage] = useState("");
+    const { teams: allTeams } = useTeams();
 
     function displayTeamName(name: string) {
         return name.replace(/\s+J\d+$/, "");
@@ -74,6 +76,19 @@ export default function SynthesesPage() {
             for (const event of events) {
                 if (!event.team?.name) continue;
                 const cleaned = displayTeamName(event.team.name);
+                if (!names.includes(cleaned)) {
+                    names.push(cleaned);
+                }
+                if (names.length === 2) break;
+            }
+            if (names.length > 0) {
+                label = names.length >= 2 ? `${names[0]} vs ${names[1]}` : names[0];
+            }
+        } else if (matchDay && allTeams.length > 0) {
+            const names: string[] = [];
+            for (const team of allTeams) {
+                if (!team.name.includes(`J${matchDay}`)) continue;
+                const cleaned = displayTeamName(team.name);
                 if (!names.includes(cleaned)) {
                     names.push(cleaned);
                 }
