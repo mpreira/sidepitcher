@@ -17,6 +17,7 @@ export default function Scoreboard({
   secondaryTimerText,
 }: Props) {
   const displayScore = (idx: number) => scores[idx] || 0;
+  const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
 
   return (
     <div className="shadow-lg rounded-lg overflow-hidden flex flex-col sm:flex-row items-stretch">
@@ -24,7 +25,7 @@ export default function Scoreboard({
       <div className="flex-1 bg-blue-700 text-white p-6 flex flex-col items-center">
         {teams[0] ? (
           <>
-            <div className="text-lg font-semibold mb-1">{teams[0].name}</div>
+            <div className="text-lg font-semibold mb-1">{displayTeamName(teams[0].name)}</div>
             <div className="text-6xl font-bold">{displayScore(0)}</div>
           </>
         ) : (
@@ -62,7 +63,7 @@ export default function Scoreboard({
       <div className="flex-1 bg-red-700 text-white p-6 flex flex-col items-center">
         {teams[1] ? (
           <>
-            <div className="text-lg font-semibold mb-1">{teams[1].name}</div>
+            <div className="text-lg font-semibold mb-1">{displayTeamName(teams[1].name)}</div>
             <div className="text-6xl font-bold">{displayScore(1)}</div>
           </>
         ) : (
