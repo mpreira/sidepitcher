@@ -1,53 +1,99 @@
 {
   "rosters": [
     {
-      "id": "3331da7a-7c8c-4d4d-9a28-7e520d0f81d4",
-      "name": "Fake",
-      "teams": [
+      "id": "2ba2b012-fbdb-465f-b467-c15f9673bd9a",
+      "name": "frfrfrg",
+      "players": [
         {
-          "name": "Fake",
-          "starters": [
-            {
-              "player": {
-                "id": "31e0e533-2b78-4576-b6ab-051f8d5e83be",
-                "name": "h j"
-              },
-              "number": 1
-            },
-            {
-              "player": {
-                "id": "59ffcc50-b0c1-48b5-883d-3ff051c6ec02",
-                "name": "gffgf hghgh"
-              },
-              "number": 2
-            }
-          ],
-          "substitutes": [
-            {
-              "player": {
-                "id": "1f59ee44-11e5-4fa8-a62d-5e87fa5ed5bd",
-                "name": "esrdydgfgfgfgfg ghghghgjhgh"
-              },
-              "number": 16
-            }
-          ]
+          "id": "bd5f1c55-9265-4185-9665-ddc64ce4a9ec",
+          "name": "jonvt asyn"
+        },
+        {
+          "id": "45b62020-dfb3-4286-84b3-0158183202cb",
+          "name": "vtvtgt vvvvvv"
+        },
+        {
+          "id": "3d2ec546-72c3-496a-985c-131eca421d12",
+          "name": "Do Bby"
         }
-      ]
+      ],
+      "category": "Top 14"
+    },
+    {
+      "id": "d3585d99-e479-4419-adb3-821091fbe2ea",
+      "name": "jtujukkkykul",
+      "players": [
+        {
+          "id": "9cb90f52-6ff5-4016-a6b5-00e52757dc5e",
+          "name": "oooohuyg huhugyyh"
+        },
+        {
+          "id": "c4126374-26d1-4f5f-828d-adba62ff2b19",
+          "name": "jhghghg hbhjjhvjgvjg"
+        },
+        {
+          "id": "3a275d45-3cc3-40e3-8fc3-ba917cfd1a99",
+          "name": "jbht nnnig"
+        }
+      ],
+      "category": "Top 14"
+    },
+    {
+      "id": "89c6c796-9503-4477-9e85-4ef75b350701",
+      "name": "ooooo",
+      "players": [
+        {
+          "id": "5ce7c4e2-57a9-437c-a039-c88e7c4c9ea7",
+          "name": "gtgggg zzzddc"
+        },
+        {
+          "id": "b8b2444e-65c0-4b53-9d29-a609b76333c5",
+          "name": "fjrjtgbtjn aaaaa"
+        }
+      ],
+      "category": "Top 14"
     }
   ],
-  "activeRosterId": "3331da7a-7c8c-4d4d-9a28-7e520d0f81d4",
-  "globalPlayers": [
+  "teams": [
     {
-      "id": "31e0e533-2b78-4576-b6ab-051f8d5e83be",
-      "name": "h j"
+      "id": "frfrfrg_J13",
+      "name": "frfrfrg J13",
+      "rosterId": "2ba2b012-fbdb-465f-b467-c15f9673bd9a",
+      "starters": [],
+      "substitutes": []
     },
     {
-      "id": "59ffcc50-b0c1-48b5-883d-3ff051c6ec02",
-      "name": "gffgf hghgh"
+      "id": "ooooo_J13",
+      "name": "ooooo J13",
+      "rosterId": "89c6c796-9503-4477-9e85-4ef75b350701",
+      "starters": [
+        {
+          "player": {
+            "id": "5ce7c4e2-57a9-437c-a039-c88e7c4c9ea7",
+            "name": "gtgggg zzzddc"
+          },
+          "number": 1
+        }
+      ],
+      "substitutes": [
+        {
+          "player": {
+            "id": "b8b2444e-65c0-4b53-9d29-a609b76333c5",
+            "name": "fjrjtgbtjn aaaaa"
+          },
+          "number": 16
+        }
+      ]
     },
     {
-      "id": "1f59ee44-11e5-4fa8-a62d-5e87fa5ed5bd",
-      "name": "esrdydgfgfgfgfg ghghghgjhgh"
+      "id": "jtujukkkykul_J13",
+      "name": "jtujukkkykul J13",
+      "rosterId": "d3585d99-e479-4419-adb3-821091fbe2ea",
+      "starters": [],
+      "substitutes": []
     }
-  ]
+  ],
+  "activeRosterId": "2ba2b012-fbdb-465f-b467-c15f9673bd9a",
+  "matchDay": "13",
+  "championship": "Top 14"
 }

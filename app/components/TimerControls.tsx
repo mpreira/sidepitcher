@@ -1,4 +1,5 @@
 import React from "react";
+import { formatTime } from "~/utils/TimeUtils";
 
 interface Props {
   time: number;
@@ -15,15 +16,9 @@ export default function TimerControls({
   onAdjust,
   onReset,
 }: Props) {
-  function formatTime(sec: number) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
 
   return (
     <section className="space-y-2">
-      <div className="text-xl">Time: {formatTime(time)}</div>
       <div className="flex flex-wrap gap-2">
         <button
           className="px-4 py-2 bg-green-500 text-white rounded"

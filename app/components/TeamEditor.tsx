@@ -1,145 +1,174 @@
 import React, { useState } from "react";
 import type { Team, Player } from "~/routes/tracker.types";
-import { v4 as uuidv4 } from "uuid";
+import { addStarterToTeam, addSubstituteToTeam, removePlayerFromTeam } from "~/utils/TeamEditorUtils";
 
 interface Props {
-  team: Team;
-  globalPlayers: Player[];
-  onChange: (team: Team) => void;
+    team: Team;
+    rosterPlayers: Player[];
+    onChange: (team: Team) => void;
+    onClose: () => void;
 }
 
-export default function TeamEditor({ team, globalPlayers, onChange }: Props) {
-  const [newStarterId, setNewStarterId] = useState("");
-  const [newStarterNumber, setNewStarterNumber] = useState(1);
+export default function TeamEditor({ team, rosterPlayers, onChange, onClose }: Props) {
+    const [newPlayerId, setNewPlayerId] = useState("");
+    const [newPlayerNumber, setNewPlayerNumber] = useState(1);
+    const [feedbackMessage, setFeedbackMessage] = useState("");
+    const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null);
 
-  const [newSubId, setNewSubId] = useState("");
-  const [newSubNumber, setNewSubNumber] = useState(16);
+    const allEntries = [...team.starters, ...team.substitutes];
+    const existingPlayerIds = new Set(allEntries.map((entry) => entry.player.id));
+    const availablePlayers = rosterPlayers.filter((player) => !existingPlayerIds.has(player.id));
 
-  function addStarter() {
-    if (!newStarterId) return;
-    const player = globalPlayers.find((p) => p.id === newStarterId);
-    if (!player) return;
-    const updated: Team = {
-      ...team,
-      starters: [...team.starters, { player, number: newStarterNumber }],
-    };
-    onChange(updated);
-    setNewStarterId("");
-    setNewStarterNumber(1);
-  }
+    function clearFeedback() {
+        if (!feedbackMessage) return;
+        setFeedbackMessage("");
+        setFeedbackType(null);
+    }
 
-  function addSub() {
-    if (!newSubId) return;
-    const player = globalPlayers.find((p) => p.id === newSubId);
-    if (!player) return;
-    const updated: Team = {
-      ...team,
-      substitutes: [...team.substitutes, { player, number: newSubNumber }],
-    };
-    onChange(updated);
-    setNewSubId("");
-    setNewSubNumber(16);
-  }
+    function addPlayer() {
+        if (!newPlayerId) {
+            setFeedbackType("error");
+            setFeedbackMessage("Sélectionne un joueur avant de valider.");
+            return;
+        }
+        if (newPlayerNumber < 1 || newPlayerNumber > 23) {
+            setFeedbackType("error");
+            setFeedbackMessage("Le numéro doit être compris entre 1 et 23.");
+            return;
+        }
+        if (existingPlayerIds.has(newPlayerId)) {
+            setFeedbackType("error");
+            setFeedbackMessage("Ce joueur est déjà dans la composition.");
+            return;
+        }
+        const player = rosterPlayers.find((p) => p.id === newPlayerId);
+        if (!player) {
+            setFeedbackType("error");
+            setFeedbackMessage("Joueur introuvable dans le roster.");
+            return;
+        }
 
-  function removePlayer(id: string) {
-    const updated: Team = {
-      ...team,
-      starters: team.starters.filter((entry) => entry.player.id !== id),
-      substitutes: team.substitutes.filter((entry) => entry.player.id !== id),
-    };
-    onChange(updated);
-  }
+        // Auto-classify based on number: 1-15 = starters, 16-23 = substitutes
+        const isStarter = newPlayerNumber >= 1 && newPlayerNumber <= 15;
+        const updated = isStarter
+            ? addStarterToTeam(team, player, newPlayerNumber)
+            : addSubstituteToTeam(team, player, newPlayerNumber);
 
-  return (
-    <div className="space-y-2 mt-2">
-      <div>
-        <div className="font-semibold">Titulaires</div>
-        <ul className="list-disc ml-6">
-          {team.starters.map((entry) => (
-            <li key={entry.player.id} className="flex items-center gap-2">
-              {entry.player.name} ({entry.number})
-              <button
-                className="text-red-600 text-sm"
-                onClick={() => removePlayer(entry.player.id)}
-              >
-                ✖
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <select
-            className="border p-1 flex-1"
-            value={newStarterId}
-            onChange={(e) => setNewStarterId(e.target.value)}
-          >
-            <option value="">-- joueur --</option>
-            {globalPlayers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            className="border p-1 w-16"
-            min={1}
-            max={15}
-            value={newStarterNumber}
-            onChange={(e) => setNewStarterNumber(Number(e.target.value))}
-          />
-          <button
-            className="px-2 py-1 bg-blue-500 text-white rounded"
-            onClick={addStarter}
-          >
-            +
-          </button>
+        onChange(updated);
+        setNewPlayerId("");
+        setNewPlayerNumber(1);
+        setFeedbackType("success");
+        setFeedbackMessage("Joueur ajouté à la composition.");
+    }
+
+    function removePlayer(id: string) {
+        const updated = removePlayerFromTeam(team, id);
+        onChange(updated);
+    }
+
+    return (
+        <div className="space-y-4 mt-2 border p-3 rounded bg-gray-90">
+            {/* Add player form */}
+            <div>
+                <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold">Ajouter un joueur</h4>
+                    <button
+                        className="px-3 py-2 bg-gray-200 text-gray-800 rounded text-sm"
+                        onClick={onClose}
+                    >
+                        Fermer
+                    </button>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <input
+                        type="number"
+                        className="border p-2 w-full sm:w-24"
+                        min={1}
+                        max={23}
+                        placeholder="Numéro"
+                        value={newPlayerNumber}
+                        onChange={(e) => {
+                            clearFeedback();
+                            setNewPlayerNumber(Number(e.target.value));
+                        }}
+                    />
+                    <select
+                        className="border p-2 flex-1"
+                        value={newPlayerId}
+                        onChange={(e) => {
+                            clearFeedback();
+                            setNewPlayerId(e.target.value);
+                        }}
+                    >
+                        <option value="">-- Sélectionner un joueur --</option>
+                        {availablePlayers.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name}
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        className="px-3 py-2 bg-blue-500 text-white rounded text-sm w-full sm:w-auto"
+                        onClick={addPlayer}
+                        disabled={availablePlayers.length === 0}
+                    >
+                        Ajouter
+                    </button>
+                </div>
+                {feedbackMessage && (
+                    <p
+                        className={`mt-2 text-sm ${
+                            feedbackType === "success" ? "text-green-700" : "text-red-600"
+                        }`}
+                    >
+                        {feedbackMessage}
+                    </p>
+                )}
+            </div>
+
+            {/* Display composition */}
+            <div>
+                <h4 className="font-semibold mb-2">Composition</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Starters */}
+                    <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Titulaires (1-15)</p>
+                        <ul className="space-y-1">
+                            {team.starters.map((entry) => (
+                                <li key={entry.player.id} className="flex items-center gap-2 text-sm">
+                                    <span className="font-semibold w-6">{entry.number}</span>
+                                    <span className="flex-1">{entry.player.name}</span>
+                                    <button
+                                        className="text-red-600 text-sm px-2 py-1"
+                                        onClick={() => removePlayer(entry.player.id)}
+                                    >
+                                        ✖
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Substitutes */}
+                    <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Remplaçants (16-23)</p>
+                        <ul className="space-y-1">
+                            {team.substitutes.map((entry) => (
+                                <li key={entry.player.id} className="flex items-center gap-2 text-sm">
+                                    <span className="font-semibold w-6">{entry.number}</span>
+                                    <span className="flex-1">{entry.player.name}</span>
+                                    <button
+                                        className="text-red-600 text-sm px-2 py-1"
+                                        onClick={() => removePlayer(entry.player.id)}
+                                    >
+                                        ✖
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div>
-        <div className="font-semibold">Remplaçants</div>
-        <ul className="list-disc ml-6">
-          {team.substitutes.map((entry) => (
-            <li key={entry.player.id} className="flex items-center gap-2">
-              {entry.player.name} ({entry.number})
-              <button
-                className="text-red-600 text-sm"
-                onClick={() => removePlayer(entry.player.id)}
-              >
-                ✖
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <select
-            className="border p-1 flex-1"
-            value={newSubId}
-            onChange={(e) => setNewSubId(e.target.value)}
-          >
-            <option value="">-- joueur --</option>
-            {globalPlayers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            className="border p-1 w-16"
-            min={16}
-            max={23}
-            value={newSubNumber}
-            onChange={(e) => setNewSubNumber(Number(e.target.value))}
-          />
-          <button
-            className="px-2 py-1 bg-blue-500 text-white rounded"
-            onClick={addSub}
-          >
-            +
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

@@ -1,152 +1,181 @@
 import React, { useState } from "react";
-import type { Team, Player } from "~/routes/tracker.types";
-import type { Roster } from "~/routes/tracker.types";
-import { v4 as uuidv4 } from "uuid";
+import type { Team, Player, Roster } from "~/routes/tracker.types";
 import TeamEditor from "~/components/TeamEditor";
+import { useTeams } from "~/context/TeamsContext";
+import {
+    createNewRoster,
+    deleteRosterFromList,
+    deleteTeamsFromRoster,
+    addPlayerToRosterList,
+    deletePlayerFromRoster,
+    updatePlayerInRoster,
+    createPlayerFromNames,
+    parsePlayerName,
+    createTeam,
+    deleteTeamFromList,
+    updateTeamInList,
+    deletePlayerFromTeamData,
+    importTeamFromJSON,
+    getTeamPlayers,
+} from "~/utils/RosterUtils";
 
 interface Props {
     rosters: Roster[];
+    teams: Team[];
     activeRosterId: string | null;
-    globalPlayers: Player[];
     setRosters: React.Dispatch<React.SetStateAction<Roster[]>>;
+    setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
     setActiveRosterId: React.Dispatch<React.SetStateAction<string | null>>;
-    setGlobalPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
 }
 
 export default function RosterManager({
     rosters,
+    teams,
     activeRosterId,
-    globalPlayers,
     setRosters,
+    setTeams,
     setActiveRosterId,
-    setGlobalPlayers,
 }: Props) {
     const [jsonInput, setJsonInput] = useState("");
     const [teamName, setTeamName] = useState("");
     const [newRosterName, setNewRosterName] = useState("");
+    const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
+    const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+    const [editingPlayerFirst, setEditingPlayerFirst] = useState("");
+    const [editingPlayerLast, setEditingPlayerLast] = useState("");
+    const [selectedRosterForPlayer, setSelectedRosterForPlayer] = useState<string | null>(null);
+    const [viewTeamId, setViewTeamId] = useState<string | null>(null);
+    const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
-    const teams = activeRoster?.teams ?? [];
-
-    // globalPlayers comes from props
-
-    function saveRosters(updated: Roster[]) {
-        setRosters(updated);
-    }
-
-    function addGlobalPlayer() {
-        if (!newPlayerFirst && !newPlayerLast) return;
-        const name = `${newPlayerFirst} ${newPlayerLast}`.trim();
-        setGlobalPlayers((p) => [...p, { id: uuidv4(), name }]);
-        setNewPlayerFirst("");
-        setNewPlayerLast("");
-    }
-
-    function removeGlobalPlayer(id: string) {
-        setGlobalPlayers((p) => p.filter((pp) => pp.id !== id));
-    }
+    const activeTeams = (teams || []).filter((t) => t.rosterId === activeRosterId);
+    const rosterViewPlayers = viewTeamId
+        ? getTeamPlayers(activeTeams.find(t => t.id === viewTeamId) || { id: "", name: "", rosterId: "", starters: [], substitutes: [] })
+        : activeRoster?.players || []; 
 
     function createRoster() {
         if (!newRosterName) return;
-        const id = uuidv4();
-        saveRosters([...rosters, { id, name: newRosterName, teams: [] }]);
-        setActiveRosterId(id);
+        const newRoster = createNewRoster(newRosterName, newRosterCategory);
+        setRosters([...rosters, newRoster]);
+        setActiveRosterId(newRoster.id);
         setNewRosterName("");
+        setNewRosterCategory('Top 14');
     }
 
     function deleteRoster(id: string) {
-        saveRosters(rosters.filter((r) => r.id !== id));
+        setRosters(deleteRosterFromList(rosters, id));
+        setTeams(deleteTeamsFromRoster(teams, id));
         if (activeRosterId === id) {
             setActiveRosterId(null);
         }
     }
 
-    function addTeam() {
-        if (!teamName || !activeRoster) return;
-        const updated = {
-            ...activeRoster,
-            teams: [...activeRoster.teams, { name: teamName, starters: [], substitutes: [] }],
-        };
-        saveRosters(rosters.map((r) => (r.id === activeRoster.id ? updated : r)));
-        setTeamName("");
+    function addPlayerToRoster() {
+        const targetRoster = selectedRosterForPlayer 
+            ? rosters.find(r => r.id === selectedRosterForPlayer)
+            : activeRoster;
+        if (!targetRoster) return;
+        if (!newPlayerFirst && !newPlayerLast) return;
+        
+        const player = createPlayerFromNames(newPlayerFirst, newPlayerLast);
+        const updated = addPlayerToRosterList(targetRoster, player);
+        setRosters(rosters.map(r => r.id === targetRoster.id ? updated : r));
+
+        setNewPlayerFirst("");
+        setNewPlayerLast("");
+        setSelectedRosterForPlayer(null);
     }
 
-    function importRoster() {
+    function deletePlayer(playerId: string) {
         if (!activeRoster) return;
-        try {
-            const data = JSON.parse(jsonInput);
-            if (data.name && Array.isArray(data.starters)) {
-                const team: Team = {
-                    name: data.name,
-                    starters: data.starters.map((p: any, idx: number) => ({
-                        player: { id: p.id || String(idx), name: p.name },
-                        number: idx + 1,
-                    })),
-                    substitutes: Array.isArray(data.substitutes)
-                        ? data.substitutes.map((p: any, idx: number) => ({
-                              player: { id: p.id || String(idx), name: p.name },
-                              number: 16 + idx,
-                          }))
-                        : [],
-                };
-                const updated = {
-                    ...activeRoster,
-                    teams: [...activeRoster.teams, team],
-                };
-                saveRosters(rosters.map((r) => (r.id === activeRoster.id ? updated : r)));
-                setJsonInput("");
-            } else {
-                alert("JSON invalide : il manque un nom d'équipe ou des titulaires");
-            }
-        } catch (e) {
-            alert("Erreur de parsing JSON");
+        const updated = deletePlayerFromRoster(activeRoster, playerId);
+        setRosters(rosters.map(r => r.id === activeRoster.id ? updated : r));
+    }
+
+    function deletePlayerFromTeam(teamId: string, playerId: string) {
+        const team = teams.find(t => t.id === teamId);
+        if (!team) return;
+        const updatedTeam = deletePlayerFromTeamData(team, playerId);
+        updateTeam(updatedTeam);
+    }
+
+    function removePlayerFromView(playerId: string) {
+        if (viewTeamId) {
+            deletePlayerFromTeam(viewTeamId, playerId);
+        } else {
+            deletePlayer(playerId);
         }
     }
 
+
+
+    function startEditPlayer(player: Player) {
+        const { first, last } = parsePlayerName(player.name);
+        setEditingPlayerId(player.id);
+        setEditingPlayerFirst(first);
+        setEditingPlayerLast(last);
+    }
+
+    function saveEditPlayer() {
+        if (!activeRoster || !editingPlayerId) return;
+        if (!editingPlayerFirst && !editingPlayerLast) return;
+        const newName = `${editingPlayerFirst} ${editingPlayerLast}`.trim();
+        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, newName);
+        setRosters(rosters.map(r => r.id === activeRoster.id ? updated : r));
+        setEditingPlayerId(null);
+        setEditingPlayerFirst("");
+        setEditingPlayerLast("");
+    }
+
+    function cancelEditPlayer() {
+        setEditingPlayerId(null);
+        setEditingPlayerFirst("");
+        setEditingPlayerLast("");
+    }
+
+    function addTeam() {
+        if (!activeRoster) return;
+        const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
+        const newTeam = createTeam(name, activeRoster.id);
+        setTeams([...(teams || []), newTeam]);
+    }
+
+    function importTeam() {
+        if (!activeRoster) return;
+        try {
+            const newTeam = importTeamFromJSON(jsonInput, activeRoster.id, activeRoster.name, matchDay ? parseInt(matchDay) : undefined);
+            setTeams([...(teams || []), newTeam]);
+            setJsonInput("");
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Erreur de parsing JSON");
+        }
+    }
+
+    function deleteTeam(teamToDelete: Team) {
+        setTeams(deleteTeamFromList(teams || [], teamToDelete.id));
+    }
+
+    function updateTeam(updatedTeam: Team) {
+        setTeams(updateTeamInList(teams || [], updatedTeam));
+    }
+
+    const { matchDay } = useTeams();
+
     return (
         <section className="space-y-4 max-w-screen-md mx-auto px-4">
-            <h2 className="font-semibold">Rosters saved</h2>
-            {/* global roster management */}
-            <section className="space-y-4">
-                <h3 className="font-semibold">Effectif global</h3>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <input
-                        className="border p-1 flex-1"
-                        placeholder="Prénom"
-                        value={newPlayerFirst}
-                        onChange={(e) => setNewPlayerFirst(e.target.value)}
-                    />
-                    <input
-                        className="border p-1 flex-1"
-                        placeholder="Nom"
-                        value={newPlayerLast}
-                        onChange={(e) => setNewPlayerLast(e.target.value)}
-                    />
-                    <button
-                        className="px-3 py-1 bg-green-500 text-white rounded"
-                        onClick={addGlobalPlayer}
-                    >
-                        Ajouter joueur
-                    </button>
-                </div>
-                <ul className="list-disc ml-6">
-                    {globalPlayers.map((p) => (
-                        <li key={p.id} className="flex items-center gap-2">
-                            {p.name}
-                            <button
-                                className="text-red-600 text-sm"
-                                onClick={() => removeGlobalPlayer(p.id)}
-                            >
-                                ✖
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            </section>
+            <h2 className="font-semibold">Rosters</h2>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <select
+                    className="border p-1"
+                    value={newRosterCategory}
+                    onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                >
+                    <option value="Top 14">Top 14</option>
+                    <option value="Pro D2">Pro D2</option>
+                </select>
                 <input
                     className="border p-1 flex-1"
                     placeholder="Nom du roster"
@@ -161,82 +190,146 @@ export default function RosterManager({
                 </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {rosters.map((r) => (
-                <div key={r.id} className="flex items-center gap-2">
-                    <button
-                        className="underline text-blue-600"
-                        onClick={() => setActiveRosterId(r.id)}
-                    >
-                        {r.name}
-                    </button>
-                    <button
-                        className="text-red-600"
-                        onClick={() => deleteRoster(r.id)}
-                    >
-                        supprimer
-                    </button>
-                </div>
-              ))}
+                {rosters.map((r) => (
+                    <div key={r.id} className="flex items-center gap-2 p-2 border rounded">
+                        <div className="text-sm text-gray-600">{r.category || 'N/A'}</div>
+                        <button
+                            className="underline text-blue-600"
+                            onClick={() => setActiveRosterId(r.id)}
+                        >
+                            {r.name}
+                        </button>
+                        <button
+                            className="text-red-600"
+                            onClick={() => deleteRoster(r.id)}
+                        >
+                            supprimer
+                        </button>
+                    </div>
+                ))}
             </div>
 
             {activeRoster && (
                 <>
-                    <h3 className="font-semibold mt-4">Équipes & effectifs</h3>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <input
-                            className="border p-1 flex-1"
-                            placeholder="Nom de l'équipe"
-                            value={teamName}
-                            onChange={(e) => setTeamName(e.target.value)}
-                        />
-                        <button
-                            className="px-3 py-1 bg-blue-500 text-white rounded"
-                            onClick={addTeam}
-                        >
-                            Ajouter équipe vide
-                        </button>
+                    <div className="flex flex-col sm:flex-row gap-6">
+                        {/* teams column */}
+                        <div className="w-full sm:w-1/2">
+                            <h3 className="font-semibold">Équipes</h3>
+                            <div className="space-y-2 mb-4">
+                                {(() => {
+                                const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
+                                const already = activeTeams.some(t => t.name === name);
+                                if (already) return null;
+                                return (
+                                    <button
+                                        className="px-3 py-1 bg-blue-500 text-white rounded"
+                                        onClick={addTeam}
+                                        disabled={!matchDay}
+                                    >
+                                        Créer « {activeRoster.name} {matchDay && `J${matchDay}`} »
+                                    </button>
+                                );
+                            })()}
+                            </div>
+                            <ul className="space-y-1">
+                                {activeTeams.map((team) => (
+                                    <li key={team.id} className="flex items-center justify-between">
+                                        <button
+                                            className="text-left flex-1"
+                                            onClick={() => {
+                                                setViewTeamId(team.id);
+                                                setEditingTeamId(team.id);
+                                            }}
+                                        >
+                                            {team.name}
+                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                className="px-2 py-1 bg-yellow-500 text-white text-sm rounded"
+                                                onClick={() => {
+                                                    setViewTeamId(team.id);
+                                                    setEditingTeamId(team.id);
+                                                }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                                onClick={() => deleteTeam(team)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                        {editingTeamId === team.id && (
+                                            <TeamEditor
+                                                team={team}
+                                                rosterPlayers={activeRoster.players || []}
+                                                onChange={(updated) => {
+                                                    updateTeam(updated);
+                                                    setViewTeamId(updated.id);
+                                                }}
+                                                onClose={() => setEditingTeamId(null)}
+                                            />
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        {/* players column */}
+                        <div className="w-full sm:w-1/2">
+                            <h3 className="font-semibold">
+                                Composition {viewTeamId ? `de ${activeTeams.find(t => t.id === viewTeamId)?.name}` : 'du roster'}
+                            </h3>
+                            <ul className="space-y-1 mt-2">
+                                {rosterViewPlayers.map((p) => (
+                                    <li key={p.id} className="flex items-center justify-between gap-2">
+                                        <span>{p.name}</span>
+                                        <button
+                                            className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                            onClick={() => removePlayerFromView(p.id)}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        <textarea
-                            className="w-full h-24 border p-2"
-                            placeholder={
-                                "Coller JSON de la forme {\n  name: string,\n  starters: [{id?,name}],\n  substitutes: [{id?,name}]\n}\nles numéros seront attribués automatiquement (1..15 / 16..23)"
-                            }
-                            value={jsonInput}
-                            onChange={(e) => setJsonInput(e.target.value)}
-                        />
-                        <button
-                            className="px-3 py-1 bg-blue-500 text-white rounded self-start"
-                            onClick={importRoster}
-                        >
-                            Importer équipe
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {teams.map((team, i) => (
-                        <div key={i} className="border p-2">
-                            <strong>{team.name}</strong>
-                    <TeamEditor
-                        team={team}
-                        globalPlayers={globalPlayers}
-                        onChange={(updatedTeam) => {
-                            const updatedRoster: Roster = {
-                                ...activeRoster,
-                                teams: activeRoster.teams.map((t) =>
-                                    t === team ? updatedTeam : t
-                                ),
-                            } as Roster;
-                            saveRosters(
-                                rosters.map((r) =>
-                                    r.id === activeRoster.id ? updatedRoster : r
-                                )
-                            );
-                        }}
-                    />
-                </div>
-            ))}
+                    {/* add player form below columns */}
+                    <h3 className="font-semibold mt-6">Ajouter un joueur à l'effectif</h3>
+                    <div className="space-y-2 border p-4 rounded bg-gray-90">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <input
+                                className="border p-1 flex-1"
+                                placeholder="Prénom"
+                                value={newPlayerFirst}
+                                onChange={(e) => setNewPlayerFirst(e.target.value)}
+                            />
+                            <input
+                                className="border p-1 flex-1"
+                                placeholder="Nom"
+                                value={newPlayerLast}
+                                onChange={(e) => setNewPlayerLast(e.target.value)}
+                            />
+                            <select
+                                className="border p-1 flex-1"
+                                value={selectedRosterForPlayer || activeRosterId || ""}
+                                onChange={(e) => setSelectedRosterForPlayer(e.target.value)}
+                            >
+                                <option value="">-- Roster --</option>
+                                {rosters.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                            <button
+                                className="px-3 py-1 bg-green-500 text-white rounded text-sm"
+                                onClick={addPlayerToRoster}
+                                disabled={!(selectedRosterForPlayer || activeRoster) || (!newPlayerFirst && !newPlayerLast)}
+                            >
+                                Ajouter
+                            </button>
+                        </div>
                     </div>
                 </>
             )}

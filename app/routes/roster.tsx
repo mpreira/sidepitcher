@@ -3,22 +3,36 @@ import RosterManager from "~/components/RosterManager";
 import { useTeams } from "~/context/TeamsContext";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Rosters" }];
+    return [{ title: "Rosters" }];
 }
 
 export default function RosterPage() {
-  const { rosters, activeRosterId, setRosters, setActiveRosterId, globalPlayers, setGlobalPlayers } = useTeams();
-  return (
-    <main className="p-6 max-w-screen-md mx-auto px-4">
-      <h1 className="text-2xl font-bold">Rosters</h1>
-      <RosterManager
-        rosters={rosters}
-        activeRosterId={activeRosterId}
-        globalPlayers={globalPlayers}
-        setRosters={setRosters}
-        setActiveRosterId={setActiveRosterId}
-        setGlobalPlayers={setGlobalPlayers}
-      />
-    </main>
-  );
+    const {
+        rosters,
+        teams,
+        activeRosterId,
+        setRosters,
+        setTeams,
+        setActiveRosterId,
+        matchDay,
+        championship,
+    } = useTeams();
+
+    return (
+        <main className="p-6 max-w-screen-md mx-auto px-4">
+            <h1 className="text-2xl font-bold">Effectifs</h1>
+            <p className="text-sm mb-4">
+                {matchDay && <>Journée : {matchDay} — </>}
+                Championnat : {championship}
+            </p>
+            <RosterManager
+                rosters={rosters}
+                teams={teams}
+                activeRosterId={activeRosterId}
+                setRosters={setRosters}
+                setTeams={setTeams}
+                setActiveRosterId={setActiveRosterId}
+            />
+        </main>
+    );
 }

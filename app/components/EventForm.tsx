@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { Team, Player, Event } from "~/routes/tracker.types";
+import { createPlayerEvent, createSubstitutionEvent, findPlayerNumberInTeam } from "~/utils/EventUtils";
 
 interface Props {
     type: string;
@@ -39,28 +40,17 @@ export default function EventForm({
       : [];
 
     function handleSubmit() {
-        const e: Event = {
-        type,
-        time: currentTime,
-        team,
-        concussion,
-        };
         if (type === "Changement") {
-        e.playerOut = players.find((p) => p.id === outPlayerId);
-        e.playerIn = players.find((p) => p.id === inPlayerId);
+            const playerOut = players.find((p) => p.id === outPlayerId);
+            const playerIn = players.find((p) => p.id === inPlayerId);
+            const event = createSubstitutionEvent(currentTime, team, playerOut, playerIn, concussion);
+            onSubmit(event);
         } else {
-        const pl = players.find((p) => p.id === playerId);
-        e.player = pl;
-        if (pl && team) {
-            const entry = [...team.starters, ...team.substitutes].find(
-            (ent) => ent.player.id === pl.id
-            );
-            if (entry) {
-            e.playerNumber = entry.number;
-            }
+            const player = players.find((p) => p.id === playerId);
+            const playerNumber = team && player ? findPlayerNumberInTeam(team, player.id) : undefined;
+            const event = createPlayerEvent(type, currentTime, team, player, playerNumber, concussion);
+            onSubmit(event);
         }
-        }
-        onSubmit(e);
     }
 
     return (

@@ -48,6 +48,9 @@ export default function App() {
     <TeamsProvider>
       <header className="p-4 bg-gray-100 dark:bg-gray-800 border-b">
         <nav className="max-w-screen-md mx-auto flex flex-wrap gap-4">
+          <a href="/" className="text-blue-600 hover:underline">
+            Home
+          </a>
           <a href="/tracker" className="text-blue-600 hover:underline">
             Tracker
           </a>

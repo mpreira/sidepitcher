@@ -1,5 +1,6 @@
 import React from "react";
 import type { Event } from "~/routes/tracker.types";
+import { formatTime } from "~/utils/TimeUtils";
 
 interface Props {
   events: Event[];
@@ -7,12 +8,6 @@ interface Props {
 }
 
 export default function EventsList({ events, remove }: Props) {
-  function formatTime(sec: number) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
-
   if (events.length === 0) {
     return <p>Aucune action enregistrée.</p>;
   }
