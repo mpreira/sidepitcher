@@ -223,12 +223,14 @@ export default function RosterManager({
             {showCreateRosterForm && (
                 <div className="space-y-2 border border-gray-700 p-3 rounded bg-gray-900 text-white">
                     <input
+                        id="newRosterName"
                         className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
                         placeholder="Nom du roster"
                         value={newRosterName}
                         onChange={(e) => setNewRosterName(e.target.value)}
                     />
                     <select
+                        id="newRosterCategory"
                         className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
                         value={newRosterCategory}
                         onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}

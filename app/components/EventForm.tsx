@@ -60,6 +60,7 @@ export default function EventForm({
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <label className="mr-2">Équipe:</label>
             <select
+                id="teamSelect"
                 className="flex-1"
                 value={teamIdx}
                 onChange={(e) => setTeamIdx(Number(e.target.value))}
@@ -74,8 +75,9 @@ export default function EventForm({
             {type === "Changement" ? (
             <>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="mr-2">Sortant:</label>
+                <label className="mr-2" htmlFor="outPlayerSelect">Sortant:</label>
                 <select
+                    id="outPlayerSelect"
                     className="flex-1"
                     value={outPlayerId}
                     onChange={(e) => setOutPlayerId(e.target.value)}
@@ -89,8 +91,9 @@ export default function EventForm({
                 </select>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="mr-2">Entrant:</label>
+                <label className="mr-2" htmlFor="inPlayerSelect">Entrant:</label>
                 <select
+                    id="inPlayerSelect"
                     className="flex-1"
                     value={inPlayerId}
                     onChange={(e) => setInPlayerId(e.target.value)}
@@ -106,11 +109,12 @@ export default function EventForm({
             </>
             ) : (
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="mr-2">Joueur:</label>
+                <label className="mr-2" htmlFor="playerSelect">Joueur:</label>
                 <select
-                className="flex-1"
-                value={playerId}
-                onChange={(e) => setPlayerId(e.target.value)}
+                    id="playerSelect"
+                    className="flex-1"
+                    value={playerId}
+                    onChange={(e) => setPlayerId(e.target.value)}
                 >
                 <option value="">--</option>
                 {players.map((p) => (
@@ -122,8 +126,9 @@ export default function EventForm({
             </div>
             )}
             <div>
-            <label>
+            <label htmlFor="concussionCheckbox">
                 <input
+                id="concussionCheckbox"
                 type="checkbox"
                 checked={concussion}
                 onChange={(e) => setConcussion(e.target.checked)}

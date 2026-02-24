@@ -318,6 +318,7 @@ export default function Tracker() {
                     <>
                         <div className="flex flex-col sm:flex-row gap-2">
                             <select
+                                id="team1Select"
                                 className="border p-2 flex-1"
                                 value={team1Id}
                                 onChange={(e) => setTeam1Id(e.target.value)}
@@ -330,6 +331,7 @@ export default function Tracker() {
                                 ))}
                             </select>
                             <select
+                                id="team2Select"
                                 className="border p-2 flex-1"
                                 value={team2Id}
                                 onChange={(e) => setTeam2Id(e.target.value)}
@@ -448,8 +450,9 @@ export default function Tracker() {
 
             {/* half selector */}
             <div className="flex items-center gap-2 justify-center">
-                <label className="font-semibold">Mi-temps:</label>
+                <label htmlFor="halfSelect" className="font-semibold">Mi-temps:</label>
                 <button
+                    id="halfSelect"
                     className={`px-4 py-2 rounded ${
                         currentHalf === 1
                             ? 'bg-blue-600 text-white'
@@ -505,9 +508,10 @@ export default function Tracker() {
             />
 
             <div className="border rounded p-4 space-y-2">
-                <label className="block font-semibold">Temps manuel (mm:ss)</label>
+                <label htmlFor="manualTimeInput" className="block font-semibold">Temps manuel (mm:ss)</label>
                 <div className="flex gap-2">
                     <input
+                        id="manualTimeInput"
                         type="text"
                         placeholder="05:30"
                         className="border p-2 flex-1"
@@ -516,6 +520,7 @@ export default function Tracker() {
                         onKeyDown={(e) => e.key === 'Enter' && applyManualTime()}
                     />
                     <button
+                        id="applyManualTimeButton"
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                         onClick={applyManualTime}
                     >
