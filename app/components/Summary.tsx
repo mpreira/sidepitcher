@@ -10,6 +10,23 @@ interface Props {
 export default function Summary({ events, currentTime }: Props) {
     const summary = buildEventSummary(events);
 
+    async function saveSummary() {
+        try {
+            await fetch("/api/summaries", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentTime,
+                    summary,
+                    events,
+                }),
+            });
+            alert("Synthese sauvegardee.");
+        } catch (e) {
+            alert("Impossible de sauvegarder la synthese.");
+        }
+    }
+
     return (
         <section className="space-y-2">
             <h2 className="font-semibold">Synthèse</h2>
@@ -25,6 +42,12 @@ export default function Summary({ events, currentTime }: Props) {
                 </ul>
             )}
             <div className="mt-2 flex flex-col sm:flex-row gap-2">
+                <button
+                    className="px-4 py-2 bg-green-600 text-white rounded w-full sm:w-auto"
+                    onClick={saveSummary}
+                >
+                    Sauvegarder la synthese
+                </button>
                 <button
                     className="px-4 py-2 bg-indigo-600 text-white rounded w-full sm:w-auto"
                     onClick={() => exportSummaryToClipboard(events, currentTime, summary)}

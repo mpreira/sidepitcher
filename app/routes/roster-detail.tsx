@@ -44,6 +44,8 @@ export default function RosterDetailPage() {
     const [editingPlayerLast, setEditingPlayerLast] = useState("");
     const [newPlayerFirstError, setNewPlayerFirstError] = useState("");
     const [newPlayerLastError, setNewPlayerLastError] = useState("");
+    const [editingPlayerFirstError, setEditingPlayerFirstError] = useState("");
+    const [editingPlayerLastError, setEditingPlayerLastError] = useState("");
 
     const rosterId = getRosterIdFromParam(rosterSlugId);
     const roster = useMemo(
@@ -122,9 +124,13 @@ export default function RosterDetailPage() {
 
     function startEditPlayer(player: { id: string; name: string }) {
         const { first, last } = parsePlayerName(player.name);
+        const formattedFirst = formatName(first);
+        const formattedLast = formatName(last);
         setEditingPlayerId(player.id);
-        setEditingPlayerFirst(first);
-        setEditingPlayerLast(last);
+        setEditingPlayerFirst(formattedFirst);
+        setEditingPlayerLast(formattedLast);
+        setEditingPlayerFirstError(validateName(formattedFirst));
+        setEditingPlayerLastError(validateName(formattedLast));
         setPlayerMessage("");
     }
 
@@ -132,12 +138,21 @@ export default function RosterDetailPage() {
         setEditingPlayerId(null);
         setEditingPlayerFirst("");
         setEditingPlayerLast("");
+        setEditingPlayerFirstError("");
+        setEditingPlayerLastError("");
     }
 
     function saveEditPlayer() {
         if (!roster || !editingPlayerId) return;
+        const formattedFirst = formatName(editingPlayerFirst);
+        const formattedLast = formatName(editingPlayerLast);
+        const firstError = validateName(formattedFirst);
+        const lastError = validateName(formattedLast);
+        setEditingPlayerFirstError(firstError);
+        setEditingPlayerLastError(lastError);
+        if (firstError || lastError) return;
         if (!editingPlayerFirst && !editingPlayerLast) return;
-        const newName = `${editingPlayerFirst} ${editingPlayerLast}`.trim();
+        const newName = `${formattedFirst} ${formattedLast}`.trim();
         const updatedRoster = updatePlayerInRoster(roster, editingPlayerId, newName);
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
         cancelEditPlayer();
@@ -244,17 +259,35 @@ export default function RosterDetailPage() {
                                 {editingPlayerId === player.id && (
                                     <div className="space-y-2 border border-gray-700 p-3 rounded bg-gray-900 text-white">
                                         <input
-                                            className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
+                                            className={`border bg-gray-800 text-white p-2 w-full ${
+                                                editingPlayerFirstError ? "border-red-500" : "border-gray-600"
+                                            }`}
                                             placeholder="Prénom"
                                             value={editingPlayerFirst}
-                                            onChange={(e) => setEditingPlayerFirst(e.target.value)}
+                                            onChange={(e) => {
+                                                const formatted = formatName(e.target.value);
+                                                setEditingPlayerFirst(formatted);
+                                                setEditingPlayerFirstError(validateName(formatted));
+                                            }}
                                         />
+                                        {editingPlayerFirstError && (
+                                            <p className="text-sm text-red-400">{editingPlayerFirstError}</p>
+                                        )}
                                         <input
-                                            className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
+                                            className={`border bg-gray-800 text-white p-2 w-full ${
+                                                editingPlayerLastError ? "border-red-500" : "border-gray-600"
+                                            }`}
                                             placeholder="Nom"
                                             value={editingPlayerLast}
-                                            onChange={(e) => setEditingPlayerLast(e.target.value)}
+                                            onChange={(e) => {
+                                                const formatted = formatName(e.target.value);
+                                                setEditingPlayerLast(formatted);
+                                                setEditingPlayerLastError(validateName(formatted));
+                                            }}
                                         />
+                                        {editingPlayerLastError && (
+                                            <p className="text-sm text-red-400">{editingPlayerLastError}</p>
+                                        )}
                                         <div className="flex items-center gap-2">
                                             <button
                                                 className="px-3 py-2 bg-blue-500 text-white rounded"

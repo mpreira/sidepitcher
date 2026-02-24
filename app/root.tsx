@@ -57,6 +57,9 @@ export default function App() {
           <a href="/roster" className="text-blue-600 hover:underline">
             Rosters
           </a>
+          <a href="/syntheses" className="text-blue-600 hover:underline">
+            Syntheses
+          </a>
         </nav>
       </header>
       <Outlet />

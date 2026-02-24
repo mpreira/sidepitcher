@@ -1,0 +1,26 @@
+{
+  "summaries": [
+    {
+      "id": "b5c303e2-eee1-417b-ac0e-02a6def27bd6",
+      "createdAt": "2026-02-24T13:59:58.534Z",
+      "currentTime": 13,
+      "summary": {
+        "Essai": 1
+      },
+      "events": [
+        {
+          "type": "Essai",
+          "time": 11,
+          "team": {
+            "id": "Roster_1_J13",
+            "name": "Roster 1 J13",
+            "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+            "starters": [],
+            "substitutes": []
+          },
+          "concussion": false
+        }
+      ]
+    }
+  ]
+}
