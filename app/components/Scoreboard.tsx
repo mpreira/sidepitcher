@@ -4,7 +4,6 @@ import type { Team } from "~/routes/tracker.types";
 interface Props {
   teams: Team[];
   scores: number[];
-  onAdjust?: (index: number, delta: number) => void;
   mainTimerText?: string;
   secondaryTimerText?: string;
 }
@@ -12,7 +11,6 @@ interface Props {
 export default function Scoreboard({
   teams,
   scores,
-  onAdjust,
   mainTimerText,
   secondaryTimerText,
 }: Props) {
@@ -30,22 +28,6 @@ export default function Scoreboard({
           </>
         ) : (
           <div className="text-lg italic">No team</div>
-        )}
-        {onAdjust && (
-          <div className="mt-2 flex gap-2">
-            <button
-              className="px-2 py-1 bg-green-500 rounded text-sm"
-              onClick={() => onAdjust(0, 1)}
-            >
-              +
-            </button>
-            <button
-              className="px-2 py-1 bg-red-500 rounded text-sm"
-              onClick={() => onAdjust(0, -1)}
-            >
-              -
-            </button>
-          </div>
         )}
       </div>
 
@@ -68,22 +50,6 @@ export default function Scoreboard({
           </>
         ) : (
           <div className="text-lg italic">No team</div>
-        )}
-        {onAdjust && (
-          <div className="mt-2 flex gap-2">
-            <button
-              className="px-2 py-1 bg-green-500 rounded text-sm"
-              onClick={() => onAdjust(1, 1)}
-            >
-              +
-            </button>
-            <button
-              className="px-2 py-1 bg-red-500 rounded text-sm"
-              onClick={() => onAdjust(1, -1)}
-            >
-              -
-            </button>
-          </div>
         )}
       </div>
     </div>
