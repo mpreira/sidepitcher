@@ -25,7 +25,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,6 +56,9 @@ export default function App() {
           </a>
           <a href="/roster" className="text-blue-600 hover:underline">
             Rosters
+          </a>
+          <a href="/syntheses" className="text-blue-600 hover:underline">
+            Syntheses
           </a>
         </nav>
       </header>

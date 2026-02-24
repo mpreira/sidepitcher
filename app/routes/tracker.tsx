@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { Route } from "./+types/tracker";
 import type { Event } from "./tracker.types";
+import { loadTrackerTeamSelection, saveTrackerTeamSelection } from "~/utils/TrackerStorage";
 
 import TimerControls from "~/components/TimerControls";
 import CommandPanel from "~/components/CommandPanel";
@@ -16,19 +17,26 @@ export function meta({}: Route.MetaArgs) {
 
 const COMMAND_TYPES = [
     "Essai",
-    "Pénalité",
     "Transformation",
+    "Pénalité réussie",
     "Drop",
+    "Essai de pénalité",
+    "Pénalité manquée",
     "Carton jaune",
     "Carton rouge",
     "Carton orange",
     "Changement",
+    "Saignement",
+    "Blessure",
+    "Protocole commotion",
 ];
 
 export default function Tracker() {
     const [time, setTime] = useState(0);
     const [running, setRunning] = useState(false);
     const [currentHalf, setCurrentHalf] = useState<1 | 2>(1);
+    const [manualTimeInput, setManualTimeInput] = useState("");
+    const [matchEnded, setMatchEnded] = useState(false);
 
     function formatTime(sec: number) {
         const m = Math.floor(sec / 60);
@@ -39,30 +47,104 @@ export default function Tracker() {
     // compute display times based on current half
     function getDisplayTimes() {
         const HALF_SECONDS = 40 * 60; // 40 minutes
+        const isSecondHalf = currentHalf === 2;
+        
         if (currentHalf === 1) {
             const mainTime = Math.min(time, HALF_SECONDS);
             const secondaryTime = time > HALF_SECONDS ? time - HALF_SECONDS : null;
             return { mainTime, secondaryTime };
         } else {
-            // 2nd half: time continues from 1st half
-            const displayTime = time >= HALF_SECONDS ? time - HALF_SECONDS : 0;
-            const secondaryTime = time > 2 * HALF_SECONDS ? time - 2 * HALF_SECONDS : null;
-            return { mainTime: displayTime, secondaryTime };
+            // 2nd half: main time goes from 40:00 to 80:00, then secondary shows extra time
+            const effectiveTime = time - HALF_SECONDS; // time since start of 2nd half
+            const mainTime = Math.min(effectiveTime, HALF_SECONDS) + HALF_SECONDS; // display from 40:00 to 80:00
+            const secondaryTime = effectiveTime > HALF_SECONDS ? effectiveTime - HALF_SECONDS : null;
+            return { mainTime, secondaryTime };
         }
     }
     const [events, setEvents] = useState<Event[]>([]);
     const { rosters, teams, activeRosterId, matchDay, championship } = useTeams();
-    const activeRoster = rosters.find((r) => r.id === activeRosterId) ?? null;
-    const activeTeams = teams.filter((t) => t.rosterId === activeRosterId);
+    
+    const activeRoster = useMemo(() => rosters.find((r) => r.id === activeRosterId) ?? null, [rosters, activeRosterId]);
+    
+    const activeTeams = useMemo(() => teams.filter((t) => t.rosterId === activeRosterId), [teams, activeRosterId]);
+    
+    const teamsForDay = useMemo(
+        () => matchDay
+            ? teams.filter((t) => t.name.includes(`J${matchDay}`))
+            : teams,
+        [teams, matchDay]
+    );
+    
+    const [team1Id, setTeam1Id] = useState<string>("");
+    const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
+    const [saveMessage, setSaveMessage] = useState<string>("");
 
-    // manual score adjustments (on top of computed values)
-    const [manualScores, setManualScores] = useState<number[]>([]);
+    const selectedTeams = useMemo(
+        () => [
+            teamsForDay.find((t) => t.id === team1Id),
+            teamsForDay.find((t) => t.id === team2Id),
+        ].filter(Boolean) as typeof teams,
+        [teamsForDay, team1Id, team2Id]
+    );
+
+    // penalty counts (fouls) for each team - computed from events
+    const [teamPenalties, setTeamPenalties] = useState<number[]>([0, 0]);
+    // manual penalty adjustments (on top of computed values)
+    const [manualPenaltyAdjustments, setManualPenaltyAdjustments] = useState<number[]>([0, 0]);
+    // en-avant counts for each team - computed from events
+    const [teamEnAvant, setTeamEnAvant] = useState<number[]>([0, 0]);
+    // manual en-avant adjustments (on top of computed values)
+    const [manualEnAvantAdjustments, setManualEnAvantAdjustments] = useState<number[]>([0, 0]);
+
+    // Load team selection from localStorage on mount
+    useEffect(() => {
+        if (!championship || !matchDay) return;
+
+        const matchDayNum = typeof matchDay === "number" ? matchDay : parseInt(matchDay, 10);
+        if (isNaN(matchDayNum)) return;
+
+        const saved = loadTrackerTeamSelection(championship, matchDayNum);
+        if (saved) {
+            setTeam1Id(saved.team1Id);
+            setTeam2Id(saved.team2Id);
+        }
+    }, [championship, matchDay]);
 
     useEffect(() => {
-        // reset manual scores whenever activeTeams change
-        setManualScores(activeTeams.map(() => 0));
-    }, [activeTeams]);
+        // reset manual penalty adjustments when teams change
+        setManualPenaltyAdjustments([0, 0]);
+        // reset manual en-avant adjustments when teams change
+        setManualEnAvantAdjustments([0, 0]);
+    }, [selectedTeams.length]);
+
+    // count penalties (fouls) from events
+    useEffect(() => {
+        const counts = [0, 0];
+        events.forEach((e) => {
+            if (e.type === "Pénalité" && e.team) {
+                const idx = selectedTeams.indexOf(e.team);
+                if (idx !== -1) {
+                    counts[idx]++;
+                }
+            }
+        });
+        setTeamPenalties(counts);
+    }, [events, selectedTeams]);
+
+    // count en-avant from events
+    useEffect(() => {
+        const counts = [0, 0];
+        events.forEach((e) => {
+            if (e.type === "En-avant" && e.team) {
+                const idx = selectedTeams.indexOf(e.team);
+                if (idx !== -1) {
+                    counts[idx]++;
+                }
+            }
+        });
+        setTeamEnAvant(counts);
+    }, [events, selectedTeams]);
 
 // timer interval
     useEffect(() => {
@@ -80,35 +162,133 @@ export default function Tracker() {
         setActiveCommand(null);
     }
 
+    function addStatsSummary(halfLabel: string) {
+        if (selectedTeams.length !== 2) return;
+        const team1Name = selectedTeams[0].name.replace(/\s+J\d+$/, "");
+        const team2Name = selectedTeams[1].name.replace(/\s+J\d+$/, "");
+        const displayedPenalties = getDisplayedPenalties();
+        const displayedEnAvant = getDisplayedEnAvant();
+        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants`;
+        
+        const summaryEvent: Event = {
+            type: "Récapitulatif",
+            time: time,
+            summary: summary
+        };
+        
+        setEvents((ev) => [...ev, summaryEvent]);
+    }
+
     function adjustTime(delta: number) {
         setTime((t) => Math.max(0, t + delta));
+    }
+
+    function parseManualTime(input: string): number | null {
+        const trimmed = input.trim();
+        if (!trimmed) return null;
+        const parts = trimmed.split(':');
+        if (parts.length === 2) {
+            const mins = parseInt(parts[0], 10);
+            const secs = parseInt(parts[1], 10);
+            if (!isNaN(mins) && !isNaN(secs) && mins >= 0 && secs >= 0 && secs < 60) {
+                return mins * 60 + secs;
+            }
+        }
+        return null;
+    }
+
+    function applyManualTime() {
+        const parsedTime = parseManualTime(manualTimeInput);
+        if (parsedTime !== null) {
+            setTime(parsedTime);
+            setManualTimeInput("");
+        }
+    }
+
+    async function saveTeamSelection() {
+        if (!team1Id || !team2Id || !championship || !matchDay) {
+            setSaveMessage("Veuillez sélectionner les deux équipes.");
+            return;
+        }
+        if (team1Id === team2Id) {
+            setSaveMessage("Les équipes doivent être différentes.");
+            return;
+        }
+        try {
+            // Save to API
+            await fetch("/api/match-day-teams", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    championship,
+                    matchDay,
+                    team1Id,
+                    team2Id,
+                }),
+            });
+            
+            // Save to localStorage
+            const matchDayNum = typeof matchDay === "number" ? matchDay : parseInt(matchDay, 10);
+            if (!isNaN(matchDayNum)) {
+                saveTrackerTeamSelection(championship, matchDayNum, team1Id, team2Id);
+            }
+            
+            setSaveMessage("Composition validée ✓");
+            setTimeout(() => setSaveMessage(""), 3000);
+        } catch (e) {
+            setSaveMessage("Erreur lors de la sauvegarde.");
+        }
     }
 
     function computeScores(): number[] {
         const points: Record<string, number> = {
             Essai: 5,
+            "Essai de pénalité": 7,
             Transformation: 2,
-            Pénalité: 3,
+            "Pénalité réussie": 3,
             Drop: 3,
         };
-        const base = activeTeams.map(() => 0);
+        const base = selectedTeams.map(() => 0);
         events.forEach((e) => {
             if (e.team) {
-                const idx = activeTeams.indexOf(e.team);
+                const idx = selectedTeams.indexOf(e.team);
                 if (idx !== -1 && points[e.type]) {
                     base[idx] += points[e.type] || 0;
                 }
             }
         });
-        // add manual adjustments
-        return base.map((v, i) => v + (manualScores[i] || 0));
+        return base.map((v) => Math.max(0, v));
     }
 
-    function adjustScore(idx: number, delta: number) {
-        setManualScores((prev) => {
+    function adjustPenalties(idx: number, delta: number) {
+        setManualPenaltyAdjustments((prev) => {
             const copy = [...prev];
-            copy[idx] = (copy[idx] || 0) + delta;
+            const newValue = (copy[idx] || 0) + delta;
+            copy[idx] = newValue;
             return copy;
+        });
+    }
+
+    function adjustEnAvant(idx: number, delta: number) {
+        setManualEnAvantAdjustments((prev) => {
+            const copy = [...prev];
+            const newValue = (copy[idx] || 0) + delta;
+            copy[idx] = newValue;
+            return copy;
+        });
+    }
+
+    function getDisplayedPenalties(): number[] {
+        return teamPenalties.map((count, idx) => {
+            const total = count + (manualPenaltyAdjustments[idx] || 0);
+            return Math.max(0, total); // cannot be negative
+        });
+    }
+
+    function getDisplayedEnAvant(): number[] {
+        return teamEnAvant.map((count, idx) => {
+            const total = count + (manualEnAvantAdjustments[idx] || 0);
+            return Math.max(0, total); // cannot be negative
         });
     }
 
@@ -130,24 +310,149 @@ export default function Tracker() {
                 </p>
             )}
 
+            <section className="space-y-2">
+                <h2 className="font-semibold">Sélection des équipes</h2>
+                {teamsForDay.length === 0 ? (
+                    <p className="text-sm text-gray-600">Aucune composition pour cette journée.</p>
+                ) : (
+                    <>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <select
+                                id="team1Select"
+                                className="border p-2 flex-1"
+                                value={team1Id}
+                                onChange={(e) => setTeam1Id(e.target.value)}
+                            >
+                                <option value="">-- Équipe 1 --</option>
+                                {teamsForDay.map((team) => (
+                                    <option key={team.id} value={team.id}>
+                                        {team.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                id="team2Select"
+                                className="border p-2 flex-1"
+                                value={team2Id}
+                                onChange={(e) => setTeam2Id(e.target.value)}
+                            >
+                                <option value="">-- Équipe 2 --</option>
+                                {teamsForDay.map((team) => (
+                                    <option key={team.id} value={team.id}>
+                                        {team.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        {team1Id && team2Id && team1Id === team2Id && (
+                            <p className="text-sm text-red-600">Équipe 1 et Équipe 2 doivent être différentes.</p>
+                        )}
+                        <button
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+                            onClick={saveTeamSelection}
+                            disabled={!team1Id || !team2Id || team1Id === team2Id}
+                        >
+                            Valider la composition
+                        </button>
+                        {saveMessage && (
+                            <p className={`text-sm ${saveMessage.includes("✓") ? "text-green-700" : "text-red-600"}`}>
+                                {saveMessage}
+                            </p>
+                        )}
+                    </>
+                )}
+            </section>
+
             {/* scoreboard showing teams, computed score and timers */}
             {(() => {
                 const times = getDisplayTimes();
+                const mainTimerText = matchEnded ? "Match terminé" : formatTime(times.mainTime);
+                const secondaryTimerText = matchEnded || times.secondaryTime === null
+                    ? undefined
+                    : formatTime(times.secondaryTime);
                 return (
                     <Scoreboard
-                        teams={activeTeams}
+                        teams={selectedTeams}
                         scores={computeScores()}
-                        onAdjust={adjustScore}
-                        mainTimerText={formatTime(times.mainTime)}
-                        secondaryTimerText={times.secondaryTime !== null ? formatTime(times.secondaryTime) : undefined}
+                        mainTimerText={mainTimerText}
+                        secondaryTimerText={secondaryTimerText}
                     />
+                );
+            })()}
+
+            {/* penalty stats */}
+            {selectedTeams.length === 2 && (() => {
+                const displayedPenalties = getDisplayedPenalties();
+                return (
+                    <section className="border rounded p-4 space-y-3">
+                        <h3 className="font-semibold text-center">Statistiques des pénalités (fautes)</h3>
+                        <div className="flex gap-4 justify-around">
+                            {selectedTeams.map((team, idx) => (
+                                <div key={team.id} className="flex flex-col items-center gap-2">
+                                    <div className="text-sm font-medium text-center">
+                                        {team.name.replace(/\s+J\d+$/, "")}
+                                    </div>
+                                    <div className="text-2xl font-bold">{displayedPenalties[idx]}</div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            onClick={() => adjustPenalties(idx, -1)}
+                                        >
+                                            −
+                                        </button>
+                                        <button
+                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                            onClick={() => adjustPenalties(idx, 1)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                );
+            })()}
+
+            {/* en-avant stats */}
+            {selectedTeams.length === 2 && (() => {
+                const displayedEnAvant = getDisplayedEnAvant();
+                return (
+                    <section className="border rounded p-4 space-y-3">
+                        <h3 className="font-semibold text-center">Statistiques des en-avants</h3>
+                        <div className="flex gap-4 justify-around">
+                            {selectedTeams.map((team, idx) => (
+                                <div key={team.id} className="flex flex-col items-center gap-2">
+                                    <div className="text-sm font-medium text-center">
+                                        {team.name.replace(/\s+J\d+$/, "")}
+                                    </div>
+                                    <div className="text-2xl font-bold">{displayedEnAvant[idx]}</div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            onClick={() => adjustEnAvant(idx, -1)}
+                                        >
+                                            −
+                                        </button>
+                                        <button
+                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                            onClick={() => adjustEnAvant(idx, 1)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
                 );
             })()}
 
             {/* half selector */}
             <div className="flex items-center gap-2 justify-center">
-                <label className="font-semibold">Mi-temps:</label>
+                <label htmlFor="halfSelect" className="font-semibold">Mi-temps:</label>
                 <button
+                    id="halfSelect"
                     className={`px-4 py-2 rounded ${
                         currentHalf === 1
                             ? 'bg-blue-600 text-white'
@@ -156,6 +461,7 @@ export default function Tracker() {
                     onClick={() => {
                         setCurrentHalf(1);
                         setTime(0);
+                        setRunning(false);
                     }}
                 >
                     1ère
@@ -167,11 +473,29 @@ export default function Tracker() {
                             : 'bg-gray-300 text-gray-700'
                     }`}
                     onClick={() => {
+                        addStatsSummary("MT1");
                         setCurrentHalf(2);
-                        setTime(40 * 60); // start 2nd half at 40:00
+                        setTime(40 * 60); // start 2nd half at 40:00 (80*60 - 40*60 = 40*60)
+                        setRunning(false);
                     }}
+                    disabled={currentHalf === 2 || matchEnded}
                 >
                     2ème
+                </button>
+                <button
+                    className={`px-4 py-2 rounded ${
+                        matchEnded
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-300 text-gray-700'
+                    }`}
+                    onClick={() => {
+                        addStatsSummary("MT2");
+                        setMatchEnded(true);
+                        setRunning(false);
+                    }}
+                    disabled={matchEnded || currentHalf === 1}
+                >
+                    Fin de match
                 </button>
             </div>
 
@@ -183,19 +507,46 @@ export default function Tracker() {
                 onReset={() => setTime(0)}
             />
 
+            <div className="border rounded p-4 space-y-2">
+                <label htmlFor="manualTimeInput" className="block font-semibold">Temps manuel (mm:ss)</label>
+                <div className="flex gap-2">
+                    <input
+                        id="manualTimeInput"
+                        type="text"
+                        placeholder="05:30"
+                        className="border p-2 flex-1"
+                        value={manualTimeInput}
+                        onChange={(e) => setManualTimeInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && applyManualTime()}
+                    />
+                    <button
+                        id="applyManualTimeButton"
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        onClick={applyManualTime}
+                    >
+                        Appliquer
+                    </button>
+                </div>
+            </div>
+
             <CommandPanel
                 types={COMMAND_TYPES}
                 onSelect={(type) => setActiveCommand(type)}
             />
 
-            {activeCommand && (
+            {activeCommand && team1Id && team2Id && team1Id !== team2Id && (
                 <EventForm
                 type={activeCommand}
-                teams={activeTeams}
+                teams={selectedTeams}
                 currentTime={time}
                 onSubmit={addEvent}
                 onCancel={() => setActiveCommand(null)}
                 />
+            )}
+            {activeCommand && (!team1Id || !team2Id || team1Id === team2Id) && (
+                <p className="text-sm text-red-600">
+                    Sélectionne deux équipes différentes pour enregistrer un événement.
+                </p>
             )}
 
             <section className="space-y-2">
@@ -203,7 +554,7 @@ export default function Tracker() {
                 <EventsList events={events} remove={removeEvent} />
             </section>
 
-            <Summary events={events} currentTime={time} />
+            <Summary events={events} currentTime={time} teams={selectedTeams} matchDay={typeof matchDay === 'number' ? matchDay : undefined} />
         </main>
     );
 }

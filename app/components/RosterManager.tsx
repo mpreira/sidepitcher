@@ -223,12 +223,14 @@ export default function RosterManager({
             {showCreateRosterForm && (
                 <div className="space-y-2 border border-gray-700 p-3 rounded bg-gray-900 text-white">
                     <input
+                        id="newRosterName"
                         className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
                         placeholder="Nom du roster"
                         value={newRosterName}
                         onChange={(e) => setNewRosterName(e.target.value)}
                     />
                     <select
+                        id="newRosterCategory"
                         className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
                         value={newRosterCategory}
                         onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
@@ -249,12 +251,12 @@ export default function RosterManager({
                 <p className="text-sm text-green-700">{rosterFeedbackMessage}</p>
             )}
 
-            {activeRoster && (
+        {/*{activeRoster && (
                 <>
                     <div className="flex flex-col sm:flex-row gap-6">
                         {/* teams column */}
+                        {/*
                         <div className="w-full sm:w-1/2">
-                            <h3 className="font-semibold">Équipes</h3>
                             <div className="space-y-2 mb-4">
                                 {(() => {
                                 const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
@@ -271,108 +273,11 @@ export default function RosterManager({
                                 );
                             })()}
                             </div>
-                            <ul className="space-y-1">
-                                {activeTeams.map((team) => (
-                                    <li key={team.id} className="flex items-center justify-between">
-                                        <button
-                                            className="text-left flex-1"
-                                            onClick={() => {
-                                                setViewTeamId(team.id);
-                                                setEditingTeamId(team.id);
-                                            }}
-                                        >
-                                            {team.name}
-                                        </button>
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                className="px-2 py-1 bg-yellow-500 text-white text-sm rounded"
-                                                onClick={() => {
-                                                    setViewTeamId(team.id);
-                                                    setEditingTeamId(team.id);
-                                                }}
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                className="px-2 py-1 bg-red-500 text-white text-sm rounded"
-                                                onClick={() => deleteTeam(team)}
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                        {editingTeamId === team.id && (
-                                            <TeamEditor
-                                                team={team}
-                                                rosterPlayers={activeRoster.players || []}
-                                                onChange={(updated) => {
-                                                    updateTeam(updated);
-                                                    setViewTeamId(updated.id);
-                                                }}
-                                                onClose={() => setEditingTeamId(null)}
-                                            />
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
                         </div>
-                        {/* players column */}
-                        <div className="w-full sm:w-1/2">
-                            <h3 className="font-semibold">
-                                Composition {viewTeamId ? `de ${activeTeams.find(t => t.id === viewTeamId)?.name}` : 'du roster'}
-                            </h3>
-                            <ul className="space-y-1 mt-2">
-                                {rosterViewPlayers.map((p) => (
-                                    <li key={p.id} className="flex items-center justify-between gap-2">
-                                        <span>{p.name}</span>
-                                        <button
-                                            className="px-2 py-1 bg-red-500 text-white text-sm rounded"
-                                            onClick={() => removePlayerFromView(p.id)}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-
-                    {/* add player form below columns */}
-                    <h3 className="font-semibold mt-6">Ajouter un joueur à l'effectif</h3>
-                    <div className="space-y-2 border p-4 rounded bg-gray-90">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <input
-                                className="border p-1 flex-1"
-                                placeholder="Prénom"
-                                value={newPlayerFirst}
-                                onChange={(e) => setNewPlayerFirst(e.target.value)}
-                            />
-                            <input
-                                className="border p-1 flex-1"
-                                placeholder="Nom"
-                                value={newPlayerLast}
-                                onChange={(e) => setNewPlayerLast(e.target.value)}
-                            />
-                            <select
-                                className="border p-1 flex-1"
-                                value={selectedRosterForPlayer || activeRosterId || ""}
-                                onChange={(e) => setSelectedRosterForPlayer(e.target.value)}
-                            >
-                                <option value="">-- Roster --</option>
-                                {rosters.map(r => (
-                                    <option key={r.id} value={r.id}>{r.name}</option>
-                                ))}
-                            </select>
-                            <button
-                                className="px-3 py-1 bg-green-500 text-white rounded text-sm"
-                                onClick={addPlayerToRoster}
-                                disabled={!(selectedRosterForPlayer || activeRoster) || (!newPlayerFirst && !newPlayerLast)}
-                            >
-                                Ajouter
-                            </button>
-                        </div>
+                        }
                     </div>
                 </>
-            )}
+            )}*/}
         </section>
     );
 }

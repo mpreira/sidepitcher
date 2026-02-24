@@ -7,5 +7,9 @@ export default [
     route("/roster", "routes/roster.tsx"),
     route("/roster/:championshipSlug/:rosterSlugId", "routes/roster-detail.tsx"),
     route("/roster/:rosterSlugId", "routes/roster-redirect.tsx"),
+    route("/syntheses", "routes/syntheses.tsx"),
+    route("/syntheses/:summaryId", "routes/synthese-detail.tsx"),
     route("/api/rosters", "routes/api/rosters.ts"),
+    route("/api/summaries", "routes/api/summaries.ts"),
+    route("/api/match-day-teams", "routes/api/match-day-teams.ts"),
 ] satisfies RouteConfig;

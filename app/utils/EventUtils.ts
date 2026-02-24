@@ -2,6 +2,10 @@ import type { Team, Player, Event } from "~/routes/tracker.types";
 import { jsPDF } from "jspdf";
 import { formatTime } from "./TimeUtils";
 
+function displayTeamName(name: string): string {
+    return name.replace(/\s+J\d+$/, "");
+}
+
 /**
  * Create an event for a player action
  */
@@ -69,14 +73,18 @@ export function exportSummaryToClipboard(
     
     lines.push("\nEvent timeline:");
     events.forEach((e) => {
-        let line = `${formatTime(e.time)} - ${e.type}`;
-        if (e.team) line += ` (${e.team.name})`;
-        if (e.player)
-            line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
-        if (e.playerOut && e.playerIn)
-            line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
-        if (e.concussion) line += " 🚨 commotion";
-        lines.push(line);
+        if (e.summary) {
+            lines.push(`${formatTime(e.time)} - ${e.summary}`);
+        } else {
+            let line = `${formatTime(e.time)} - ${e.type}`;
+            if (e.team) line += ` (${displayTeamName(e.team.name)})`;
+            if (e.player)
+                line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
+            if (e.playerOut && e.playerIn)
+                line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
+            if (e.concussion) line += " 🚨 commotion";
+            lines.push(line);
+        }
     });
     
     const text = lines.join("\n");
@@ -108,14 +116,18 @@ export function exportSummaryToPdf(
     y += 7;
     
     events.forEach((e) => {
-        let line = `${formatTime(e.time)} - ${e.type}`;
-        if (e.team) line += ` (${e.team.name})`;
-        if (e.player)
-            line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
-        if (e.playerOut && e.playerIn)
-            line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
-        if (e.concussion) line += " 🚨 commotion";
-        doc.text(line, 10, y);
+        if (e.summary) {
+            doc.text(`${formatTime(e.time)} - ${e.summary}`, 10, y);
+        } else {
+            let line = `${formatTime(e.time)} - ${e.type}`;
+            if (e.team) line += ` (${displayTeamName(e.team.name)})`;
+            if (e.player)
+                line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
+            if (e.playerOut && e.playerIn)
+                line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
+            if (e.concussion) line += " 🚨 commotion";
+            doc.text(line, 10, y);
+        }
         y += 7;
         if (y > 280) {
             doc.addPage();
@@ -134,4 +146,26 @@ export function buildEventSummary(events: Event[]): Record<string, number> {
         acc[e.type] = (acc[e.type] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
+}
+
+export function buildDetailedEventSummary(events: Event[]): Array<{
+    type: string;
+    team?: string;
+    player?: string;
+    playerNumber?: number;
+    playerOut?: string;
+    playerIn?: string;
+    concussion?: boolean;
+    summary?: string;
+}> {
+    return events.map((e) => ({
+        type: e.type,
+        team: e.team ? displayTeamName(e.team.name) : undefined,
+        player: e.player?.name,
+        playerNumber: e.playerNumber,
+        playerOut: e.playerOut?.name,
+        playerIn: e.playerIn?.name,
+        concussion: e.concussion,
+        summary: e.summary,
+    }));
 }
