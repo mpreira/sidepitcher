@@ -42,11 +42,17 @@ export default function Summary({ events, currentTime, teams, matchDay }: Props)
                 <ul className="space-y-1 text-sm">
                     {detailedSummary.map((event, idx) => (
                         <li key={idx}>
-                            <span className="font-semibold">{event.type}</span>
-                            {event.team && <span> ({event.team})</span>}
-                            {event.player && <span> — {event.player}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
-                            {event.playerOut && event.playerIn && <span> — {event.playerOut} → {event.playerIn}</span>}
-                            {event.concussion && <span> 🚨 commotion</span>}
+                            {event.summary ? (
+                                <span className="font-bold text-blue-700">{event.summary}</span>
+                            ) : (
+                                <>
+                                    <span className="font-semibold">{event.type}</span>
+                                    {event.team && <span> ({event.team})</span>}
+                                    {event.player && <span> — {event.player}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
+                                    {event.playerOut && event.playerIn && <span> — {event.playerOut} → {event.playerIn}</span>}
+                                    {event.concussion && <span> 🚨 commotion</span>}
+                                </>
+                            )}
                         </li>
                     ))}
                 </ul>

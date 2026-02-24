@@ -120,11 +120,19 @@ export default function SyntheseDetailPage() {
                     <ul className="space-y-1 text-sm">
                         {summary.events.map((event, index) => (
                             <li key={`${event.time}-${index}`}>
-                                {formatTime(event.time)} - <span className="font-semibold">{event.type}</span>
-                                {event.team && <span> ({displayTeamName(event.team.name)})</span>}
-                                {event.player && <span> — {event.player.name}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
-                                {event.playerOut && event.playerIn && <span> — {event.playerOut.name} → {event.playerIn.name}</span>}
-                                {event.concussion && <span> 🚨 commotion</span>}
+                                {event.summary ? (
+                                    <>
+                                        {formatTime(event.time)} - <span className="font-bold text-blue-700">{event.summary}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        {formatTime(event.time)} - <span className="font-semibold">{event.type}</span>
+                                        {event.team && <span> ({displayTeamName(event.team.name)})</span>}
+                                        {event.player && <span> — {event.player.name}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
+                                        {event.playerOut && event.playerIn && <span> — {event.playerOut.name} → {event.playerIn.name}</span>}
+                                        {event.concussion && <span> 🚨 commotion</span>}
+                                    </>
+                                )}
                             </li>
                         ))}
                     </ul>

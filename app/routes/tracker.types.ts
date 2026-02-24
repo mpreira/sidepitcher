@@ -34,4 +34,6 @@ export interface Event {
     // for substitutions
     playerOut?: Player;
     playerIn?: Player;
+    // for half-time summaries
+    summary?: string;
 }

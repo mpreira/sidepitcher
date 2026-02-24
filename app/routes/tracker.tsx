@@ -17,13 +17,18 @@ export function meta({}: Route.MetaArgs) {
 
 const COMMAND_TYPES = [
     "Essai",
-    "Pénalité",
     "Transformation",
+    "Pénalité réussie",
     "Drop",
+    "Essai de pénalité",
+    "Pénalité manquée",
     "Carton jaune",
     "Carton rouge",
     "Carton orange",
     "Changement",
+    "Saignement",
+    "Blessure",
+    "Protocole commotion",
 ];
 
 export default function Tracker() {
@@ -31,6 +36,7 @@ export default function Tracker() {
     const [running, setRunning] = useState(false);
     const [currentHalf, setCurrentHalf] = useState<1 | 2>(1);
     const [manualTimeInput, setManualTimeInput] = useState("");
+    const [matchEnded, setMatchEnded] = useState(false);
 
     function formatTime(sec: number) {
         const m = Math.floor(sec / 60);
@@ -82,8 +88,14 @@ export default function Tracker() {
         [teamsForDay, team1Id, team2Id]
     );
 
-    // manual score adjustments (on top of computed values)
-    const [manualScores, setManualScores] = useState<number[]>([]);
+    // penalty counts (fouls) for each team - computed from events
+    const [teamPenalties, setTeamPenalties] = useState<number[]>([0, 0]);
+    // manual penalty adjustments (on top of computed values)
+    const [manualPenaltyAdjustments, setManualPenaltyAdjustments] = useState<number[]>([0, 0]);
+    // en-avant counts for each team - computed from events
+    const [teamEnAvant, setTeamEnAvant] = useState<number[]>([0, 0]);
+    // manual en-avant adjustments (on top of computed values)
+    const [manualEnAvantAdjustments, setManualEnAvantAdjustments] = useState<number[]>([0, 0]);
 
     // Load team selection from localStorage on mount
     useEffect(() => {
@@ -100,16 +112,39 @@ export default function Tracker() {
     }, [championship, matchDay]);
 
     useEffect(() => {
-        // reset manual scores whenever selected teams change
-        const newScores = selectedTeams.map(() => 0);
-        setManualScores((prev) => {
-            // Only update if the number of teams actually changed
-            if (prev.length !== newScores.length) {
-                return newScores;
-            }
-            return prev;
-        });
+        // reset manual penalty adjustments when teams change
+        setManualPenaltyAdjustments([0, 0]);
+        // reset manual en-avant adjustments when teams change
+        setManualEnAvantAdjustments([0, 0]);
     }, [selectedTeams.length]);
+
+    // count penalties (fouls) from events
+    useEffect(() => {
+        const counts = [0, 0];
+        events.forEach((e) => {
+            if (e.type === "Pénalité" && e.team) {
+                const idx = selectedTeams.indexOf(e.team);
+                if (idx !== -1) {
+                    counts[idx]++;
+                }
+            }
+        });
+        setTeamPenalties(counts);
+    }, [events, selectedTeams]);
+
+    // count en-avant from events
+    useEffect(() => {
+        const counts = [0, 0];
+        events.forEach((e) => {
+            if (e.type === "En-avant" && e.team) {
+                const idx = selectedTeams.indexOf(e.team);
+                if (idx !== -1) {
+                    counts[idx]++;
+                }
+            }
+        });
+        setTeamEnAvant(counts);
+    }, [events, selectedTeams]);
 
 // timer interval
     useEffect(() => {
@@ -125,6 +160,23 @@ export default function Tracker() {
     function addEvent(e: Event) {
         setEvents((ev) => [...ev, e]);
         setActiveCommand(null);
+    }
+
+    function addStatsSummary(halfLabel: string) {
+        if (selectedTeams.length !== 2) return;
+        const team1Name = selectedTeams[0].name.replace(/\s+J\d+$/, "");
+        const team2Name = selectedTeams[1].name.replace(/\s+J\d+$/, "");
+        const displayedPenalties = getDisplayedPenalties();
+        const displayedEnAvant = getDisplayedEnAvant();
+        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants`;
+        
+        const summaryEvent: Event = {
+            type: "Récapitulatif",
+            time: time,
+            summary: summary
+        };
+        
+        setEvents((ev) => [...ev, summaryEvent]);
     }
 
     function adjustTime(delta: number) {
@@ -191,8 +243,9 @@ export default function Tracker() {
     function computeScores(): number[] {
         const points: Record<string, number> = {
             Essai: 5,
+            "Essai de pénalité": 7,
             Transformation: 2,
-            Pénalité: 3,
+            "Pénalité réussie": 3,
             Drop: 3,
         };
         const base = selectedTeams.map(() => 0);
@@ -204,15 +257,38 @@ export default function Tracker() {
                 }
             }
         });
-        // add manual adjustments
-        return base.map((v, i) => v + (manualScores[i] || 0));
+        return base.map((v) => Math.max(0, v));
     }
 
-    function adjustScore(idx: number, delta: number) {
-        setManualScores((prev) => {
+    function adjustPenalties(idx: number, delta: number) {
+        setManualPenaltyAdjustments((prev) => {
             const copy = [...prev];
-            copy[idx] = (copy[idx] || 0) + delta;
+            const newValue = (copy[idx] || 0) + delta;
+            copy[idx] = newValue;
             return copy;
+        });
+    }
+
+    function adjustEnAvant(idx: number, delta: number) {
+        setManualEnAvantAdjustments((prev) => {
+            const copy = [...prev];
+            const newValue = (copy[idx] || 0) + delta;
+            copy[idx] = newValue;
+            return copy;
+        });
+    }
+
+    function getDisplayedPenalties(): number[] {
+        return teamPenalties.map((count, idx) => {
+            const total = count + (manualPenaltyAdjustments[idx] || 0);
+            return Math.max(0, total); // cannot be negative
+        });
+    }
+
+    function getDisplayedEnAvant(): number[] {
+        return teamEnAvant.map((count, idx) => {
+            const total = count + (manualEnAvantAdjustments[idx] || 0);
+            return Math.max(0, total); // cannot be negative
         });
     }
 
@@ -288,14 +364,85 @@ export default function Tracker() {
             {/* scoreboard showing teams, computed score and timers */}
             {(() => {
                 const times = getDisplayTimes();
+                const mainTimerText = matchEnded ? "Match terminé" : formatTime(times.mainTime);
+                const secondaryTimerText = matchEnded || times.secondaryTime === null
+                    ? undefined
+                    : formatTime(times.secondaryTime);
                 return (
                     <Scoreboard
                         teams={selectedTeams}
                         scores={computeScores()}
-                        onAdjust={adjustScore}
-                        mainTimerText={formatTime(times.mainTime)}
-                        secondaryTimerText={times.secondaryTime !== null ? formatTime(times.secondaryTime) : undefined}
+                        mainTimerText={mainTimerText}
+                        secondaryTimerText={secondaryTimerText}
                     />
+                );
+            })()}
+
+            {/* penalty stats */}
+            {selectedTeams.length === 2 && (() => {
+                const displayedPenalties = getDisplayedPenalties();
+                return (
+                    <section className="border rounded p-4 space-y-3">
+                        <h3 className="font-semibold text-center">Statistiques des pénalités (fautes)</h3>
+                        <div className="flex gap-4 justify-around">
+                            {selectedTeams.map((team, idx) => (
+                                <div key={team.id} className="flex flex-col items-center gap-2">
+                                    <div className="text-sm font-medium text-center">
+                                        {team.name.replace(/\s+J\d+$/, "")}
+                                    </div>
+                                    <div className="text-2xl font-bold">{displayedPenalties[idx]}</div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            onClick={() => adjustPenalties(idx, -1)}
+                                        >
+                                            −
+                                        </button>
+                                        <button
+                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                            onClick={() => adjustPenalties(idx, 1)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                );
+            })()}
+
+            {/* en-avant stats */}
+            {selectedTeams.length === 2 && (() => {
+                const displayedEnAvant = getDisplayedEnAvant();
+                return (
+                    <section className="border rounded p-4 space-y-3">
+                        <h3 className="font-semibold text-center">Statistiques des en-avants</h3>
+                        <div className="flex gap-4 justify-around">
+                            {selectedTeams.map((team, idx) => (
+                                <div key={team.id} className="flex flex-col items-center gap-2">
+                                    <div className="text-sm font-medium text-center">
+                                        {team.name.replace(/\s+J\d+$/, "")}
+                                    </div>
+                                    <div className="text-2xl font-bold">{displayedEnAvant[idx]}</div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            onClick={() => adjustEnAvant(idx, -1)}
+                                        >
+                                            −
+                                        </button>
+                                        <button
+                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                            onClick={() => adjustEnAvant(idx, 1)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
                 );
             })()}
 
@@ -323,12 +470,29 @@ export default function Tracker() {
                             : 'bg-gray-300 text-gray-700'
                     }`}
                     onClick={() => {
+                        addStatsSummary("MT1");
                         setCurrentHalf(2);
                         setTime(40 * 60); // start 2nd half at 40:00 (80*60 - 40*60 = 40*60)
                         setRunning(false);
                     }}
+                    disabled={currentHalf === 2 || matchEnded}
                 >
                     2ème
+                </button>
+                <button
+                    className={`px-4 py-2 rounded ${
+                        matchEnded
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-300 text-gray-700'
+                    }`}
+                    onClick={() => {
+                        addStatsSummary("MT2");
+                        setMatchEnded(true);
+                        setRunning(false);
+                    }}
+                    disabled={matchEnded || currentHalf === 1}
+                >
+                    Fin de match
                 </button>
             </div>
 
