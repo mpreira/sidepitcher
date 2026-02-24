@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
 import type { Team } from "~/routes/tracker.types";
-import { addPlayerToRosterList, createPlayerFromNames, createTeam } from "~/utils/RosterUtils";
+import {
+    addPlayerToRosterList,
+    createPlayerFromNames,
+    createTeam,
+    deleteTeamFromList,
+} from "~/utils/RosterUtils";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
     return [{ title: "Détail roster" }];
 }
 
@@ -30,6 +34,7 @@ export default function RosterDetailPage() {
     const [showAddPlayerForm, setShowAddPlayerForm] = useState(false);
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
+    const [compositionMessage, setCompositionMessage] = useState("");
 
     const rosterId = getRosterIdFromParam(rosterSlugId);
     const roster = useMemo(
@@ -42,11 +47,26 @@ export default function RosterDetailPage() {
         [teams, roster?.id]
     );
 
+    const compositionName = matchDay ? `${roster?.name} J${matchDay}` : null;
+    const hasCompositionForDay = Boolean(
+        compositionName && rosterTeams.some((team) => team.name === compositionName)
+    );
+
     function addTeam() {
         if (!roster) return;
         const name = `${roster.name}${matchDay ? ` J${matchDay}` : ""}`;
         const newTeam = createTeam(name, roster.id);
         setTeams([...(teams || []), newTeam]);
+        setCompositionMessage("");
+    }
+
+    function deleteTeam(teamToDelete: Team) {
+        const confirmed = window.confirm(
+            `Supprimer la composition "${teamToDelete.name}" ?`
+        );
+        if (!confirmed) return;
+        setTeams(deleteTeamFromList(teams || [], teamToDelete.id));
+        setCompositionMessage("Composition supprimée.");
     }
 
     function addPlayerToRoster() {
@@ -94,19 +114,30 @@ export default function RosterDetailPage() {
                 ) : (
                     <ul className="space-y-1">
                         {rosterTeams.map((team: Team) => (
-                            <li key={team.id} className="border rounded p-2">
-                                {team.name}
+                            <li key={team.id} className="border rounded p-2 flex items-center justify-between">
+                                <span>{team.name}</span>
+                                <button
+                                    className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                    onClick={() => deleteTeam(team)}
+                                >
+                                    Supprimer
+                                </button>
                             </li>
                         ))}
                     </ul>
                 )}
-                <button
-                    className="px-3 py-1 bg-blue-500 text-white rounded"
-                    onClick={addTeam}
-                    disabled={!matchDay}
-                >
-                    Créer « {roster.name} {matchDay && `J${matchDay}`} »
-                </button>
+                {!hasCompositionForDay && (
+                    <button
+                        className="px-3 py-1 bg-blue-500 text-white rounded"
+                        onClick={addTeam}
+                        disabled={!matchDay}
+                    >
+                        Créer « {roster.name} {matchDay && `J${matchDay}`} »
+                    </button>
+                )}
+                {compositionMessage && (
+                    <p className="text-sm text-green-700">{compositionMessage}</p>
+                )}
             </section>
 
             <section className="space-y-2">
