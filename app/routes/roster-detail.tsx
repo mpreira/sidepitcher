@@ -188,6 +188,10 @@ export default function RosterDetailPage() {
         setActiveRosterId(roster.id);
     }, [roster.id, setActiveRosterId]);
 
+    useEffect(() => {
+        document.title = roster.name;
+    }, [roster.name]);
+
     return (
         <main className="p-6 max-w-screen-md mx-auto px-4 space-y-6">
             <div className="space-y-1">
