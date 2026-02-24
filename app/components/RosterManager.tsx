@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import type { Team, Player, Roster } from "~/routes/tracker.types";
 import TeamEditor from "~/components/TeamEditor";
 import { useTeams } from "~/context/TeamsContext";
@@ -36,10 +37,13 @@ export default function RosterManager({
     setTeams,
     setActiveRosterId,
 }: Props) {
+    const navigate = useNavigate();
     const [jsonInput, setJsonInput] = useState("");
     const [teamName, setTeamName] = useState("");
     const [newRosterName, setNewRosterName] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
+    const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
+    const [rosterFeedbackMessage, setRosterFeedbackMessage] = useState("");
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
     const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -60,6 +64,8 @@ export default function RosterManager({
         const newRoster = createNewRoster(newRosterName, newRosterCategory);
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
+        setRosterFeedbackMessage("Roster créé avec succès.");
+        setShowCreateRosterForm(false);
         setNewRosterName("");
         setNewRosterCategory('Top 14');
     }
@@ -161,53 +167,87 @@ export default function RosterManager({
         setTeams(updateTeamInList(teams || [], updatedTeam));
     }
 
+    function getRosterPath(roster: Roster) {
+        const championshipSlug = roster.category === 'Pro D2' ? 'prod2' : 'top14';
+        const slug = roster.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+        return `/roster/${championshipSlug}/${slug}_${roster.id}`;
+    }
+
     const { matchDay } = useTeams();
 
     return (
         <section className="space-y-4 max-w-screen-md mx-auto px-4">
             <h2 className="font-semibold">Rosters</h2>
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <select
-                    className="border p-1"
-                    value={newRosterCategory}
-                    onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
-                >
-                    <option value="Top 14">Top 14</option>
-                    <option value="Pro D2">Pro D2</option>
-                </select>
-                <input
-                    className="border p-1 flex-1"
-                    placeholder="Nom du roster"
-                    value={newRosterName}
-                    onChange={(e) => setNewRosterName(e.target.value)}
-                />
-                <button
-                    className="px-3 py-1 bg-green-500 text-white rounded"
-                    onClick={createRoster}
-                >
-                    Créer nouveau roster
-                </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {rosters.map((r) => (
-                    <div key={r.id} className="flex items-center gap-2 p-2 border rounded">
-                        <div className="text-sm text-gray-600">{r.category || 'N/A'}</div>
-                        <button
-                            className="underline text-blue-600"
-                            onClick={() => setActiveRosterId(r.id)}
-                        >
-                            {r.name}
-                        </button>
-                        <button
-                            className="text-red-600"
-                            onClick={() => deleteRoster(r.id)}
-                        >
-                            supprimer
-                        </button>
-                    </div>
-                ))}
-            </div>
+            {rosters.length === 0 ? (
+                <p className="text-sm text-gray-600">Aucun roster existant</p>
+            ) : (
+                <div className="flex flex-wrap gap-2">
+                    {rosters.map((r) => (
+                        <div key={r.id} className="flex items-center gap-2 p-2 border rounded">
+                            <div className="text-sm text-gray-600">{r.category || 'N/A'}</div>
+                            <button
+                                className="underline text-blue-600"
+                                onClick={() => {
+                                    setActiveRosterId(r.id);
+                                    navigate(getRosterPath(r));
+                                }}
+                            >
+                                {r.name}
+                            </button>
+                            <button
+                                className="text-red-600"
+                                onClick={() => deleteRoster(r.id)}
+                            >
+                                supprimer
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <button
+                className="px-3 py-2 bg-green-500 text-white rounded"
+                onClick={() => {
+                    setShowCreateRosterForm((value) => !value);
+                    setRosterFeedbackMessage("");
+                }}
+            >
+                Créer un roster
+            </button>
+
+            {showCreateRosterForm && (
+                <div className="space-y-2 border border-gray-700 p-3 rounded bg-gray-900 text-white">
+                    <input
+                        className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
+                        placeholder="Nom du roster"
+                        value={newRosterName}
+                        onChange={(e) => setNewRosterName(e.target.value)}
+                    />
+                    <select
+                        className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
+                        value={newRosterCategory}
+                        onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                    >
+                        <option value="Top 14">Top 14</option>
+                        <option value="Pro D2">Pro D2</option>
+                    </select>
+                    <button
+                        className="px-3 py-2 bg-blue-500 text-white rounded"
+                        onClick={createRoster}
+                    >
+                        Valider
+                    </button>
+                </div>
+            )}
+
+            {rosterFeedbackMessage && (
+                <p className="text-sm text-green-700">{rosterFeedbackMessage}</p>
+            )}
 
             {activeRoster && (
                 <>

@@ -1,0 +1,70 @@
+import { useEffect, useMemo } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import type { Route } from "./+types/roster-redirect";
+import { useTeams } from "~/context/TeamsContext";
+
+export function meta({}: Route.MetaArgs) {
+    return [{ title: "Redirection roster" }];
+}
+
+function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
+    if (!rosterSlugId) return null;
+    const idx = rosterSlugId.lastIndexOf("_");
+    if (idx === -1) return rosterSlugId;
+    return rosterSlugId.slice(idx + 1);
+}
+
+function getRosterPath(category: "Top 14" | "Pro D2" | undefined, name: string, id: string) {
+    const championshipSlug = category === "Pro D2" ? "prod2" : "top14";
+    const slug = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    return `/roster/${championshipSlug}/${slug}_${id}`;
+}
+
+export default function RosterRedirectPage() {
+    const navigate = useNavigate();
+    const { rosterSlugId } = useParams();
+    const { rosters } = useTeams();
+
+    const rosterId = getRosterIdFromParam(rosterSlugId);
+    const roster = useMemo(
+        () => rosters.find((item) => item.id === rosterId) ?? null,
+        [rosters, rosterId]
+    );
+
+    useEffect(() => {
+        if (!roster) return;
+        navigate(getRosterPath(roster.category, roster.name, roster.id), { replace: true });
+    }, [navigate, roster]);
+
+    if (rosters.length === 0) {
+        return (
+            <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+                <p className="text-sm text-gray-700">Chargement des rosters...</p>
+                <Link to="/roster" className="underline text-blue-600">
+                    Retour aux rosters
+                </Link>
+            </main>
+        );
+    }
+
+    if (!roster) {
+        return (
+            <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+                <p className="text-sm text-gray-700">Roster introuvable.</p>
+                <Link to="/roster" className="underline text-blue-600">
+                    Retour aux rosters
+                </Link>
+            </main>
+        );
+    }
+
+    return (
+        <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+            <p className="text-sm text-gray-700">Redirection en cours...</p>
+        </main>
+    );
+}
