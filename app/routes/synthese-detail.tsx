@@ -5,6 +5,7 @@ import { useLayoutEffect, useState } from "react";
 import type { Event } from "~/routes/tracker.types";
 import { formatTime } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
+import { useTeams } from "~/context/TeamsContext";
 
 interface StoredSummary {
     id: string;
@@ -54,6 +55,7 @@ function FormattedDateTime({ dateString }: { dateString: string }) {
 
 export default function SyntheseDetailPage() {
     const summary = useLoaderData<typeof loader>();
+    const { teams: allTeams } = useTeams();
 
     const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
     const getTeamsLabel = () => {
@@ -73,8 +75,22 @@ export default function SyntheseDetailPage() {
                 }
                 if (names.length === 2) break;
             }
-            if (names.length === 0) teamsLabel = "Match";
-            else if (names.length === 1) teamsLabel = names[0];
+            if (names.length === 0 && summary.matchDay) {
+                const fallback: string[] = [];
+                for (const team of allTeams) {
+                    if (!team.name.includes(`J${summary.matchDay}`)) continue;
+                    const cleaned = displayTeamName(team.name);
+                    if (!fallback.includes(cleaned)) {
+                        fallback.push(cleaned);
+                    }
+                    if (fallback.length === 2) break;
+                }
+                if (fallback.length === 1) teamsLabel = fallback[0];
+                else if (fallback.length >= 2) teamsLabel = `${fallback[0]} vs ${fallback[1]}`;
+                else teamsLabel = "Match";
+            } else if (names.length === 0) {
+                teamsLabel = "Match";
+            } else if (names.length === 1) teamsLabel = names[0];
             else teamsLabel = `${names[0]} vs ${names[1]}`;
         }
         

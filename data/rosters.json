@@ -60,15 +60,68 @@
       "id": "Roster_1_J13",
       "name": "Roster 1 J13",
       "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
-      "starters": [],
-      "substitutes": []
+      "starters": [
+        {
+          "player": {
+            "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+            "name": "Baba Bam"
+          },
+          "number": 1
+        },
+        {
+          "player": {
+            "id": "0a170f64-96ab-44a2-837c-36c7b0fec2ba",
+            "name": "Lilh Wes"
+          },
+          "number": 2
+        },
+        {
+          "player": {
+            "id": "50a99220-aefa-4499-ac0d-d56133ab54eb",
+            "name": "Pa Pou"
+          },
+          "number": 9
+        }
+      ],
+      "substitutes": [
+        {
+          "player": {
+            "id": "aa204808-6527-474c-9d21-256e2368f0ad",
+            "name": "Chi Chi"
+          },
+          "number": 16
+        }
+      ]
     },
     {
       "id": "Roster_2_J13",
       "name": "Roster 2 J13",
       "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
-      "starters": [],
-      "substitutes": []
+      "starters": [
+        {
+          "player": {
+            "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+            "name": "Oui Oui"
+          },
+          "number": 1
+        },
+        {
+          "player": {
+            "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+            "name": "No No"
+          },
+          "number": 9
+        }
+      ],
+      "substitutes": [
+        {
+          "player": {
+            "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+            "name": "Na Na"
+          },
+          "number": 18
+        }
+      ]
     }
   ],
   "activeRosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
