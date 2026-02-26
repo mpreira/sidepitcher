@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTeams } from "~/context/TeamsContext";
-import type { Team } from "~/routes/tracker.types";
+import type { Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
     createPlayerFromNames,

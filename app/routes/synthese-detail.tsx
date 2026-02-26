@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Link, useLoaderData } from "react-router";
 import { useLayoutEffect, useState } from "react";
-import type { Event } from "~/routes/tracker.types";
+import type { Event } from "~/types/tracker";
 import { formatTime } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";

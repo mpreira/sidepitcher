@@ -1,5 +1,5 @@
 import React from "react";
-import type { Team } from "~/routes/tracker.types";
+import type { Team } from "~/types/tracker";
 
 interface Props {
   teams: Team[];

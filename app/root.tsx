@@ -19,13 +19,18 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  {
+    rel: "icon",
+    type: "image/png",
+    href: "/fav_36.png",
+  }
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -49,16 +54,16 @@ export default function App() {
       <header className="p-4 bg-gray-100 dark:bg-gray-800 border-b">
         <nav className="max-w-screen-md mx-auto flex flex-wrap gap-4">
           <a href="/" className="text-blue-600 hover:underline">
-            Home
+            Accueil
           </a>
           <a href="/tracker" className="text-blue-600 hover:underline">
-            Tracker
+            Match
           </a>
           <a href="/roster" className="text-blue-600 hover:underline">
-            Rosters
+            Effectifs
           </a>
           <a href="/syntheses" className="text-blue-600 hover:underline">
-            Syntheses
+            Synthèses
           </a>
         </nav>
       </header>

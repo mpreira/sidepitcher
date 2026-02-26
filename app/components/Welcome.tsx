@@ -1,6 +1,5 @@
 import { useTeams } from "~/context/TeamsContext";
-import logoDark from "./logo-dark.svg";
-import logoLight from "./logo-light.svg";
+import logoSP from "~/assets/images/logo_800.svg";
 
 export function Welcome() {
   const { matchDay, championship, setMatchDay, setChampionship } = useTeams();
@@ -9,21 +8,30 @@ export function Welcome() {
     <main className="flex items-center justify-center pt-16 pb-4">
       <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
         <header className="flex flex-col items-center gap-9">
-          {/* réglages de journée/championnat */}
+            <div className="w-[500px] max-w-[100vw] p-4">
+            <img
+              src={logoSP}
+              alt="Sidepitcher Logo"
+              className="block w-[300px]"
+            />
+          </div>
+          {/* reglages de journee/championnat */}
           <div className="space-y-2 text-center">
-            <div>
-              <label className="mr-2 font-semibold">Journée :</label>
+            <div className="input max-w-sm">
+              <label data-slot="label" className="text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 flex items-center gap-2" htmlFor="matchDayInput">Journée</label>
               <input
+                id="matchDayInput"
                 type="text"
-                className="border px-2 py-1"
+                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
                 value={matchDay}
                 onChange={(e) => setMatchDay(e.target.value)}
                 placeholder="ex. J1"
               />
             </div>
             <div>
-              <label className="mr-2 font-semibold">Championnat :</label>
+              <label className="mr-2 font-semibold">Championnat :</label>
               <select
+                id="championshipSelect"
                 className="border px-2 py-1"
                 value={championship}
                 onChange={(e) =>
@@ -34,19 +42,6 @@ export function Welcome() {
                 <option>Pro D2</option>
               </select>
             </div>
-          </div>
-
-          <div className="w-[500px] max-w-[100vw] p-4">
-            <img
-              src={logoLight}
-              alt="React Router"
-              className="block w-full dark:hidden"
-            />
-            <img
-              src={logoDark}
-              alt="React Router"
-              className="hidden w-full dark:block"
-            />
           </div>
         </header>
         <div className="max-w-[300px] w-full space-y-6 px-4">

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
-import type { Team, Player, Roster } from "~/routes/tracker.types";
+import type { Team, Player, Roster } from "~/types/tracker";
 import TeamEditor from "~/components/TeamEditor";
 import { useTeams } from "~/context/TeamsContext";
 import {

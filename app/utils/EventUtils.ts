@@ -1,4 +1,4 @@
-import type { Team, Player, Event } from "~/routes/tracker.types";
+import type { Team, Player, Event } from "~/types/tracker";
 import { jsPDF } from "jspdf";
 import { formatTime } from "./TimeUtils";
 

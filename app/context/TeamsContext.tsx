@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { Team, Player, Roster } from "~/routes/tracker.types";
+import type { Team, Player, Roster } from "~/types/tracker";
 import { v4 as uuidv4 } from "uuid";
 
 interface TeamsContextValue {

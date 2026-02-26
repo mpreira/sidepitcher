@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import type { Route } from "./+types/tracker";
-import type { Event } from "./tracker.types";
+import type { Event } from "~/types/tracker";
 import { loadTrackerTeamSelection, saveTrackerTeamSelection } from "~/utils/TrackerStorage";
 
 import TimerControls from "~/components/TimerControls";
