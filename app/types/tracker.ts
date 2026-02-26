@@ -20,6 +20,7 @@ export interface Team {
     id: string;              // nouveau : « nomDuRoster_journee »
     name: string;
     rosterId: string;        // which roster this team draws from
+    captainPlayerId?: string | null;
     starters: CompositionEntry[]; // numbers 1–15
     substitutes: CompositionEntry[]; // numbers 16–23
 }
