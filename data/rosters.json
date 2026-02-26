@@ -99,14 +99,20 @@
       "category": "Top 14"
     },
     {
-      "id": "1230942f-78db-42e0-aa85-57f083bff93c",
+      "id": "7752aa27-8a8a-45fe-b147-a3ddfc706213",
       "name": "USON Nevers",
       "players": [],
       "category": "Pro D2"
     },
     {
-      "id": "d4659d6a-c793-4b48-a33a-561f3c9b2afc",
+      "id": "eca9fe9d-be30-47d9-8896-09b8691821f7",
       "name": "FC Grenoble",
+      "players": [],
+      "category": "Pro D2"
+    },
+    {
+      "id": "b62b8cb8-80b7-498e-af89-1eb6c25473e5",
+      "name": "Nouveau test",
       "players": [],
       "category": "Pro D2"
     }
@@ -307,7 +313,7 @@
       ]
     }
   ],
-  "activeRosterId": "1230942f-78db-42e0-aa85-57f083bff93c",
+  "activeRosterId": "b62b8cb8-80b7-498e-af89-1eb6c25473e5",
   "matchDay": "14",
   "sport": "Rugby",
   "championship": "Top 14"
