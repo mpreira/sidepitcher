@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { Team, Player, Event } from "~/routes/tracker.types";
+import type { Team, Player, Event } from "~/types/tracker";
 import { createPlayerEvent, createSubstitutionEvent, findPlayerNumberInTeam } from "~/utils/EventUtils";
 
 interface Props {

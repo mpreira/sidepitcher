@@ -2,7 +2,7 @@ import type { ActionFunction, LoaderFunction } from "react-router";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import type { Event } from "~/routes/tracker.types";
+import type { Event } from "~/types/tracker";
 
 interface StoredSummary {
     id: string;

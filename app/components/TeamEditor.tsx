@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { Team, Player } from "~/routes/tracker.types";
+import type { Team, Player } from "~/types/tracker";
 import { addStarterToTeam, addSubstituteToTeam, removePlayerFromTeam } from "~/utils/TeamEditorUtils";
 
 interface Props {

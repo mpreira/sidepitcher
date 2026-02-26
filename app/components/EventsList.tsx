@@ -1,5 +1,5 @@
 import React from "react";
-import type { Event } from "~/routes/tracker.types";
+import type { Event } from "~/types/tracker";
 import { formatTime } from "~/utils/TimeUtils";
 
 interface Props {

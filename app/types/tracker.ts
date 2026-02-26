@@ -17,7 +17,7 @@ export interface Roster {
 }
 
 export interface Team {
-    id: string;              // nouveau : « nomDuRoster_journee »
+    id: string;              // nouveau : « nomDuRoster_journee »
     name: string;
     rosterId: string;        // which roster this team draws from
     starters: CompositionEntry[]; // numbers 1–15

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { Team, Player, CompositionEntry, Roster } from "~/routes/tracker.types";
+import type { Team, Player, CompositionEntry, Roster } from "~/types/tracker";
 
 // Roster Operations
 export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2'): Roster {

@@ -1,5 +1,5 @@
 import React from "react";
-import type { Event, Team } from "~/routes/tracker.types";
+import type { Event, Team } from "~/types/tracker";
 import { buildEventSummary, buildDetailedEventSummary, exportSummaryToClipboard, exportSummaryToPdf } from "~/utils/EventUtils";
 import { formatTime } from "~/utils/TimeUtils";
 

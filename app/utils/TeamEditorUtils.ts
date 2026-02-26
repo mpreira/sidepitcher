@@ -1,4 +1,4 @@
-import type { Team, Player } from "~/routes/tracker.types";
+import type { Team, Player } from "~/types/tracker";
 
 /**
  * Add a starter player to a team
