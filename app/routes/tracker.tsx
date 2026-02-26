@@ -28,7 +28,6 @@ const COMMAND_TYPES = [
     "Changement",
     "Saignement",
     "Blessure",
-    "Protocole commotion",
 ];
 
 export default function Tracker() {
