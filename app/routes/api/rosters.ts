@@ -7,6 +7,7 @@ interface StoredData {
     teams: unknown;
     activeRosterId: string | null;
     matchDay?: string;
+    sport?: 'Rugby' | 'Football';
     championship?: 'Top 14' | 'Pro D2';
 }
 
@@ -22,6 +23,7 @@ export const loader: LoaderFunction = async () => {
             teams: [],
             activeRosterId: null,
             matchDay: "",
+            sport: "Rugby",
             championship: "Top 14",
         };
     }
