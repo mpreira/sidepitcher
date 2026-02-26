@@ -117,6 +117,14 @@
         {
           "id": "dcd70134-168f-4c28-9b6a-d33352a8c622",
           "name": "Tom Dar"
+        },
+        {
+          "id": "30f35c87-1f16-4e9a-b146-b443349f1d96",
+          "name": "Hol Ander"
+        },
+        {
+          "id": "01b59721-d115-4f82-802d-8e8ee317c361",
+          "name": "Koi Ngyij"
         }
       ],
       "category": "Pro D2"
@@ -316,6 +324,44 @@
           "number": 19
         }
       ]
+    },
+    {
+      "id": "Nouveau_test_J14",
+      "name": "Nouveau test J14",
+      "rosterId": "b62b8cb8-80b7-498e-af89-1eb6c25473e5",
+      "starters": [
+        {
+          "player": {
+            "id": "dcd70134-168f-4c28-9b6a-d33352a8c622",
+            "name": "Tom Dar"
+          },
+          "number": 1
+        },
+        {
+          "player": {
+            "id": "30f35c87-1f16-4e9a-b146-b443349f1d96",
+            "name": "Hol Ander"
+          },
+          "number": 12
+        }
+      ],
+      "substitutes": [
+        {
+          "player": {
+            "id": "01b59721-d115-4f82-802d-8e8ee317c361",
+            "name": "Koi Ngyij"
+          },
+          "number": 23
+        }
+      ],
+      "captainPlayerId": "dcd70134-168f-4c28-9b6a-d33352a8c622"
+    },
+    {
+      "id": "Union_Bordeaux-Bègles_J14",
+      "name": "Union Bordeaux-Bègles J14",
+      "rosterId": "98c78bec-4652-4958-aca4-6b55ec719182",
+      "starters": [],
+      "substitutes": []
     }
   ],
   "activeRosterId": "b62b8cb8-80b7-498e-af89-1eb6c25473e5",

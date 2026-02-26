@@ -15,7 +15,8 @@ import {
     updateTeamInList,
     parsePlayerName,
 } from "~/utils/RosterUtils";
-import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faSquareWebAwesome } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -67,6 +68,7 @@ export default function RosterDetailPage() {
     const [compositionEditTeamId, setCompositionEditTeamId] = useState<string | null>(null);
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
     const [playerNumbers, setPlayerNumbers] = useState<Record<string, number>>({});
+    const [selectedCaptainPlayerId, setSelectedCaptainPlayerId] = useState<string | null>(null);
     const [compositionEditMessage, setCompositionEditMessage] = useState("");
     const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
 
@@ -126,6 +128,7 @@ export default function RosterDetailPage() {
         setCompositionEditTeamId(teamId);
         setSelectedPlayerIds(new Set());
         setPlayerNumbers({});
+        setSelectedCaptainPlayerId(null);
         setCompositionEditMessage("");
         setExpandedTeams((prev) => {
             const next = new Set(prev);
@@ -138,6 +141,7 @@ export default function RosterDetailPage() {
         setCompositionEditTeamId(null);
         setSelectedPlayerIds(new Set());
         setPlayerNumbers({});
+        setSelectedCaptainPlayerId(null);
         setCompositionEditMessage("");
     }
 
@@ -158,6 +162,9 @@ export default function RosterDetailPage() {
             const next = new Set(prev);
             if (next.has(playerId)) {
                 next.delete(playerId);
+                setSelectedCaptainPlayerId((currentCaptainId) =>
+                    currentCaptainId === playerId ? null : currentCaptainId
+                );
             } else {
                 next.add(playerId);
                 setPlayerNumbers((numbers) =>
@@ -200,13 +207,28 @@ export default function RosterDetailPage() {
         }
 
         const updatedTeam = addMultiplePlayersToTeam(team, selectedPlayers, playerNumbers);
-        setTeams(updateTeamInList(teams || [], updatedTeam));
+        const teamWithCaptain = selectedCaptainPlayerId
+            ? {
+                ...updatedTeam,
+                captainPlayerId: selectedCaptainPlayerId,
+            }
+            : updatedTeam;
+
+        setTeams(updateTeamInList(teams || [], teamWithCaptain));
         setCompositionEditMessage("Joueurs ajoutés à la composition.");
         setSelectedPlayerIds(new Set());
         setPlayerNumbers({});
+        setSelectedCaptainPlayerId(null);
     }
 
     function removePlayerFromComposition(team: Team, playerId: string) {
+        const teamEntries = [...team.starters, ...team.substitutes];
+        const playerName = teamEntries.find((entry) => entry.player.id === playerId)?.player.name ?? "ce joueur";
+        const confirmed = window.confirm(
+            `Retirer "${playerName}" de la composition "${team.name}" ?`
+        );
+        if (!confirmed) return;
+
         const updatedTeam = deletePlayerFromTeamData(team, playerId);
         setTeams(updateTeamInList(teams || [], updatedTeam));
     }
@@ -323,11 +345,11 @@ export default function RosterDetailPage() {
                 ) : (
                     <ul className="space-y-1">
                         {rosterTeams.map((team: Team) => (
-                            <li key={team.id} className="border rounded p-2 space-y-2">
+                            <li key={team.id} className="p-2 space-y-2 mb-6 py-6">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <button
-                                            className="px-2 py-1 text-sm rounded border"
+                                            className="px-2 py-1 text-sm font-bold"
                                             onClick={() => toggleTeamExpanded(team.id)}
                                             aria-label={expandedTeams.has(team.id) ? "Réduire la composition" : "Afficher la composition"}
                                         >
@@ -344,15 +366,13 @@ export default function RosterDetailPage() {
                                                     : openCompositionEditor(team.id)
                                             }
                                         >
-                                            <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                                            joueurs
+                                            <FontAwesomeIcon icon={faPlus} /> <FontAwesomeIcon icon={faUser} />
                                         </button>
                                         <button
-                                            className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                            className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
                                             onClick={() => deleteTeam(team)}
                                         >
-                                            <FontAwesomeIcon icon={faTrashCan} className="mr-2" />
-                                            Supprimer
+                                            <FontAwesomeIcon icon={faTrashCan} />
                                         </button>
                                     </div>
                                 </div>
@@ -360,15 +380,14 @@ export default function RosterDetailPage() {
                                 {expandedTeams.has(team.id) && (
                                     <>
                                         {compositionEditTeamId === team.id && roster && (
-                                            <div className="space-y-3 border border-gray-300 rounded p-3">
+                                            <div className="space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3">
                                                 <div className="flex items-center justify-between">
                                                     <h3 className="font-semibold">Ajouter des joueurs</h3>
                                                     <button
-                                                        className="px-2 py-1 bg-gray-200 text-gray-800 rounded text-sm"
+                                                        className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
                                                         onClick={closeCompositionEditor}
                                                     >
-                                                        <FontAwesomeIcon icon={faCircleXmark} className="mr-2" />
-                                                        Fermer
+                                                        <FontAwesomeIcon icon={faCircleXmark} />
                                                     </button>
                                                 </div>
 
@@ -388,23 +407,39 @@ export default function RosterDetailPage() {
                                                     }
 
                                                     return (
-                                                        <ul className="space-y-2 flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                                                        <ul className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
                                                             {availablePlayers.map((player) => (
-                                                                <li key={player.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                                    <label className="flex items-center gap-2 flex-1 text-left">
+                                                                <li key={player.id} className="flex w-full items-center justify-between gap-3">
+                                                                    <label className="flex min-w-0 items-center gap-2 text-left">
                                                                         <input
-                                                                            className="ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                                                                            className="h-4 w-4 min-w-0 border-0 bg-transparent p-0 shadow-none focus:ring-0 focus:border-0"
                                                                             type="checkbox"
                                                                             checked={selectedPlayerIds.has(player.id)}
                                                                             onChange={() => togglePlayerSelection(player.id)}
                                                                         />
-                                                                        <span>{player.name}</span>
+                                                                        <span className="truncate">{player.name}</span>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-1 text-xs text-gray-400">
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`captain-${team.id}`}
+                                                                            className="h-4 w-4"
+                                                                            checked={selectedCaptainPlayerId === player.id}
+                                                                            onChange={() => {
+                                                                                if (!selectedPlayerIds.has(player.id)) {
+                                                                                    togglePlayerSelection(player.id);
+                                                                                }
+                                                                                setSelectedCaptainPlayerId(player.id);
+                                                                            }}
+                                                                            disabled={!selectedPlayerIds.has(player.id)}
+                                                                        />
+                                                                        Capitaine
                                                                     </label>
                                                                     <input
                                                                         type="number"
                                                                         min={1}
                                                                         max={23}
-                                                                        className="ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                                                                        className="h-auto w-20 min-w-[5rem] border-0 bg-transparent p-0 text-right text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                                                                         value={playerNumbers[player.id] || 1}
                                                                         onChange={(e) =>
                                                                             updatePlayerNumber(player.id, Number(e.target.value))
@@ -421,6 +456,7 @@ export default function RosterDetailPage() {
                                                     className="px-3 py-2 bg-green-600 text-white rounded"
                                                     onClick={() => addPlayersToComposition(team)}
                                                 >
+                                                    <FontAwesomeIcon icon={faPlus} className="mr-1" />
                                                     Ajouter
                                                 </button>
 
@@ -439,16 +475,21 @@ export default function RosterDetailPage() {
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div>
                                                         <p className="text-xs font-semibold text-gray-600 mb-1">Titulaires (1-15)</p>
-                                                        <ul className="space-y-1 text-sm">
+                                                        <ul className="space-y-1 text-base">
                                                             {team.starters.map((entry) => (
                                                                 <li key={entry.player.id} className="flex items-center gap-2">
-                                                                    <span className="font-semibold w-6">{entry.number}</span>
-                                                                    <span className="flex-1">{entry.player.name}</span>
+                                                                    <span className="font-bold text-white w-6">{entry.number}</span>
+                                                                    <span className="flex-1 inline-flex items-center gap-1">
+                                                                        {entry.player.name}
+                                                                        {team.captainPlayerId === entry.player.id && (
+                                                                            <FontAwesomeIcon icon={faCrown} className="text-sky-400" />
+                                                                        )}
+                                                                    </span>
                                                                     <button
-                                                                        className="text-red-600 text-xs px-2 py-1"
+                                                                        className="text-neutral-400 text-xs px-2 py-1"
                                                                         onClick={() => removePlayerFromComposition(team, entry.player.id)}
                                                                     >
-                                                                        Retirer
+                                                                        <FontAwesomeIcon icon={faTrashCan} />
                                                                     </button>
                                                                 </li>
                                                             ))}
@@ -456,16 +497,21 @@ export default function RosterDetailPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-xs font-semibold text-gray-600 mb-1">Remplaçants (16-23)</p>
-                                                        <ul className="space-y-1 text-sm">
+                                                        <ul className="space-y-1 text-base">
                                                             {team.substitutes.map((entry) => (
                                                                 <li key={entry.player.id} className="flex items-center gap-2">
-                                                                    <span className="font-semibold w-6">{entry.number}</span>
-                                                                    <span className="flex-1">{entry.player.name}</span>
+                                                                    <span className="font-bold text-white w-6">{entry.number}</span>
+                                                                    <span className="flex-1 inline-flex items-center gap-1">
+                                                                        {entry.player.name}
+                                                                        {team.captainPlayerId === entry.player.id && (
+                                                                            <FontAwesomeIcon icon={faCrown} className="text-sky-400" />
+                                                                        )}
+                                                                    </span>
                                                                     <button
-                                                                        className="text-red-600 text-xs px-2 py-1"
+                                                                        className="text-neutral-400 text-xs px-2 py-1"
                                                                         onClick={() => removePlayerFromComposition(team, entry.player.id)}
                                                                     >
-                                                                        Retirer
+                                                                        <FontAwesomeIcon icon={faTrashCan} />
                                                                     </button>
                                                                 </li>
                                                             ))}
@@ -502,33 +548,42 @@ export default function RosterDetailPage() {
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Effectif</h2>
+                <button
+                    className="px-3 py-1 bg-green-500 text-white rounded mb-6"
+                    onClick={() => setShowAddPlayerForm((value) => !value)}
+                >
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    Ajouter un joueur à l'effectif
+                </button>
                 {roster.players.length === 0 ? (
                     <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
                 ) : (
-                    <ul className="space-y-1">
+                    <ul className="space-y-4">
                         {roster.players.map((player) => (
-                            <li key={player.id} className="border rounded p-2 space-y-2">
+                            <li key={player.id} className="border-b w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
                                 <div className="flex items-center justify-between gap-2">
                                     <span>{player.name}</span>
                                     <div className="flex items-center gap-2">
                                         <button
-                                            className="px-2 py-1 bg-yellow-500 text-white text-sm rounded"
+                                            className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
                                             onClick={() => startEditPlayer(player)}
                                         >
-                                            Modifier
+                                            <FontAwesomeIcon icon={faPenToSquare} />
                                         </button>
                                         <button
-                                            className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                            className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
                                             onClick={() => deletePlayer(player.id, player.name)}
                                         >
-                                            Supprimer
+                                            <FontAwesomeIcon icon={faTrashCan} />
                                         </button>
                                     </div>
                                 </div>
                                 {editingPlayerId === player.id && (
-                                    <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                                    <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2">
+                                        <label className="leading-none" data-slot="label" htmlFor={`editingPlayerFirst-${player.id}`}>Prénom</label>
                                         <input
-                                            className={`ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0 ${
+                                            id={`editingPlayerFirst-${player.id}`}
+                                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
                                                 editingPlayerFirstError ? "border-red-500" : "border-gray-600"
                                             }`}
                                             placeholder="Prénom"
@@ -542,8 +597,11 @@ export default function RosterDetailPage() {
                                         {editingPlayerFirstError && (
                                             <p className="text-sm text-red-400">{editingPlayerFirstError}</p>
                                         )}
+                                        <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
+                                        <label className="leading-none" data-slot="label" htmlFor={`editingPlayerLast-${player.id}`}>Nom</label>
                                         <input
-                                            className={`ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0 ${
+                                            id={`editingPlayerLast-${player.id}`}
+                                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
                                                 editingPlayerLastError ? "border-red-500" : "border-gray-600"
                                             }`}
                                             placeholder="Nom"
@@ -557,7 +615,7 @@ export default function RosterDetailPage() {
                                         {editingPlayerLastError && (
                                             <p className="text-sm text-red-400">{editingPlayerLastError}</p>
                                         )}
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center gap-2">
                                             <button
                                                 className="px-3 py-2 bg-blue-500 text-white rounded"
                                                 onClick={saveEditPlayer}
@@ -578,14 +636,6 @@ export default function RosterDetailPage() {
                         ))}
                     </ul>
                 )}
-
-                <button
-                    className="px-3 py-1 bg-green-500 text-white rounded mb-6"
-                    onClick={() => setShowAddPlayerForm((value) => !value)}
-                >
-                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Ajouter un joueur à l'effectif
-                </button>
 
                 {showAddPlayerForm && (
                     <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2">
@@ -624,13 +674,27 @@ export default function RosterDetailPage() {
                         {newPlayerLastError && (
                             <p className="text-sm text-red-400">{newPlayerLastError}</p>
                         )}
-                        <button
-                            className="px-3 py-2 bg-blue-500 text-white rounded"
-                            onClick={addPlayerToRoster}
-                            disabled={!newPlayerFirst && !newPlayerLast}
-                        >
-                            Valider
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                            <button
+                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                onClick={addPlayerToRoster}
+                                disabled={!newPlayerFirst && !newPlayerLast}
+                            >
+                                Valider
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                onClick={() => {
+                                    setShowAddPlayerForm(false);
+                                    setNewPlayerFirst("");
+                                    setNewPlayerLast("");
+                                    setNewPlayerFirstError("");
+                                    setNewPlayerLastError("");
+                                }}
+                            >
+                                Annuler
+                            </button>
+                        </div>
                     </div>
                 )}
                 {playerMessage && (

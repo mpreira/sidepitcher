@@ -62,6 +62,7 @@ export function createTeam(name: string, rosterId: string): Team {
         id: `${name}`.replace(/\s+/g, "_"),
         name,
         rosterId,
+        captainPlayerId: null,
         starters: [],
         substitutes: [],
     };
@@ -78,6 +79,7 @@ export function updateTeamInList(teams: Team[], updatedTeam: Team): Team[] {
 export function deletePlayerFromTeamData(team: Team, playerId: string): Team {
     return {
         ...team,
+        captainPlayerId: team.captainPlayerId === playerId ? null : team.captainPlayerId,
         starters: team.starters.filter(e => e.player.id !== playerId),
         substitutes: team.substitutes.filter(e => e.player.id !== playerId),
     };
