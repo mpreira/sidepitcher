@@ -7,7 +7,7 @@
 
 html,
 body {
-  @apply bg-white dark:bg-neutral-950;
+  @apply bg-neutral-950 text-gray-400 text-sm;
   font-family: var(--font-sans);
 
   @media (prefers-color-scheme: dark) {
@@ -19,7 +19,7 @@ body {
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
   select,
   textarea {
-    @apply rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none;
+    @apply rounded-md border border-gray-300 bg-neutral-950 px-3 py-2 text-sm text-white shadow-sm outline-none;
     @apply transition-colors duration-150;
     @apply placeholder:text-gray-400;
     @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20;
