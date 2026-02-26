@@ -97,18 +97,6 @@
       "name": "Union Bordeaux-Bègles",
       "players": [],
       "category": "Top 14"
-    },
-    {
-      "id": "7752aa27-8a8a-45fe-b147-a3ddfc706213",
-      "name": "USON Nevers",
-      "players": [],
-      "category": "Pro D2"
-    },
-    {
-      "id": "eca9fe9d-be30-47d9-8896-09b8691821f7",
-      "name": "FC Grenoble",
-      "players": [],
-      "category": "Pro D2"
     }
   ],
   "teams": [
@@ -307,7 +295,7 @@
       ]
     }
   ],
-  "activeRosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+  "activeRosterId": "b72f6307-83d4-4c0d-908d-b3a95be30209",
   "matchDay": "14",
   "sport": "Rugby",
   "championship": "Top 14"
