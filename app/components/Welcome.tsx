@@ -2,49 +2,72 @@ import { useTeams } from "~/context/TeamsContext";
 import logoSP from "~/assets/images/logo_800.svg";
 
 export function Welcome() {
-  const { matchDay, championship, setMatchDay, setChampionship } = useTeams();
+  const { matchDay, sport, championship, setMatchDay, setSport, setChampionship } = useTeams();
+
+  const sportOptions = ["Rugby", "Football"] as const;
+  const championshipOptions = ["Top 14", "Pro D2"] as const;
 
   return (
-    <main className="flex items-center justify-center pt-16 pb-4">
-      <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
-        <header className="flex flex-col items-center gap-9">
-            <div className="w-[500px] max-w-[100vw] p-4">
+    <main className="flex h-full min-h-0 w-full items-center justify-center py-4">
+      <div className="flex w-full flex-1 flex-col items-center gap-16 min-h-0">
+        <header className="flex w-full flex-col items-center gap-9">
+            <div className="mx-auto w-[96vw] p-2 lg:max-w-[1100px]">
             <img
               src={logoSP}
               alt="Sidepitcher Logo"
-              className="block w-[300px]"
+              className="mx-auto block w-full max-h-[38vh] object-contain"
             />
           </div>
           {/* reglages de journee/championnat */}
-          <div className="space-y-2 text-center">
-            <div className="input max-w-sm">
-              <label data-slot="label" className="text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 flex items-center gap-2" htmlFor="matchDayInput">Journée</label>
+          <div className="mx-auto w-full max-w-sm space-y-3 text-left">
+            <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:shadow-sm">
+              <label className="self-center leading-none" htmlFor="sportSelect">Sport</label>
+              <select
+                id="sportSelect"
+                className="ml-auto h-auto w-auto min-w-[8rem] self-center border-0 bg-transparent p-0 text-left leading-none shadow-none focus:ring-0 focus:border-0"
+                value={sport}
+                onChange={(e) =>
+                  setSport(e.target.value as "Rugby" | "Football")
+                }
+              >
+                {sportOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:shadow-sm">
+              <label className="self-center leading-none" data-slot="label" htmlFor="matchDayInput">Journée</label>
               <input
                 id="matchDayInput"
                 type="text"
-                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                className="ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                 value={matchDay}
                 onChange={(e) => setMatchDay(e.target.value)}
                 placeholder="ex. J1"
               />
             </div>
-            <div>
-              <label className="mr-2 font-semibold">Championnat :</label>
+            <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:shadow-sm">
+              <label className="self-center leading-none" htmlFor="championshipSelect">Championnat</label>
               <select
                 id="championshipSelect"
-                className="border px-2 py-1"
+                className="ml-auto h-auto w-auto min-w-[8rem] self-center border-0 bg-transparent p-0 text-left leading-none shadow-none focus:ring-0 focus:border-0"
                 value={championship}
                 onChange={(e) =>
                   setChampionship(e.target.value as "Top 14" | "Pro D2")
                 }
               >
-                <option>Top 14</option>
-                <option>Pro D2</option>
+                {championshipOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
         </header>
-        <div className="max-w-[300px] w-full space-y-6 px-4">
+        {/*<div className="max-w-[300px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
             <ul>
               {resources.map(({ href, text, icon }) => (
@@ -60,13 +83,13 @@ export function Welcome() {
               ))}
             </ul>
           </nav>
-        </div>
+        </div>*/}
       </div>
     </main>
   );
 }
 
-const resources = [
+{/*const resources = [
   {
     href: "/",
     text: "Accueil",
@@ -132,4 +155,4 @@ const resources = [
       </svg>
     ),
   }
-];
+]*/};
