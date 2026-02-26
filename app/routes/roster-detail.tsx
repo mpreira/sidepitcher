@@ -391,7 +391,7 @@ export default function RosterDetailPage() {
                                                         <ul className="space-y-2 flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
                                                             {availablePlayers.map((player) => (
                                                                 <li key={player.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                                    <label className="flex items-center gap-2 flex-1">
+                                                                    <label className="flex items-center gap-2 flex-1 text-left">
                                                                         <input
                                                                             className="ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                                                                             type="checkbox"
@@ -580,7 +580,7 @@ export default function RosterDetailPage() {
                 )}
 
                 <button
-                    className="px-3 py-1 bg-green-500 text-white rounded"
+                    className="px-3 py-1 bg-green-500 text-white rounded mb-6"
                     onClick={() => setShowAddPlayerForm((value) => !value)}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
@@ -588,12 +588,14 @@ export default function RosterDetailPage() {
                 </button>
 
                 {showAddPlayerForm && (
-                    <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                    <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2">
+                        <label className="leading-none" data-slot="label" htmlFor="newPlayerFirst">Prénom</label>
                         <input
-                            className={`ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0 ${
+                            id="newPlayerFirst"
+                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
                                 newPlayerFirstError ? "border-red-500" : "border-gray-600"
                             }`}
-                            placeholder="Prénom"
+                            placeholder="ex. Jean"
                             value={newPlayerFirst}
                             onChange={(e) => {
                                 const formatted = formatName(e.target.value);
@@ -604,11 +606,14 @@ export default function RosterDetailPage() {
                         {newPlayerFirstError && (
                             <p className="text-sm text-red-400">{newPlayerFirstError}</p>
                         )}
+                        <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
+                        <label className="leading-none" data-slot="label" htmlFor="newPlayerLast">Nom</label>
                         <input
-                            className={`ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0 ${
+                            id="newPlayerLast"
+                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
                                 newPlayerLastError ? "border-red-500" : "border-gray-600"
                             }`}
-                            placeholder="Nom"
+                            placeholder="ex. Dupont"
                             value={newPlayerLast}
                             onChange={(e) => {
                                 const formatted = formatName(e.target.value);
