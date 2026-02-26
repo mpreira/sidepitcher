@@ -7,11 +7,13 @@ interface TeamsContextValue {
     teams: Team[]; // all teams across rosters
     activeRosterId: string | null;
     matchDay: string;
+    sport: 'Rugby' | 'Football';
     championship: 'Top 14' | 'Pro D2';
     setRosters: React.Dispatch<React.SetStateAction<Roster[]>>;
     setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
     setActiveRosterId: React.Dispatch<React.SetStateAction<string | null>>;
     setMatchDay: React.Dispatch<React.SetStateAction<string>>;
+    setSport: React.Dispatch<React.SetStateAction<'Rugby' | 'Football'>>;
     setChampionship: React.Dispatch<React.SetStateAction<'Top 14' | 'Pro D2'>>;
 }
 
@@ -22,6 +24,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
     const [teams, setTeams] = useState<Team[]>([]);
     const [activeRosterId, setActiveRosterId] = useState<string | null>(null);
     const [matchDay, setMatchDay] = useState<string>('');
+    const [sport, setSport] = useState<'Rugby' | 'Football'>('Rugby');
     const [championship, setChampionship] = useState<'Top 14' | 'Pro D2'>('Top 14');
 
   // load from backend on mount
@@ -33,6 +36,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             setTeams(data.teams || []);
             setActiveRosterId(data.activeRosterId || null);
             setMatchDay(data.matchDay || '');
+            setSport(data.sport || 'Rugby');
             setChampionship(data.championship || 'Top 14');
         })
         .catch(() => {
@@ -46,6 +50,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         teams: Team[];
         activeId: string | null;
         matchDay: string;
+        sport: 'Rugby' | 'Football';
         championship: 'Top 14' | 'Pro D2';
     } | null>(null);
 
@@ -55,6 +60,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         teams.length === 0 &&
         activeRosterId == null &&
         matchDay === '' &&
+        sport === 'Rugby' &&
         championship === 'Top 14'
         ) {
         return;
@@ -63,6 +69,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         lastSent.current &&
         lastSent.current.activeId === activeRosterId &&
         lastSent.current.matchDay === matchDay &&
+        lastSent.current.sport === sport &&
         lastSent.current.championship === championship &&
         JSON.stringify(lastSent.current.rosters) === JSON.stringify(rosters) &&
         JSON.stringify(lastSent.current.teams) === JSON.stringify(teams)
@@ -78,6 +85,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             teams,
             activeRosterId,
             matchDay,
+            sport,
             championship,
         }),
         })
@@ -90,10 +98,11 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             teams,
             activeId: activeRosterId,
             matchDay,
+            sport,
             championship,
             };
         });
-    }, [rosters, teams, activeRosterId, matchDay, championship]);
+    }, [rosters, teams, activeRosterId, matchDay, sport, championship]);
 
     return (
         <TeamsContext.Provider
@@ -102,11 +111,13 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             teams,
             activeRosterId,
             matchDay,
+            sport,
             championship,
             setRosters,
             setTeams,
             setActiveRosterId,
             setMatchDay,
+            setSport,
             setChampionship,
         }}
         >
