@@ -36,6 +36,12 @@ export default function TimerControls({
     <section className="space-y-2">
       <div className="flex items-center gap-2 justify-center">
         <button
+          className={`px-4 py-2 text-white rounded ${running ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}`}
+          onClick={onStartStop}
+        >
+          {running ? "Pause" : "Départ"}
+        </button>
+        <button
           id="halfSelect"
           className={`px-4 py-2 rounded ${
             currentHalf === 1 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
@@ -55,36 +61,19 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded ${
-            matchEnded ? "bg-red-600 text-white" : "bg-gray-300 text-gray-700"
+            matchEnded ? "bg-gray-300 text-gray-700": "bg-red-600 text-white" 
           }`}
           onClick={onEndMatch}
           disabled={matchEnded || currentHalf === 1}
         >
-          Fin de match
+          <span className="sm:hidden">Fin</span>
+          <span className="hidden sm:inline">Fin de match</span>
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex justify-center gap-4">
         <button
-          className="px-4 py-2 bg-green-500 text-white rounded"
-          onClick={onStartStop}
-        >
-          {running ? "Stop" : "Start"}
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-200 rounded"
-          onClick={() => onAdjust(-10)}
-        >
-          -10s
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-200 rounded"
-          onClick={() => onAdjust(10)}
-        >
-          +10s
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-200 rounded"
+          className="px-4 py-2 bg-blue-500/20 text-blue-500 rounded"
           onClick={onReset}
         >
           Reset

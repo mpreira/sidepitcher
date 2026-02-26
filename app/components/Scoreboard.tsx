@@ -27,7 +27,7 @@ export default function Scoreboard({
             <div className="text-6xl font-bold">{displayScore(0)}</div>
           </>
         ) : (
-          <div className="text-lg italic">No team</div>
+          <div className="text-lg italic">Aucune équipe</div>
         )}
       </div>
 
@@ -49,7 +49,7 @@ export default function Scoreboard({
             <div className="text-6xl font-bold">{displayScore(1)}</div>
           </>
         ) : (
-          <div className="text-lg italic">No team</div>
+          <div className="text-lg italic">Aucune équipe</div>
         )}
       </div>
     </div>

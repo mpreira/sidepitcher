@@ -424,7 +424,10 @@ export default function Tracker() {
                 running={running}
                 onStartStop={() => setRunning((r) => !r)}
                 onAdjust={adjustTime}
-                onReset={() => setTime(0)}
+                onReset={() => {
+                    setTime(0);
+                    setMatchEnded(false);
+                }}
                 manualTimeInput={manualTimeInput}
                 onManualTimeInputChange={setManualTimeInput}
                 onApplyManualTime={applyManualTime}
