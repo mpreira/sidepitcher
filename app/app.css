@@ -10,6 +10,10 @@ body {
   @apply bg-neutral-950 text-gray-400 text-base md:text-lg leading-relaxed;
   font-family: var(--font-sans);
 
+  h1{
+    @apply leading-[0.95] font-bold tracking-[-0.03em] text-xl md:text-2xl;
+  }
+
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }

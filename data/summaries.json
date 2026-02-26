@@ -1,3 +1,205 @@
 {
-  "summaries": []
+  "summaries": [
+    {
+      "id": "c10cdbf2-8960-4f6f-82a0-a82052d2239c",
+      "createdAt": "2026-02-26T16:48:00.471Z",
+      "currentTime": 4818,
+      "summary": {
+        "Pénalité réussie": 1,
+        "Carton jaune": 1,
+        "Blessure": 1,
+        "Récapitulatif": 2,
+        "Essai": 1
+      },
+      "events": [
+        {
+          "type": "Pénalité réussie",
+          "time": 2406,
+          "team": {
+            "id": "Roster_2_J14",
+            "name": "Roster 2 J14",
+            "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
+            "starters": [
+              {
+                "player": {
+                  "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+                  "name": "Oui Oui"
+                },
+                "number": 13
+              },
+              {
+                "player": {
+                  "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+                  "name": "No No"
+                },
+                "number": 10
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+                  "name": "Na Na"
+                },
+                "number": 19
+              }
+            ]
+          },
+          "player": {
+            "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+            "name": "Na Na"
+          },
+          "playerNumber": 19,
+          "concussion": false
+        },
+        {
+          "type": "Carton jaune",
+          "time": 2421,
+          "team": {
+            "id": "Roster_1_J14",
+            "name": "Roster 1 J14",
+            "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+            "starters": [
+              {
+                "player": {
+                  "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+                  "name": "Baba Bam"
+                },
+                "number": 1
+              },
+              {
+                "player": {
+                  "id": "0a170f64-96ab-44a2-837c-36c7b0fec2ba",
+                  "name": "Lilh Wes"
+                },
+                "number": 2
+              },
+              {
+                "player": {
+                  "id": "50a99220-aefa-4499-ac0d-d56133ab54eb",
+                  "name": "Pa Pou"
+                },
+                "number": 2
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "aa204808-6527-474c-9d21-256e2368f0ad",
+                  "name": "Chi Chi"
+                },
+                "number": 18
+              }
+            ]
+          },
+          "player": {
+            "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+            "name": "Baba Bam"
+          },
+          "playerNumber": 1,
+          "concussion": false
+        },
+        {
+          "type": "Blessure",
+          "time": 2429,
+          "team": {
+            "id": "Roster_2_J14",
+            "name": "Roster 2 J14",
+            "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
+            "starters": [
+              {
+                "player": {
+                  "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+                  "name": "Oui Oui"
+                },
+                "number": 13
+              },
+              {
+                "player": {
+                  "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+                  "name": "No No"
+                },
+                "number": 10
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+                  "name": "Na Na"
+                },
+                "number": 19
+              }
+            ]
+          },
+          "player": {
+            "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+            "name": "No No"
+          },
+          "playerNumber": 10,
+          "concussion": true
+        },
+        {
+          "type": "Récapitulatif",
+          "time": 2431,
+          "summary": "MT1 : Roster 1 : 0 pénalités, 0 en-avants / Roster 2 : 0 pénalités, 0 en-avants"
+        },
+        {
+          "type": "Essai",
+          "time": 4808,
+          "team": {
+            "id": "Roster_2_J14",
+            "name": "Roster 2 J14",
+            "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
+            "starters": [
+              {
+                "player": {
+                  "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+                  "name": "Oui Oui"
+                },
+                "number": 13
+              },
+              {
+                "player": {
+                  "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+                  "name": "No No"
+                },
+                "number": 10
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+                  "name": "Na Na"
+                },
+                "number": 19
+              }
+            ]
+          },
+          "player": {
+            "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+            "name": "Oui Oui"
+          },
+          "playerNumber": 13,
+          "concussion": false
+        },
+        {
+          "type": "Récapitulatif",
+          "time": 4818,
+          "summary": "MT2 : Roster 1 : 4 pénalités, 2 en-avants / Roster 2 : 1 pénalités, 3 en-avants"
+        }
+      ],
+      "teams": [
+        {
+          "id": "Roster_1_J14",
+          "name": "Roster 1 J14"
+        },
+        {
+          "id": "Roster_2_J14",
+          "name": "Roster 2 J14"
+        }
+      ]
+    }
+  ]
 }

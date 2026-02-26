@@ -19,7 +19,7 @@ export function Welcome() {
             />
           </div>
           {/* reglages de journee/championnat */}
-          <div className="mx-auto w-full max-w-sm space-y-3 text-left">
+          <div className="mx-auto w-5/6 max-w-sm space-y-3 text-left md:w-full">
             <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
               <label className="self-center leading-none" htmlFor="sportSelect">Sport</label>
               <select
