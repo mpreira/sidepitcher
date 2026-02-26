@@ -96,6 +96,10 @@ export default function Tracker() {
     const [teamEnAvant, setTeamEnAvant] = useState<number[]>([0, 0]);
     // manual en-avant adjustments (on top of computed values)
     const [manualEnAvantAdjustments, setManualEnAvantAdjustments] = useState<number[]>([0, 0]);
+    const [teamToucheGagnee, setTeamToucheGagnee] = useState<number[]>([0, 0]);
+    const [teamTouchePerdue, setTeamTouchePerdue] = useState<number[]>([0, 0]);
+    const [teamMeleeGagnee, setTeamMeleeGagnee] = useState<number[]>([0, 0]);
+    const [teamMeleePerdue, setTeamMeleePerdue] = useState<number[]>([0, 0]);
 
     // Load team selection from localStorage on mount
     useEffect(() => {
@@ -116,6 +120,10 @@ export default function Tracker() {
         setManualPenaltyAdjustments([0, 0]);
         // reset manual en-avant adjustments when teams change
         setManualEnAvantAdjustments([0, 0]);
+        setTeamToucheGagnee([0, 0]);
+        setTeamTouchePerdue([0, 0]);
+        setTeamMeleeGagnee([0, 0]);
+        setTeamMeleePerdue([0, 0]);
     }, [selectedTeams.length]);
 
     // count penalties (fouls) from events
@@ -278,6 +286,38 @@ export default function Tracker() {
         });
     }
 
+    function adjustToucheGagnee(idx: number, delta: number) {
+        setTeamToucheGagnee((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
+    function adjustTouchePerdue(idx: number, delta: number) {
+        setTeamTouchePerdue((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
+    function adjustMeleeGagnee(idx: number, delta: number) {
+        setTeamMeleeGagnee((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
+    function adjustMeleePerdue(idx: number, delta: number) {
+        setTeamMeleePerdue((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
     function getDisplayedPenalties(): number[] {
         return teamPenalties.map((count, idx) => {
             const total = count + (manualPenaltyAdjustments[idx] || 0);
@@ -298,20 +338,19 @@ export default function Tracker() {
 
     return (
         <main className="p-6 space-y-6 max-w-screen-md mx-auto px-4">
-            <h1 className="text-2xl font-bold">Feuille de match</h1>
-            <p className="text-sm">
+            <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
+            <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
                 {matchDay && <>Journée : {matchDay} — </>}
                 Championnat : {championship}
             </p>
 
             {!activeRoster && (
                 <p className="text-red-600">
-                    Aucun roster actif. Allez sur la page « Rosters » pour en sélectionner un ou en créer un.
+                    Aucun effectif actif. Allez sur la page « Effectifs » pour en sélectionner un ou en créer un.
                 </p>
             )}
 
             <section className="space-y-2">
-                <h2 className="font-semibold">Sélection des équipes</h2>
                 {teamsForDay.length === 0 ? (
                     <p className="text-sm text-gray-600">Aucune composition pour cette journée.</p>
                 ) : (
@@ -319,7 +358,7 @@ export default function Tracker() {
                         <div className="flex flex-col sm:flex-row gap-2">
                             <select
                                 id="team1Select"
-                                className="border p-2 flex-1"
+                                className="md:w-1/2 border-0 bg-neutral-900 py-1 px-2 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                                 value={team1Id}
                                 onChange={(e) => setTeam1Id(e.target.value)}
                             >
@@ -332,7 +371,7 @@ export default function Tracker() {
                             </select>
                             <select
                                 id="team2Select"
-                                className="border p-2 flex-1"
+                                className="md:w-1/2 border-0 bg-neutral-900 py-1 px-2 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                                 value={team2Id}
                                 onChange={(e) => setTeam2Id(e.target.value)}
                             >
@@ -352,7 +391,7 @@ export default function Tracker() {
                             onClick={saveTeamSelection}
                             disabled={!team1Id || !team2Id || team1Id === team2Id}
                         >
-                            Valider la composition
+                            Valider
                         </button>
                         {saveMessage && (
                             <p className={`text-sm ${saveMessage.includes("✓") ? "text-green-700" : "text-red-600"}`}>
@@ -380,154 +419,109 @@ export default function Tracker() {
                 );
             })()}
 
-            {/* penalty stats */}
-            {selectedTeams.length === 2 && (() => {
-                const displayedPenalties = getDisplayedPenalties();
-                return (
-                    <section className="border rounded p-4 space-y-3">
-                        <h3 className="font-semibold text-center">Statistiques des pénalités (fautes)</h3>
-                        <div className="flex gap-4 justify-around">
-                            {selectedTeams.map((team, idx) => (
-                                <div key={team.id} className="flex flex-col items-center gap-2">
-                                    <div className="text-sm font-medium text-center">
-                                        {team.name.replace(/\s+J\d+$/, "")}
-                                    </div>
-                                    <div className="text-2xl font-bold">{displayedPenalties[idx]}</div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                            onClick={() => adjustPenalties(idx, -1)}
-                                        >
-                                            −
-                                        </button>
-                                        <button
-                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                                            onClick={() => adjustPenalties(idx, 1)}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                );
-            })()}
-
-            {/* en-avant stats */}
-            {selectedTeams.length === 2 && (() => {
-                const displayedEnAvant = getDisplayedEnAvant();
-                return (
-                    <section className="border rounded p-4 space-y-3">
-                        <h3 className="font-semibold text-center">Statistiques des en-avants</h3>
-                        <div className="flex gap-4 justify-around">
-                            {selectedTeams.map((team, idx) => (
-                                <div key={team.id} className="flex flex-col items-center gap-2">
-                                    <div className="text-sm font-medium text-center">
-                                        {team.name.replace(/\s+J\d+$/, "")}
-                                    </div>
-                                    <div className="text-2xl font-bold">{displayedEnAvant[idx]}</div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                            onClick={() => adjustEnAvant(idx, -1)}
-                                        >
-                                            −
-                                        </button>
-                                        <button
-                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                                            onClick={() => adjustEnAvant(idx, 1)}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                );
-            })()}
-
-            {/* half selector */}
-            <div className="flex items-center gap-2 justify-center">
-                <label htmlFor="halfSelect" className="font-semibold">Mi-temps:</label>
-                <button
-                    id="halfSelect"
-                    className={`px-4 py-2 rounded ${
-                        currentHalf === 1
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-300 text-gray-700'
-                    }`}
-                    onClick={() => {
-                        setCurrentHalf(1);
-                        setTime(0);
-                        setRunning(false);
-                    }}
-                >
-                    1ère
-                </button>
-                <button
-                    className={`px-4 py-2 rounded ${
-                        currentHalf === 2
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-300 text-gray-700'
-                    }`}
-                    onClick={() => {
-                        addStatsSummary("MT1");
-                        setCurrentHalf(2);
-                        setTime(40 * 60); // start 2nd half at 40:00 (80*60 - 40*60 = 40*60)
-                        setRunning(false);
-                    }}
-                    disabled={currentHalf === 2 || matchEnded}
-                >
-                    2ème
-                </button>
-                <button
-                    className={`px-4 py-2 rounded ${
-                        matchEnded
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-300 text-gray-700'
-                    }`}
-                    onClick={() => {
-                        addStatsSummary("MT2");
-                        setMatchEnded(true);
-                        setRunning(false);
-                    }}
-                    disabled={matchEnded || currentHalf === 1}
-                >
-                    Fin de match
-                </button>
-            </div>
-
             <TimerControls
                 time={time}
                 running={running}
                 onStartStop={() => setRunning((r) => !r)}
                 onAdjust={adjustTime}
                 onReset={() => setTime(0)}
+                manualTimeInput={manualTimeInput}
+                onManualTimeInputChange={setManualTimeInput}
+                onApplyManualTime={applyManualTime}
+                currentHalf={currentHalf}
+                matchEnded={matchEnded}
+                onSetFirstHalf={() => {
+                    setCurrentHalf(1);
+                    setTime(0);
+                    setRunning(false);
+                }}
+                onSetSecondHalf={() => {
+                    addStatsSummary("MT1");
+                    setCurrentHalf(2);
+                    setTime(40 * 60);
+                    setRunning(false);
+                }}
+                onEndMatch={() => {
+                    addStatsSummary("MT2");
+                    setMatchEnded(true);
+                    setRunning(false);
+                }}
             />
 
-            <div className="border rounded p-4 space-y-2">
-                <label htmlFor="manualTimeInput" className="block font-semibold">Temps manuel (mm:ss)</label>
-                <div className="flex gap-2">
-                    <input
-                        id="manualTimeInput"
-                        type="text"
-                        placeholder="05:30"
-                        className="border p-2 flex-1"
-                        value={manualTimeInput}
-                        onChange={(e) => setManualTimeInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && applyManualTime()}
-                    />
-                    <button
-                        id="applyManualTimeButton"
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        onClick={applyManualTime}
-                    >
-                        Appliquer
-                    </button>
-                </div>
-            </div>
+            {selectedTeams.length === 2 && (() => {
+                const displayedPenalties = getDisplayedPenalties();
+                const displayedEnAvant = getDisplayedEnAvant();
+
+                const teamStats = [
+                    {
+                        label: "Pénalité",
+                        values: displayedPenalties,
+                        onAdjust: adjustPenalties,
+                    },
+                    {
+                        label: "En Avant",
+                        values: displayedEnAvant,
+                        onAdjust: adjustEnAvant,
+                    },
+                    {
+                        label: "Touche Gagnée",
+                        values: teamToucheGagnee,
+                        onAdjust: adjustToucheGagnee,
+                    },
+                    {
+                        label: "Touche Perdue",
+                        values: teamTouchePerdue,
+                        onAdjust: adjustTouchePerdue,
+                    },
+                    {
+                        label: "Mêlée Gagnée",
+                        values: teamMeleeGagnee,
+                        onAdjust: adjustMeleeGagnee,
+                    },
+                    {
+                        label: "Mêlée Perdue",
+                        values: teamMeleePerdue,
+                        onAdjust: adjustMeleePerdue,
+                    },
+                ];
+
+                return (
+                    <section className="space-y-3">
+                        <h3 className="font-semibold text-center">Statistiques</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {selectedTeams.map((team, teamIdx) => (
+                                <div key={team.id} className="border-neutral-700 bg-neutral-900 rounded p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-center">
+                                        {team.name.replace(/\s+J\d+$/, "")}
+                                    </h4>
+                                    <ul className="space-y-2">
+                                        {teamStats.map((stat) => (
+                                            <li key={stat.label} className="flex items-center justify-between gap-2">
+                                                <span className="text-sm">{stat.label}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-red-600"
+                                                        onClick={() => stat.onAdjust(teamIdx, -1)}
+                                                    >
+                                                        −
+                                                    </button>
+                                                    <span className="min-w-8 text-center font-semibold">{stat.values[teamIdx] || 0}</span>
+                                                    <button
+                                                        className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-green-600"
+                                                        onClick={() => stat.onAdjust(teamIdx, 1)}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                );
+            })()}
 
             <CommandPanel
                 types={COMMAND_TYPES}
@@ -550,7 +544,7 @@ export default function Tracker() {
             )}
 
             <section className="space-y-2">
-                <h2 className="font-semibold">Events</h2>
+                <h2 className="font-semibold">Faits de match</h2>
                 <EventsList events={events} remove={removeEvent} />
             </section>
 
