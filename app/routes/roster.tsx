@@ -3,7 +3,7 @@ import RosterManager from "~/components/RosterManager";
 import { useTeams } from "~/context/TeamsContext";
 
 export function meta({}: Route.MetaArgs) {
-    return [{ title: "Rosters" }];
+    return [{ title: "Effectifs" }];
 }
 
 export default function RosterPage() {
@@ -20,9 +20,9 @@ export default function RosterPage() {
 
     return (
         <main className="p-6 max-w-screen-md mx-auto px-4">
-            <h1 className="text-2xl font-bold">Effectifs</h1>
-            <p className="text-sm mb-4">
-                {matchDay && <>Journée : {matchDay} — </>}
+            <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Effectifs</h1>
+            <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
+                {matchDay && <>Journée {matchDay} — </>}
                 Championnat : {championship}
             </p>
             <RosterManager
