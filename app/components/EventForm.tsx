@@ -54,14 +54,14 @@ export default function EventForm({
     }
 
     return (
-        <div className="p-4 border rounded-md bg-gray-50">
-        <h3 className="font-semibold">{type}</h3>
+        <div className="p-4 border rounded-md bg-neutral-800 text-white w-full max-w-md mx-auto">
+        <h3 className="font-bold text-xl mb-4">{type}</h3>
         <div className="space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <label className="mr-2">Équipe:</label>
+            <label className="leading-none">Équipe</label>
             <select
                 id="teamSelect"
-                className="flex-1"
+                className="flex-1 text-base font-light text-neutral-300"
                 value={teamIdx}
                 onChange={(e) => setTeamIdx(Number(e.target.value))}
             >
@@ -75,10 +75,10 @@ export default function EventForm({
             {type === "Changement" ? (
             <>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="mr-2" htmlFor="outPlayerSelect">Sortant:</label>
+                <label className="leading-none" htmlFor="outPlayerSelect">Sortant</label>
                 <select
                     id="outPlayerSelect"
-                    className="flex-1"
+                    className="flex-1 text-base font-light text-neutral-300"
                     value={outPlayerId}
                     onChange={(e) => setOutPlayerId(e.target.value)}
                 >
@@ -91,10 +91,10 @@ export default function EventForm({
                 </select>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="mr-2" htmlFor="inPlayerSelect">Entrant:</label>
+                <label className="leading-none" htmlFor="inPlayerSelect">Entrant</label>
                 <select
                     id="inPlayerSelect"
-                    className="flex-1"
+                    className="flex-1 text-base font-light text-neutral-300"
                     value={inPlayerId}
                     onChange={(e) => setInPlayerId(e.target.value)}
                 >
@@ -109,10 +109,10 @@ export default function EventForm({
             </>
             ) : (
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="mr-2" htmlFor="playerSelect">Joueur:</label>
+                <label className="leading-none" htmlFor="playerSelect">Joueur</label>
                 <select
                     id="playerSelect"
-                    className="flex-1"
+                    className="flex-1 text-base font-light text-neutral-300"
                     value={playerId}
                     onChange={(e) => setPlayerId(e.target.value)}
                 >
@@ -125,18 +125,20 @@ export default function EventForm({
                 </select>
             </div>
             )}
-            <div>
-            <label htmlFor="concussionCheckbox">
+            {type === "Blessure" && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label className="leading-none" htmlFor="concussionCheckbox">
                 <input
                 id="concussionCheckbox"
                 type="checkbox"
                 checked={concussion}
                 onChange={(e) => setConcussion(e.target.checked)}
-                className="mr-1"
+                className="mr-1 text-neutral-300"
                 />
                 Protocole commotion
             </label>
             </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-2">
             <button
                 className="px-3 py-1 bg-green-500 text-white rounded"

@@ -1,3 +1,5 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
 import type { Event } from "~/types/tracker";
 import { formatTime } from "~/utils/TimeUtils";
@@ -17,7 +19,7 @@ export default function EventsList({ events, remove }: Props) {
   return (
     <ul className="space-y-1">
       {events.map((e, idx) => (
-        <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
           <span>
             {e.summary ? (
               <>
@@ -25,20 +27,31 @@ export default function EventsList({ events, remove }: Props) {
               </>
             ) : (
               <>
-                {formatTime(e.time)} - {e.type}
+                {formatTime(e.time)} - {e.type} de{" "}
+                {e.player && (
+                  <>
+                    <strong>{e.player.name}</strong>
+                    {e.playerNumber ? ` (#${e.playerNumber})` : ""}
+                  </>
+                )}
                 {e.team && ` (${displayTeamName(e.team.name)})`}
-                {e.player && ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`}
-                {e.playerOut && e.playerIn &&
-                  ` — ${e.playerOut.name} → ${e.playerIn.name}`}
+                {e.playerOut && e.playerIn && (
+                  <>
+                    {" — "}
+                    <strong>{e.playerOut.name}</strong>
+                    {" → "}
+                    <strong>{e.playerIn.name}</strong>
+                  </>
+                )}
                 {e.concussion && " 🚨 commotion"}
               </>
             )}
           </span>
           <button
-            className="text-red-600 hover:underline"
+            className="text-red-600 text-sm px-2 py-1"
             onClick={() => remove(idx)}
           >
-            supprimer
+            <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
           </button>
         </li>
       ))}
