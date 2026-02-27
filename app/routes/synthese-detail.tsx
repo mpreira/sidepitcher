@@ -141,7 +141,7 @@ export default function SyntheseDetailPage() {
     const teamStats = getTeamStatsFromRecap();
 
     return (
-        <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
             <p className="text-sm text-gray-700">
                 Date: <FormattedDateTime dateString={summary.createdAt} />

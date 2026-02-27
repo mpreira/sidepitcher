@@ -123,17 +123,17 @@ export default function SynthesesPage() {
     }
 
     return (
-        <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <h1 className="text-2xl font-bold">Anciennes syntheses</h1>
             {summaries.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucune synthese disponible.</p>
             ) : (
                 <ul className="space-y-2">
                     {summaries.map((summary) => (
-                        <li key={summary.id} className="border-b border-neutral-700 w-[90%] mx-auto rounded p-3 flex items-center justify-between gap-2">
+                        <li key={summary.id} className="border-b border-neutral-700 w-full rounded p-3 flex items-center justify-between gap-2">
                             <Link
                                 to={`/syntheses/${summary.id}`}
-                                className="text-white text-lg font-semibold"
+                                className="text-white text-lg font-semibold min-w-0 break-words pr-2"
                             >
                                 {getTeamsLabel(summary.teams, summary.events, summary.matchDay) || "Match"} (
                                 <FormattedDate dateString={summary.createdAt} />

@@ -71,7 +71,7 @@ export default function App() {
 
   return (
     <TeamsProvider>
-      <div className={isHome ? "h-dvh overflow-hidden" : "min-h-screen pb-32"}>
+      <div className={isHome ? "h-dvh w-full max-w-full overflow-hidden" : "min-h-screen w-full max-w-full pb-32 overflow-x-hidden"}>
         <Outlet />
       </div>
 
