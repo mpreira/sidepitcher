@@ -1,6 +1,7 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
 import fs from "fs";
 import path from "path";
+import { dbQuery, hasDatabase } from "~/utils/serverDb";
 
 interface MatchDayTeamSelection {
     championship: string;
@@ -14,7 +15,8 @@ interface MatchDayTeamsData {
     selections: MatchDayTeamSelection[];
 }
 
-const filePath = path.join(process.cwd(), "data", "match-day-teams.json");
+const dataDir = process.env.DATA_DIR || path.join(process.cwd(), "data");
+const filePath = path.join(dataDir, "match-day-teams.json");
 
 async function readFile(): Promise<MatchDayTeamsData> {
     try {
@@ -35,6 +37,63 @@ export const loader: LoaderFunction = async ({ request }) => {
     const championship = url.searchParams.get("championship");
     const matchDay = url.searchParams.get("matchDay");
 
+    if (hasDatabase) {
+        if (championship && matchDay) {
+            const rows = await dbQuery<{
+                championship: string;
+                match_day: number;
+                team1_id: string;
+                team2_id: string;
+                saved_at: string;
+            }>(
+                `
+                SELECT championship, match_day, team1_id, team2_id, saved_at
+                FROM match_day_teams
+                WHERE championship = $1 AND match_day = $2
+                LIMIT 1
+                `,
+                [championship, parseInt(matchDay, 10)]
+            );
+
+            const row = rows[0];
+            if (!row) return { selection: null };
+
+            return {
+                selection: {
+                    championship: row.championship,
+                    matchDay: row.match_day,
+                    team1Id: row.team1_id,
+                    team2Id: row.team2_id,
+                    savedAt: row.saved_at,
+                },
+            };
+        }
+
+        const rows = await dbQuery<{
+            championship: string;
+            match_day: number;
+            team1_id: string;
+            team2_id: string;
+            saved_at: string;
+        }>(
+            `
+            SELECT championship, match_day, team1_id, team2_id, saved_at
+            FROM match_day_teams
+            ORDER BY saved_at DESC
+            `
+        );
+
+        return {
+            selections: rows.map((row) => ({
+                championship: row.championship,
+                matchDay: row.match_day,
+                team1Id: row.team1_id,
+                team2Id: row.team2_id,
+                savedAt: row.saved_at,
+            })),
+        };
+    }
+
     const data = await readFile();
 
     if (championship && matchDay) {
@@ -48,10 +107,23 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-    const data = await readFile();
+    const data = hasDatabase ? { selections: [] as MatchDayTeamSelection[] } : await readFile();
 
     if (request.method === "POST") {
         const payload = (await request.json()) as Omit<MatchDayTeamSelection, "savedAt">;
+
+        if (hasDatabase) {
+            await dbQuery(
+                `
+                INSERT INTO match_day_teams (championship, match_day, team1_id, team2_id, saved_at)
+                VALUES ($1, $2, $3, $4, NOW())
+                ON CONFLICT (championship, match_day)
+                DO UPDATE SET team1_id = EXCLUDED.team1_id, team2_id = EXCLUDED.team2_id, saved_at = NOW()
+                `,
+                [payload.championship, payload.matchDay, payload.team1Id, payload.team2Id]
+            );
+            return { ok: true };
+        }
 
         // Find and replace existing selection or add new one
         const index = data.selections.findIndex(

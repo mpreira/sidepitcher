@@ -1,11 +1,65 @@
+import { useEffect, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import logoSP from "~/assets/images/logo_800.svg";
 
 export function Welcome() {
   const { matchDay, sport, championship, setMatchDay, setSport, setChampionship } = useTeams();
+  const [draftSport, setDraftSport] = useState<"Rugby" | "Football">(sport);
+  const [draftMatchDay, setDraftMatchDay] = useState(matchDay);
+  const [draftChampionship, setDraftChampionship] = useState<"Top 14" | "Pro D2">(championship);
+  const [lastValidated, setLastValidated] = useState<{
+    sport: "Rugby" | "Football";
+    matchDay: string;
+    championship: "Top 14" | "Pro D2";
+  } | null>(null);
+  const [formMessage, setFormMessage] = useState<{ type: "success" | "info"; text: string } | null>(null);
 
   const sportOptions = ["Rugby", "Football"] as const;
   const championshipOptions = ["Top 14", "Pro D2"] as const;
+
+  useEffect(() => {
+    setDraftSport(sport);
+    setDraftMatchDay(matchDay);
+    setDraftChampionship(championship);
+  }, [sport, matchDay, championship]);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const nextValues = {
+      sport: draftSport,
+      matchDay: draftMatchDay,
+      championship: draftChampionship,
+    };
+
+    const isSameAsLastValidation =
+      lastValidated !== null &&
+      lastValidated.sport === nextValues.sport &&
+      lastValidated.matchDay === nextValues.matchDay &&
+      lastValidated.championship === nextValues.championship;
+
+    if (isSameAsLastValidation) {
+      setFormMessage({
+        type: "info",
+        text: "Aucun changement depuis la dernière validation.",
+      });
+      return;
+    }
+
+    setSport(draftSport);
+    setMatchDay(draftMatchDay);
+    setChampionship(draftChampionship);
+    setLastValidated(nextValues);
+    setFormMessage({
+      type: "success",
+      text: "Formulaire validé avec succès.",
+    });
+  }
+
+  const hasChanges =
+    draftSport !== sport ||
+    draftMatchDay !== matchDay ||
+    draftChampionship !== championship;
 
   return (
     <main className="flex h-full min-h-0 w-full items-center justify-center py-4">
@@ -19,15 +73,15 @@ export function Welcome() {
             />
           </div>
           {/* reglages de journee/championnat */}
-          <div className="mx-auto w-5/6 max-w-sm space-y-3 text-left md:w-full">
+          <form className="mx-auto w-5/6 max-w-sm space-y-3 text-left md:w-full" onSubmit={handleSubmit}>
             <div className="flex items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
               <label className="self-center leading-none" htmlFor="sportSelect">Sport</label>
               <select
                 id="sportSelect"
                 className="ml-auto h-auto w-auto min-w-[8rem] self-center border-0 bg-transparent p-0 text-left leading-none shadow-none focus:ring-0 focus:border-0"
-                value={sport}
+                value={draftSport}
                 onChange={(e) =>
-                  setSport(e.target.value as "Rugby" | "Football")
+                  setDraftSport(e.target.value as "Rugby" | "Football")
                 }
               >
                 {sportOptions.map((option) => (
@@ -43,8 +97,8 @@ export function Welcome() {
                 id="matchDayInput"
                 type="text"
                 className="ml-auto h-auto w-auto min-w-[13rem] self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                value={matchDay}
-                onChange={(e) => setMatchDay(e.target.value)}
+                value={draftMatchDay}
+                onChange={(e) => setDraftMatchDay(e.target.value)}
                 placeholder="ex. J1"
               />
             </div>
@@ -53,9 +107,9 @@ export function Welcome() {
               <select
                 id="championshipSelect"
                 className="ml-auto h-auto w-auto min-w-[8rem] self-center border-0 bg-transparent p-0 text-left leading-none shadow-none focus:ring-0 focus:border-0"
-                value={championship}
+                value={draftChampionship}
                 onChange={(e) =>
-                  setChampionship(e.target.value as "Top 14" | "Pro D2")
+                  setDraftChampionship(e.target.value as "Top 14" | "Pro D2")
                 }
               >
                 {championshipOptions.map((option) => (
@@ -65,7 +119,22 @@ export function Welcome() {
                 ))}
               </select>
             </div>
-          </div>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Valider
+            </button>
+            {formMessage && (
+              <p
+                className={`text-sm ${
+                  formMessage.type === "success" ? "text-green-400" : "text-sky-400"
+                }`}
+              >
+                {formMessage.text}
+              </p>
+            )}
+          </form>
         </header>
         {/*<div className="max-w-[300px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
