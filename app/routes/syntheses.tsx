@@ -3,6 +3,8 @@ import path from "path";
 import { Link, useLoaderData } from "react-router";
 import { useState, useLayoutEffect } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowCircleLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 interface StoredSummaryListItem {
     id: string;
@@ -128,10 +130,10 @@ export default function SynthesesPage() {
             ) : (
                 <ul className="space-y-2">
                     {summaries.map((summary) => (
-                        <li key={summary.id} className="border rounded p-3 flex items-center justify-between gap-2">
+                        <li key={summary.id} className="border-b border-neutral-700 w-[90%] mx-auto rounded p-3 flex items-center justify-between gap-2">
                             <Link
                                 to={`/syntheses/${summary.id}`}
-                                className="underline text-blue-600"
+                                className="text-white text-lg font-semibold"
                             >
                                 {getTeamsLabel(summary.teams, summary.events, summary.matchDay) || "Match"} (
                                 <FormattedDate dateString={summary.createdAt} />
@@ -141,7 +143,7 @@ export default function SynthesesPage() {
                                 className="px-2 py-1 bg-red-500 text-white text-sm rounded"
                                 onClick={() => deleteSummary(summary.id)}
                             >
-                                Supprimer
+                                <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
                             </button>
                         </li>
                     ))}
@@ -150,7 +152,8 @@ export default function SynthesesPage() {
             {deleteMessage && (
                 <p className="text-sm text-green-700">{deleteMessage}</p>
             )}
-            <Link to="/tracker" className="underline text-blue-600 text-sm">
+            <Link to="/tracker" className="text-white text-base font-medium">
+                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour au suivi
             </Link>
         </main>

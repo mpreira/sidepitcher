@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import type { Route } from "./+types/tracker";
 import type { Event } from "~/types/tracker";
 import { loadTrackerTeamSelection, saveTrackerTeamSelection } from "~/utils/TrackerStorage";
@@ -61,7 +61,7 @@ export default function Tracker() {
         }
     }
     const [events, setEvents] = useState<Event[]>([]);
-    const { rosters, teams, activeRosterId, matchDay, championship } = useTeams();
+    const { rosters, teams, activeRosterId, matchDay, championship, sport } = useTeams();
     
     const activeRoster = useMemo(() => rosters.find((r) => r.id === activeRosterId) ?? null, [rosters, activeRosterId]);
     
@@ -78,6 +78,8 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState<string>("");
+    const contextInitializedRef = useRef(false);
+    const prevContextRef = useRef<{ matchDay: string | number; championship: string; sport: string } | null>(null);
 
     const selectedTeams = useMemo(
         () => [
@@ -114,16 +116,48 @@ export default function Tracker() {
         }
     }, [championship, matchDay]);
 
-    useEffect(() => {
-        // reset manual penalty adjustments when teams change
+    function resetTrackerInfos() {
+        setEvents([]);
+        setTime(0);
+        setRunning(false);
+        setCurrentHalf(1);
+        setMatchEnded(false);
+        setManualTimeInput("");
+        setActiveCommand(null);
+        setTeamPenalties([0, 0]);
         setManualPenaltyAdjustments([0, 0]);
-        // reset manual en-avant adjustments when teams change
+        setTeamEnAvant([0, 0]);
         setManualEnAvantAdjustments([0, 0]);
         setTeamToucheGagnee([0, 0]);
         setTeamTouchePerdue([0, 0]);
         setTeamMeleeGagnee([0, 0]);
         setTeamMeleePerdue([0, 0]);
-    }, [selectedTeams.length]);
+    }
+
+    useEffect(() => {
+        if (!contextInitializedRef.current) {
+            contextInitializedRef.current = true;
+            prevContextRef.current = { matchDay, championship, sport };
+            return;
+        }
+
+        const prev = prevContextRef.current;
+        if (!prev) {
+            prevContextRef.current = { matchDay, championship, sport };
+            return;
+        }
+
+        const contextChanged =
+            prev.matchDay !== matchDay ||
+            prev.championship !== championship ||
+            prev.sport !== sport;
+
+        if (contextChanged) {
+            resetTrackerInfos();
+        }
+
+        prevContextRef.current = { matchDay, championship, sport };
+    }, [matchDay, championship, sport]);
 
     // count penalties (fouls) from events
     useEffect(() => {
@@ -175,7 +209,7 @@ export default function Tracker() {
         const team2Name = selectedTeams[1].name.replace(/\s+J\d+$/, "");
         const displayedPenalties = getDisplayedPenalties();
         const displayedEnAvant = getDisplayedEnAvant();
-        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants`;
+        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamToucheGagnee[0] || 0} touches gagnées, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleeGagnee[0] || 0} mêlées gagnées, ${teamMeleePerdue[0] || 0} mêlées perdues / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamToucheGagnee[1] || 0} touches gagnées, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleeGagnee[1] || 0} mêlées gagnées, ${teamMeleePerdue[1] || 0} mêlées perdues`;
         
         const summaryEvent: Event = {
             type: "Récapitulatif",
@@ -335,6 +369,20 @@ export default function Tracker() {
         setEvents((ev) => ev.filter((_, i) => i !== index));
     }
 
+    function handleTeam1Change(nextTeamId: string) {
+        if (nextTeamId !== team1Id) {
+            resetTrackerInfos();
+        }
+        setTeam1Id(nextTeamId);
+    }
+
+    function handleTeam2Change(nextTeamId: string) {
+        if (nextTeamId !== team2Id) {
+            resetTrackerInfos();
+        }
+        setTeam2Id(nextTeamId);
+    }
+
     return (
         <main className="p-6 space-y-6 max-w-screen-md mx-auto px-4">
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
@@ -359,7 +407,7 @@ export default function Tracker() {
                                 id="team1Select"
                                 className="md:w-1/2 border-0 bg-neutral-900 py-1 px-2 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                                 value={team1Id}
-                                onChange={(e) => setTeam1Id(e.target.value)}
+                                onChange={(e) => handleTeam1Change(e.target.value)}
                             >
                                 <option value="">-- Équipe 1 --</option>
                                 {teamsForDay.map((team) => (
@@ -372,7 +420,7 @@ export default function Tracker() {
                                 id="team2Select"
                                 className="md:w-1/2 border-0 bg-neutral-900 py-1 px-2 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
                                 value={team2Id}
-                                onChange={(e) => setTeam2Id(e.target.value)}
+                                onChange={(e) => handleTeam2Change(e.target.value)}
                             >
                                 <option value="">-- Équipe 2 --</option>
                                 {teamsForDay.map((team) => (
