@@ -15,7 +15,6 @@ import {
   faStopwatch,
   faUsers,
   faFileLines,
-  faLayerGroup,
   faGear,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -60,8 +59,8 @@ import { TeamsProvider } from "~/context/TeamsContext";
 
 const navigationItems = [
   { href: "/", label: "Accueil", icon: faHouse, active: true },
-  { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
   { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
+  { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
   { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
   { href: "#", label: "Réglages", icon: faGear, active: false },
 ] as const;

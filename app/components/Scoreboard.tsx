@@ -27,17 +27,17 @@ export default function Scoreboard({
             <div className="text-6xl font-bold">{displayScore(0)}</div>
           </>
         ) : (
-          <div className="text-lg italic">No team</div>
+          <div className="text-lg italic">Aucune équipe</div>
         )}
       </div>
 
       {/* timer / center */}
       <div className="bg-gray-900 text-white flex flex-col items-center justify-center px-8 py-6 gap-2">
         {mainTimerText && (
-          <div className="text-5xl font-mono font-bold">{mainTimerText}</div>
+          <div className="text-3xl sm:text-5xl font-mono font-bold text-center break-words">{mainTimerText}</div>
         )}
         {secondaryTimerText && (
-          <div className="text-2xl font-mono text-yellow-300">{secondaryTimerText}</div>
+          <div className="text-xl sm:text-2xl font-mono text-yellow-300 text-center break-words">{secondaryTimerText}</div>
         )}
       </div>
 
@@ -49,7 +49,7 @@ export default function Scoreboard({
             <div className="text-6xl font-bold">{displayScore(1)}</div>
           </>
         ) : (
-          <div className="text-lg italic">No team</div>
+          <div className="text-lg italic">Aucune équipe</div>
         )}
       </div>
     </div>

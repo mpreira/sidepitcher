@@ -6,6 +6,8 @@ import type { Event } from "~/types/tracker";
 import { formatTime } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowCircleLeft } from "@fortawesome/free-solid-svg-icons";
 
 interface StoredSummary {
     id: string;
@@ -100,6 +102,44 @@ export default function SyntheseDetailPage() {
         return teamsLabel;
     };
 
+    const getTeamStatsFromRecap = () => {
+        const recapEvent = [...summary.events]
+            .reverse()
+            .find((event) => event.type === "Récapitulatif" && event.summary);
+
+        if (!recapEvent?.summary) return null;
+
+        const [rawLeft, rawRight] = recapEvent.summary.split(" / ");
+        if (!rawLeft || !rawRight) return null;
+
+        const leftAfterHalf = rawLeft.includes(" : ")
+            ? rawLeft.split(" : ").slice(1).join(" : ").trim()
+            : rawLeft.trim();
+
+        const parseTeamBlock = (block: string) => {
+            const separatorIndex = block.indexOf(" : ");
+            if (separatorIndex === -1) return null;
+
+            const teamName = block.slice(0, separatorIndex).trim();
+            const statsText = block.slice(separatorIndex + 3).trim();
+            const stats = statsText
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+            return { teamName, stats };
+        };
+
+        const leftTeam = parseTeamBlock(leftAfterHalf);
+        const rightTeam = parseTeamBlock(rawRight.trim());
+
+        if (!leftTeam || !rightTeam) return null;
+
+        return { leftTeam, rightTeam };
+    };
+
+    const teamStats = getTeamStatsFromRecap();
+
     return (
         <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
             <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
@@ -125,6 +165,32 @@ export default function SyntheseDetailPage() {
                             </li>
                         ))}
                     </ul>
+                )}
+            </section>
+
+            <section className="space-y-2">
+                <h2 className="font-semibold">Statistiques équipes</h2>
+                {!teamStats ? (
+                    <p className="text-sm text-gray-600">Statistiques par équipe indisponibles.</p>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="border border-neutral-700 rounded p-3">
+                            <h3 className="font-semibold mb-2">{teamStats.leftTeam.teamName}</h3>
+                            <ul className="space-y-1 text-sm">
+                                {teamStats.leftTeam.stats.map((stat, idx) => (
+                                    <li key={`left-${idx}`}>{stat}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="border border-neutral-700 rounded p-3">
+                            <h3 className="font-semibold mb-2">{teamStats.rightTeam.teamName}</h3>
+                            <ul className="space-y-1 text-sm">
+                                {teamStats.rightTeam.stats.map((stat, idx) => (
+                                    <li key={`right-${idx}`}>{stat}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
                 )}
             </section>
 
@@ -155,7 +221,8 @@ export default function SyntheseDetailPage() {
                 )}
             </section>
 
-            <Link to="/syntheses" className="underline text-blue-600 text-sm">
+            <Link to="/syntheses" className="text-white text-base">
+                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour aux syntheses
             </Link>
         </main>

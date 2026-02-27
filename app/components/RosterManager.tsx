@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Team, Player, Roster } from "~/types/tracker";
-import TeamEditor from "~/components/TeamEditor";
 import { useTeams } from "~/context/TeamsContext";
 import {
     createNewRoster,
@@ -19,6 +18,8 @@ import {
     importTeamFromJSON,
     getTeamPlayers,
 } from "~/utils/RosterUtils";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleCheck, faPlus } from "@fortawesome/free-solid-svg-icons";
 
 interface Props {
     rosters: Roster[];
@@ -42,7 +43,9 @@ export default function RosterManager({
     const [teamName, setTeamName] = useState("");
     const [newRosterName, setNewRosterName] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
+    const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
+    const [activeCategoryTab, setActiveCategoryTab] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const [rosterFeedbackMessage, setRosterFeedbackMessage] = useState("");
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
@@ -64,13 +67,18 @@ export default function RosterManager({
         const newRoster = createNewRoster(newRosterName, newRosterCategory);
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
-        setRosterFeedbackMessage("Roster créé avec succès.");
+        setRosterFeedbackMessage("Effectif créé avec succès.");
         setShowCreateRosterForm(false);
         setNewRosterName("");
         setNewRosterCategory('Top 14');
     }
 
     function deleteRoster(id: string) {
+        const rosterToDelete = rosters.find((r) => r.id === id);
+        const label = rosterToDelete?.name ?? "cet effectif";
+        const confirmed = window.confirm(`Confirmer la suppression de ${label} ?`);
+        if (!confirmed) return;
+
         setRosters(deleteRosterFromList(rosters, id));
         setTeams(deleteTeamsFromRoster(teams, id));
         if (activeRosterId === id) {
@@ -177,21 +185,63 @@ export default function RosterManager({
         return `/roster/${championshipSlug}/${slug}_${roster.id}`;
     }
 
-    const { matchDay } = useTeams();
+    const { matchDay, championship } = useTeams();
+
+    useEffect(() => {
+        setActiveCategoryTab(championship);
+    }, [championship]);
+
+    const filteredRosters = rosters
+        .filter((r) => r.category === activeCategoryTab)
+        .sort((firstRoster, secondRoster) =>
+            firstRoster.name.localeCompare(secondRoster.name, "fr", { sensitivity: "base" })
+        );
 
     return (
         <section className="space-y-4 max-w-screen-md mx-auto px-4">
-            <h2 className="font-semibold">Rosters</h2>
+            <div className="flex items-center gap-2">
+                <button
+                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        activeCategoryTab === 'Top 14'
+                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                    }`}
+                    onClick={() => setActiveCategoryTab('Top 14')}
+                >
+                    Top 14
+                </button>
+                <button
+                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        activeCategoryTab === 'Pro D2'
+                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                    }`}
+                    onClick={() => setActiveCategoryTab('Pro D2')}
+                >
+                    Pro D2
+                </button>
+            </div>
+            <button
+                className="px-3 py-2 bg-sky-500/20 text-sky-300 rounded border hover:bg-sky-600 flex items-center font-medium"
+                onClick={() => {
+                    setShowCreateRosterForm((value) => !value);
+                    setRosterFeedbackMessage("");
+                }}
+            >
+                <FontAwesomeIcon icon={faPlus} className="mr-1 text-white" />
+                Créer un effectif
+            </button>
 
             {rosters.length === 0 ? (
-                <p className="text-sm text-gray-600">Aucun roster existant</p>
+                <p className="text-sm text-gray-600">Aucun effectif existant</p>
+            ) : filteredRosters.length === 0 ? (
+                <p className="text-sm text-gray-600">Aucun effectif dans {activeCategoryTab}</p>
             ) : (
-                <div className="flex flex-wrap gap-2">
-                    {rosters.map((r) => (
-                        <div key={r.id} className="flex items-center gap-2 p-2 border rounded">
-                            <div className="text-sm text-gray-600">{r.category || 'N/A'}</div>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                    {filteredRosters.map((r) => (
+                        <div key={r.id} className="flex items-center justify-between gap-2 rounded bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 py-2 px-4">
                             <button
-                                className="underline text-blue-600"
+                                className="text-white font-semibold text-base md:text-lg w-full"
                                 onClick={() => {
                                     setActiveRosterId(r.id);
                                     navigate(getRosterPath(r));
@@ -199,44 +249,31 @@ export default function RosterManager({
                             >
                                 {r.name}
                             </button>
-                            <button
-                                className="text-red-600"
-                                onClick={() => deleteRoster(r.id)}
-                            >
-                                supprimer
-                            </button>
                         </div>
                     ))}
                 </div>
             )}
 
-            <button
-                className="px-3 py-2 bg-green-500 text-white rounded"
-                onClick={() => {
-                    setShowCreateRosterForm((value) => !value);
-                    setRosterFeedbackMessage("");
-                }}
-            >
-                Créer un roster
-            </button>
-
             {showCreateRosterForm && (
-                <div className="space-y-2 border border-gray-700 p-3 rounded bg-gray-900 text-white">
+                <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
                     <input
                         id="newRosterName"
-                        className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
-                        placeholder="Nom du roster"
+                        className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                        placeholder="Nom de l'effectif"
                         value={newRosterName}
                         onChange={(e) => setNewRosterName(e.target.value)}
                     />
                     <select
                         id="newRosterCategory"
-                        className="border border-gray-600 bg-gray-800 text-white p-2 w-full"
+                        className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
                         value={newRosterCategory}
                         onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
                     >
-                        <option value="Top 14">Top 14</option>
-                        <option value="Pro D2">Pro D2</option>
+                        {championshipOptions.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
                     </select>
                     <button
                         className="px-3 py-2 bg-blue-500 text-white rounded"
@@ -248,36 +285,11 @@ export default function RosterManager({
             )}
 
             {rosterFeedbackMessage && (
-                <p className="text-sm text-green-700">{rosterFeedbackMessage}</p>
+                <p className="flex items-center gap-2 text-sm text-green-400">
+                    <FontAwesomeIcon icon={faCircleCheck} />
+                    {rosterFeedbackMessage}
+                </p>
             )}
-
-        {/*{activeRoster && (
-                <>
-                    <div className="flex flex-col sm:flex-row gap-6">
-                        {/* teams column */}
-                        {/*
-                        <div className="w-full sm:w-1/2">
-                            <div className="space-y-2 mb-4">
-                                {(() => {
-                                const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
-                                const already = activeTeams.some(t => t.name === name);
-                                if (already) return null;
-                                return (
-                                    <button
-                                        className="px-3 py-1 bg-blue-500 text-white rounded"
-                                        onClick={addTeam}
-                                        disabled={!matchDay}
-                                    >
-                                        Créer « {activeRoster.name} {matchDay && `J${matchDay}`} »
-                                    </button>
-                                );
-                            })()}
-                            </div>
-                        </div>
-                        }
-                    </div>
-                </>
-            )}*/}
         </section>
     );
 }

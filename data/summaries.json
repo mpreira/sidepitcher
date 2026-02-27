@@ -1,3 +1,274 @@
 {
-  "summaries": []
+  "summaries": [
+    {
+      "id": "05709765-08f7-4672-aa56-ff51351be4ab",
+      "createdAt": "2026-02-27T00:30:22.119Z",
+      "currentTime": 2415,
+      "summary": {
+        "Récapitulatif": 2,
+        "Drop": 1,
+        "Essai": 1
+      },
+      "events": [
+        {
+          "type": "Récapitulatif",
+          "time": 2400,
+          "summary": "MT1 : Roster 1 : 4 pénalités, 2 en-avants, 2 touches gagnées, 2 touches perdues, 2 mêlées gagnées, 0 mêlées perdues / Roster 2 : 3 pénalités, 0 en-avants, 4 touches gagnées, 2 touches perdues, 0 mêlées gagnées, 3 mêlées perdues"
+        },
+        {
+          "type": "Drop",
+          "time": 2404,
+          "team": {
+            "id": "Roster_1_J14",
+            "name": "Roster 1 J14",
+            "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+            "starters": [
+              {
+                "player": {
+                  "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+                  "name": "Baba Bam"
+                },
+                "number": 1
+              },
+              {
+                "player": {
+                  "id": "0a170f64-96ab-44a2-837c-36c7b0fec2ba",
+                  "name": "Lilh Wes"
+                },
+                "number": 2
+              },
+              {
+                "player": {
+                  "id": "50a99220-aefa-4499-ac0d-d56133ab54eb",
+                  "name": "Pa Pou"
+                },
+                "number": 2
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "aa204808-6527-474c-9d21-256e2368f0ad",
+                  "name": "Chi Chi"
+                },
+                "number": 18
+              }
+            ]
+          },
+          "player": {
+            "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+            "name": "Baba Bam"
+          },
+          "playerNumber": 1,
+          "concussion": false
+        },
+        {
+          "type": "Essai",
+          "time": 2411,
+          "team": {
+            "id": "Roster_2_J14",
+            "name": "Roster 2 J14",
+            "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
+            "starters": [
+              {
+                "player": {
+                  "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+                  "name": "Oui Oui"
+                },
+                "number": 13
+              },
+              {
+                "player": {
+                  "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+                  "name": "No No"
+                },
+                "number": 10
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+                  "name": "Na Na"
+                },
+                "number": 19
+              }
+            ]
+          },
+          "player": {
+            "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+            "name": "No No"
+          },
+          "playerNumber": 10,
+          "concussion": false
+        },
+        {
+          "type": "Récapitulatif",
+          "time": 2415,
+          "summary": "MT2 : Roster 1 : 4 pénalités, 2 en-avants, 2 touches gagnées, 2 touches perdues, 2 mêlées gagnées, 0 mêlées perdues / Roster 2 : 3 pénalités, 0 en-avants, 4 touches gagnées, 2 touches perdues, 0 mêlées gagnées, 3 mêlées perdues"
+        }
+      ],
+      "teams": [
+        {
+          "id": "Roster_1_J14",
+          "name": "Roster 1 J14"
+        },
+        {
+          "id": "Roster_2_J14",
+          "name": "Roster 2 J14"
+        }
+      ]
+    },
+    {
+      "id": "6e297fbd-49b8-41ff-bf4e-2b143ea0f1ca",
+      "createdAt": "2026-02-27T00:26:21.645Z",
+      "currentTime": 40,
+      "summary": {
+        "Carton jaune": 1,
+        "Essai": 1,
+        "Essai de pénalité": 1
+      },
+      "events": [
+        {
+          "type": "Carton jaune",
+          "time": 24,
+          "team": {
+            "id": "Roster_2_J14",
+            "name": "Roster 2 J14",
+            "rosterId": "b584429c-c62c-493d-bac2-57ada4eb423a",
+            "starters": [
+              {
+                "player": {
+                  "id": "9f33e986-ef92-4bec-9a1f-f708c5370b60",
+                  "name": "Oui Oui"
+                },
+                "number": 13
+              },
+              {
+                "player": {
+                  "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+                  "name": "No No"
+                },
+                "number": 10
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "38204cc1-7af1-4fed-a106-9395ba1a36e0",
+                  "name": "Na Na"
+                },
+                "number": 19
+              }
+            ]
+          },
+          "player": {
+            "id": "9453fa7c-8ff7-43c9-abfb-0b1b2d063433",
+            "name": "No No"
+          },
+          "playerNumber": 10,
+          "concussion": false
+        },
+        {
+          "type": "Essai",
+          "time": 30,
+          "team": {
+            "id": "Roster_1_J14",
+            "name": "Roster 1 J14",
+            "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+            "starters": [
+              {
+                "player": {
+                  "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+                  "name": "Baba Bam"
+                },
+                "number": 1
+              },
+              {
+                "player": {
+                  "id": "0a170f64-96ab-44a2-837c-36c7b0fec2ba",
+                  "name": "Lilh Wes"
+                },
+                "number": 2
+              },
+              {
+                "player": {
+                  "id": "50a99220-aefa-4499-ac0d-d56133ab54eb",
+                  "name": "Pa Pou"
+                },
+                "number": 2
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "aa204808-6527-474c-9d21-256e2368f0ad",
+                  "name": "Chi Chi"
+                },
+                "number": 18
+              }
+            ]
+          },
+          "player": {
+            "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+            "name": "Baba Bam"
+          },
+          "playerNumber": 1,
+          "concussion": false
+        },
+        {
+          "type": "Essai de pénalité",
+          "time": 32,
+          "team": {
+            "id": "Roster_1_J14",
+            "name": "Roster 1 J14",
+            "rosterId": "e525c291-be7d-4176-8f0c-c8e741b80642",
+            "starters": [
+              {
+                "player": {
+                  "id": "bb22a06f-21ee-4bea-a17f-f0750d712854",
+                  "name": "Baba Bam"
+                },
+                "number": 1
+              },
+              {
+                "player": {
+                  "id": "0a170f64-96ab-44a2-837c-36c7b0fec2ba",
+                  "name": "Lilh Wes"
+                },
+                "number": 2
+              },
+              {
+                "player": {
+                  "id": "50a99220-aefa-4499-ac0d-d56133ab54eb",
+                  "name": "Pa Pou"
+                },
+                "number": 2
+              }
+            ],
+            "substitutes": [
+              {
+                "player": {
+                  "id": "aa204808-6527-474c-9d21-256e2368f0ad",
+                  "name": "Chi Chi"
+                },
+                "number": 18
+              }
+            ]
+          },
+          "concussion": false
+        }
+      ],
+      "teams": [
+        {
+          "id": "Roster_1_J14",
+          "name": "Roster 1 J14"
+        },
+        {
+          "id": "Roster_2_J14",
+          "name": "Roster 2 J14"
+        }
+      ]
+    }
+  ]
 }
