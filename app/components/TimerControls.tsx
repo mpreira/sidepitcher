@@ -80,14 +80,14 @@ export default function TimerControls({
         </button>
       </div>
 
-      <div className="border rounded p-4 space-y-2">
-        <label htmlFor="manualTimeInput" className="block font-semibold">Temps manuel (mm:ss)</label>
-        <div className="flex gap-2">
+      <div className="border border-neutral-700 rounded p-4">
+        <div className="flex items-center gap-2">
+          <label htmlFor="manualTimeInput" className="font-semibold whitespace-nowrap">Temps manuel (mm:ss)</label>
           <input
             id="manualTimeInput"
             type="text"
             placeholder="05:30"
-            className="border p-2 flex-1"
+            className="text-base p-2 flex-1"
             value={manualTimeInput}
             onChange={(e) => onManualTimeInputChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onApplyManualTime()}
