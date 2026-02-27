@@ -384,7 +384,7 @@ export default function Tracker() {
     }
 
     return (
-        <main className="p-6 space-y-6 max-w-screen-md mx-auto px-4">
+        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
             <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
                 {matchDay && <>Journée : {matchDay} — </>}
