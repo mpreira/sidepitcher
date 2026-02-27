@@ -20,7 +20,7 @@ export default function EventsList({ events, remove }: Props) {
     <ul className="space-y-1">
       {events.map((e, idx) => (
         <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
-          <span>
+          <span className="min-w-0 break-words">
             {e.summary ? (
               <>
                 {formatTime(e.time)} - <strong>{e.summary}</strong>
