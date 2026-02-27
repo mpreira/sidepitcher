@@ -3,7 +3,17 @@ import { useTeams } from "~/context/TeamsContext";
 import logoSP from "~/assets/images/logo_800.svg";
 
 export function Welcome() {
-  const { matchDay, sport, championship, setMatchDay, setSport, setChampionship } = useTeams();
+  const {
+    rosters,
+    teams,
+    activeRosterId,
+    matchDay,
+    sport,
+    championship,
+    setMatchDay,
+    setSport,
+    setChampionship,
+  } = useTeams();
   const [draftSport, setDraftSport] = useState<"Rugby" | "Football">(sport);
   const [draftMatchDay, setDraftMatchDay] = useState(matchDay);
   const [draftChampionship, setDraftChampionship] = useState<"Top 14" | "Pro D2">(championship);
@@ -23,7 +33,7 @@ export function Welcome() {
     setDraftChampionship(championship);
   }, [sport, matchDay, championship]);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const nextValues = {
@@ -46,14 +56,34 @@ export function Welcome() {
       return;
     }
 
-    setSport(draftSport);
-    setMatchDay(draftMatchDay);
-    setChampionship(draftChampionship);
-    setLastValidated(nextValues);
-    setFormMessage({
-      type: "success",
-      text: "Formulaire validé avec succès.",
-    });
+    try {
+      await fetch("/api/rosters", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rosters,
+          teams,
+          activeRosterId,
+          matchDay: nextValues.matchDay,
+          sport: nextValues.sport,
+          championship: nextValues.championship,
+        }),
+      });
+
+      setSport(draftSport);
+      setMatchDay(draftMatchDay);
+      setChampionship(draftChampionship);
+      setLastValidated(nextValues);
+      setFormMessage({
+        type: "success",
+        text: "Formulaire validé et sauvegardé.",
+      });
+    } catch {
+      setFormMessage({
+        type: "info",
+        text: "Impossible de sauvegarder pour le moment.",
+      });
+    }
   }
 
   const hasChanges =
