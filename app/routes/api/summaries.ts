@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import type { Event } from "~/types/tracker";
-import { dbQuery, hasDatabase } from "~/utils/serverDb";
+import { dbQuery, hasDatabase } from "data/serverDb";
 
 interface StoredSummary {
     id: string;

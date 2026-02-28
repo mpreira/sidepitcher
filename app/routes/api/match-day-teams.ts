@@ -1,7 +1,7 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
 import fs from "fs";
 import path from "path";
-import { dbQuery, hasDatabase } from "~/utils/serverDb";
+import { dbQuery, hasDatabase } from "data/serverDb";
 
 interface MatchDayTeamSelection {
     championship: string;
