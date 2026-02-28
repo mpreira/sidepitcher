@@ -41,7 +41,7 @@ export async function ensureDbSchema(): Promise<void> {
                 await client.query(`
                     CREATE TABLE IF NOT EXISTS summaries (
                         id TEXT PRIMARY KEY,
-                        created_at TIMESTAMPTZ NOT NULL,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                         current_time INTEGER NOT NULL,
                         summary JSONB NOT NULL,
                         events JSONB NOT NULL,
