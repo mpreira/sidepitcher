@@ -613,31 +613,35 @@ export default function Tracker() {
                                 {saveMessage}
                             </p>
                         )}
-                        <div className="space-y-2 border border-neutral-700 rounded p-3 bg-neutral-900">
-                            <p className="text-sm text-neutral-300">Diffusion externe en lecture seule</p>
-                            {!livePublicSlug ? (
-                                <button
-                                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
-                                    onClick={activateLivePublic}
-                                    disabled={!canPublishLive || liveBusy}
-                                >
-                                    {liveBusy ? "Activation..." : "Activer le live public"}
-                                </button>
-                            ) : (
-                                <>
-                                    <p className="text-xs break-all text-neutral-200">{liveViewerUrl}</p>
-                                    <button
-                                        className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                        onClick={copyLiveViewerUrl}
-                                    >
-                                        Copier le lien spectateur
-                                    </button>
-                                </>
-                            )}
-                            {liveMessage && <p className="text-sm text-green-700">{liveMessage}</p>}
-                        </div>
                     </>
                 )}
+            </section>
+
+            <section className="space-y-2 border border-neutral-700 rounded p-3 bg-neutral-900">
+                <p className="text-sm text-neutral-300">Diffusion externe en lecture seule</p>
+                {!livePublicSlug ? (
+                    <button
+                        className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+                        onClick={activateLivePublic}
+                        disabled={!canPublishLive || liveBusy}
+                    >
+                        {liveBusy ? "Activation..." : "Activer le live public"}
+                    </button>
+                ) : (
+                    <>
+                        <p className="text-xs break-all text-neutral-200">{liveViewerUrl}</p>
+                        <button
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            onClick={copyLiveViewerUrl}
+                        >
+                            Copier le lien spectateur
+                        </button>
+                    </>
+                )}
+                {!canPublishLive && !livePublicSlug && (
+                    <p className="text-xs text-neutral-400">Sélectionne deux équipes différentes pour activer le live.</p>
+                )}
+                {liveMessage && <p className="text-sm text-green-700">{liveMessage}</p>}
             </section>
 
             {/* scoreboard showing teams, computed score and timers */}
