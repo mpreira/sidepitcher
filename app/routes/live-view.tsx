@@ -107,13 +107,38 @@ export default function LiveViewPage() {
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">Événements</h2>
         {snapshot.events.length === 0 ? (
-          <p className="text-sm text-neutral-400">Aucun événement pour le moment.</p>
+          <p>Aucune action enregistrée.</p>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-1">
             {snapshot.events.map((event, index) => (
-              <li key={`${event.time}-${index}`}>
-                {formatTime(event.time)} - {event.summary ? <strong>{event.summary}</strong> : event.type}
-                {event.team?.name ? ` (${event.team.name.replace(/\s+J\d+$/, "")})` : ""}
+              <li key={`${event.time}-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
+                <span className="min-w-0 break-words">
+                  {event.summary ? (
+                    <>
+                      {formatTime(event.time)} - <strong>{event.summary}</strong>
+                    </>
+                  ) : (
+                    <>
+                      {formatTime(event.time)} - {event.type} de{" "}
+                      {event.player && (
+                        <>
+                          <strong>{event.player.name}</strong>
+                          {event.playerNumber ? ` (#${event.playerNumber})` : ""}
+                        </>
+                      )}
+                      {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
+                      {event.playerOut && event.playerIn && (
+                        <>
+                          {" — "}
+                          <strong>{event.playerOut.name}</strong>
+                          {" → "}
+                          <strong>{event.playerIn.name}</strong>
+                        </>
+                      )}
+                      {event.concussion && " 🚨 commotion"}
+                    </>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
