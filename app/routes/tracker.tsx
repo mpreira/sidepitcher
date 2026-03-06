@@ -667,7 +667,7 @@ export default function Tracker() {
                 onStartStop={() => setRunning((r) => !r)}
                 onAdjust={adjustTime}
                 onReset={() => {
-                    setTime(0);
+                    setTime(currentHalf === 2 ? 40 * 60 : 0);
                     setMatchEnded(false);
                 }}
                 manualTimeInput={manualTimeInput}
