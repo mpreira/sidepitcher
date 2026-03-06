@@ -83,6 +83,21 @@ Make sure to deploy the output of `npm run build`
 │   └── server/    # Server-side code
 ```
 
+### Render PostgreSQL Configuration
+
+The app now stores rosters, match-day team selections, and summaries in PostgreSQL.
+
+Set the environment variable below in Render (Service > Environment):
+
+```bash
+DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DBNAME
+```
+
+Notes:
+
+- Use the Render PostgreSQL "External Database URL" as `DATABASE_URL`.
+- No local SQLite setup is needed in production.
+
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.

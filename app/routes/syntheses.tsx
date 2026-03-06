@@ -1,10 +1,9 @@
-import fs from "fs";
-import path from "path";
 import { Link, useLoaderData } from "react-router";
 import { useState, useLayoutEffect } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { listSummaries } from "~/utils/database.server";
 
 interface StoredSummaryListItem {
     id: string;
@@ -18,19 +17,8 @@ interface StoredSummaryListItem {
     }>;
 }
 
-interface SummariesData {
-    summaries: StoredSummaryListItem[];
-}
-
-const filePath = path.join(process.cwd(), "data", "summaries.json");
-
 export async function loader() {
-    try {
-        const content = await fs.promises.readFile(filePath, "utf-8");
-        return JSON.parse(content) as SummariesData;
-    } catch (e) {
-        return { summaries: [] } as SummariesData;
-    }
+    return { summaries: (await listSummaries()) as StoredSummaryListItem[] };
 }
 
 export function meta() {
