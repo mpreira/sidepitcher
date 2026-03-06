@@ -71,7 +71,7 @@ export default function App() {
 
   return (
     <TeamsProvider>
-      <div className={isHome ? "h-dvh overflow-hidden" : "min-h-screen pb-32"}>
+      <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden" : "min-h-screen w-full max-w-full pb-32 overflow-x-hidden"}>
         <Outlet />
       </div>
 
@@ -94,7 +94,7 @@ export default function App() {
                     event.preventDefault();
                   }
                 }}
-                className={`flex min-w-[3.8rem] flex-col items-center justify-start gap-1 py-1 text-[11px] leading-none transition-colors md:min-w-[4.5rem] md:text-[13px] ${
+                className={`flex flex-1 min-w-0 flex-col items-center justify-start gap-1 py-1 text-[11px] leading-none transition-colors md:text-[13px] ${
                   item.active
                     ? isSelected
                       ? "text-sky-400"

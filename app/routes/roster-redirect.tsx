@@ -42,7 +42,7 @@ export default function RosterRedirectPage() {
 
     if (rosters.length === 0) {
         return (
-            <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+            <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
                 <p className="text-sm text-gray-700">Chargement des rosters...</p>
                 <Link to="/roster" className="underline text-blue-600">
                     Retour aux rosters
@@ -53,7 +53,7 @@ export default function RosterRedirectPage() {
 
     if (!roster) {
         return (
-            <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+            <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
                 <p className="text-sm text-gray-700">Roster introuvable.</p>
                 <Link to="/roster" className="underline text-blue-600">
                     Retour aux rosters
@@ -63,7 +63,7 @@ export default function RosterRedirectPage() {
     }
 
     return (
-        <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <p className="text-sm text-gray-700">Redirection en cours...</p>
         </main>
     );
