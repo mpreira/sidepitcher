@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import type { Route } from "./+types/tracker";
 import type { Event } from "~/types/tracker";
-import { loadTrackerTeamSelection, saveTrackerTeamSelection } from "~/utils/TrackerStorage";
 
 import TimerControls from "~/components/TimerControls";
 import CommandPanel from "~/components/CommandPanel";
@@ -89,6 +88,13 @@ export default function Tracker() {
         [teamsForDay, team1Id, team2Id]
     );
 
+    const selectedTeamIds = useMemo(() => [team1Id, team2Id], [team1Id, team2Id]);
+
+    function getSelectedTeamIndex(teamId?: string): number {
+        if (!teamId) return -1;
+        return selectedTeamIds.findIndex((id) => id === teamId);
+    }
+
     // penalty counts (fouls) for each team - computed from events
     const [teamPenalties, setTeamPenalties] = useState<number[]>([0, 0]);
     // manual penalty adjustments (on top of computed values)
@@ -102,18 +108,37 @@ export default function Tracker() {
     const [teamMeleeGagnee, setTeamMeleeGagnee] = useState<number[]>([0, 0]);
     const [teamMeleePerdue, setTeamMeleePerdue] = useState<number[]>([0, 0]);
 
-    // Load team selection from localStorage on mount
+    // Load saved selection for the current championship/matchday.
     useEffect(() => {
         if (!championship || !matchDay) return;
 
         const matchDayNum = typeof matchDay === "number" ? matchDay : parseInt(matchDay, 10);
         if (isNaN(matchDayNum)) return;
 
-        const saved = loadTrackerTeamSelection(championship, matchDayNum);
-        if (saved) {
-            setTeam1Id(saved.team1Id);
-            setTeam2Id(saved.team2Id);
-        }
+        let cancelled = false;
+
+        fetch(`/api/match-day-teams?championship=${encodeURIComponent(championship)}&matchDay=${matchDayNum}`)
+            .then((r) => r.json())
+            .then((data) => {
+                if (cancelled) return;
+                const saved = data?.selection as { team1Id?: string; team2Id?: string } | null;
+                if (!saved?.team1Id || !saved?.team2Id) {
+                    setTeam1Id("");
+                    setTeam2Id("");
+                    return;
+                }
+                setTeam1Id(saved.team1Id);
+                setTeam2Id(saved.team2Id);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setTeam1Id("");
+                setTeam2Id("");
+            });
+
+        return () => {
+            cancelled = true;
+        };
     }, [championship, matchDay]);
 
     function resetTrackerInfos() {
@@ -164,28 +189,28 @@ export default function Tracker() {
         const counts = [0, 0];
         events.forEach((e) => {
             if (e.type === "Pénalité" && e.team) {
-                const idx = selectedTeams.indexOf(e.team);
+                const idx = getSelectedTeamIndex(e.team.id);
                 if (idx !== -1) {
                     counts[idx]++;
                 }
             }
         });
         setTeamPenalties(counts);
-    }, [events, selectedTeams]);
+    }, [events, selectedTeamIds]);
 
     // count en-avant from events
     useEffect(() => {
         const counts = [0, 0];
         events.forEach((e) => {
             if (e.type === "En-avant" && e.team) {
-                const idx = selectedTeams.indexOf(e.team);
+                const idx = getSelectedTeamIndex(e.team.id);
                 if (idx !== -1) {
                     counts[idx]++;
                 }
             }
         });
         setTeamEnAvant(counts);
-    }, [events, selectedTeams]);
+    }, [events, selectedTeamIds]);
 
 // timer interval
     useEffect(() => {
@@ -262,17 +287,11 @@ export default function Tracker() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     championship,
-                    matchDay,
+                    matchDay: typeof matchDay === "number" ? matchDay : parseInt(matchDay, 10),
                     team1Id,
                     team2Id,
                 }),
             });
-            
-            // Save to localStorage
-            const matchDayNum = typeof matchDay === "number" ? matchDay : parseInt(matchDay, 10);
-            if (!isNaN(matchDayNum)) {
-                saveTrackerTeamSelection(championship, matchDayNum, team1Id, team2Id);
-            }
             
             setSaveMessage("Composition validée ✓");
             setTimeout(() => setSaveMessage(""), 3000);
@@ -292,7 +311,7 @@ export default function Tracker() {
         const base = selectedTeams.map(() => 0);
         events.forEach((e) => {
             if (e.team) {
-                const idx = selectedTeams.indexOf(e.team);
+                const idx = getSelectedTeamIndex(e.team.id);
                 if (idx !== -1 && points[e.type]) {
                     base[idx] += points[e.type] || 0;
                 }

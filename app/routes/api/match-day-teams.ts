@@ -1,75 +1,51 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
-import fs from "fs";
-import path from "path";
-
-interface MatchDayTeamSelection {
-    championship: string;
-    matchDay: number;
-    team1Id: string;
-    team2Id: string;
-    savedAt: string;
-}
-
-interface MatchDayTeamsData {
-    selections: MatchDayTeamSelection[];
-}
-
-const filePath = path.join(process.cwd(), "data", "match-day-teams.json");
-
-async function readFile(): Promise<MatchDayTeamsData> {
-    try {
-        const content = await fs.promises.readFile(filePath, "utf-8");
-        return JSON.parse(content) as MatchDayTeamsData;
-    } catch (e) {
-        return { selections: [] };
-    }
-}
-
-async function writeFile(data: MatchDayTeamsData): Promise<void> {
-    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
-}
+import {
+    getMatchDaySelection,
+    listMatchDaySelections,
+    saveMatchDaySelection,
+} from "~/utils/database.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const url = new URL(request.url);
     const championship = url.searchParams.get("championship");
     const matchDay = url.searchParams.get("matchDay");
 
-    const data = await readFile();
-
     if (championship && matchDay) {
-        const selection = data.selections.find(
-            (s) => s.championship === championship && s.matchDay === parseInt(matchDay)
-        );
-        return { selection: selection || null };
+        const normalizedMatchDay = parseInt(matchDay, 10);
+        if (Number.isNaN(normalizedMatchDay)) {
+            return { selection: null };
+        }
+        return { selection: await getMatchDaySelection(championship, normalizedMatchDay) };
     }
 
-    return { selections: data.selections };
+    return { selections: await listMatchDaySelections() };
 };
 
 export const action: ActionFunction = async ({ request }) => {
-    const data = await readFile();
-
     if (request.method === "POST") {
-        const payload = (await request.json()) as Omit<MatchDayTeamSelection, "savedAt">;
-
-        // Find and replace existing selection or add new one
-        const index = data.selections.findIndex(
-            (s) => s.championship === payload.championship && s.matchDay === payload.matchDay
-        );
-
-        const selection: MatchDayTeamSelection = {
-            ...payload,
-            savedAt: new Date().toISOString(),
+        const payload = (await request.json()) as {
+            championship?: string;
+            matchDay?: number | string;
+            team1Id?: string;
+            team2Id?: string;
         };
 
-        if (index >= 0) {
-            data.selections[index] = selection;
-        } else {
-            data.selections.push(selection);
+        const normalizedMatchDay = Number(payload.matchDay);
+        if (
+            !payload.championship ||
+            !payload.team1Id ||
+            !payload.team2Id ||
+            Number.isNaN(normalizedMatchDay)
+        ) {
+            return { ok: false };
         }
 
-        await writeFile(data);
+        await saveMatchDaySelection({
+            championship: payload.championship,
+            matchDay: normalizedMatchDay,
+            team1Id: payload.team1Id,
+            team2Id: payload.team2Id,
+        });
         return { ok: true };
     }
 
