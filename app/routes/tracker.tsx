@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import type { Route } from "./+types/tracker";
 import type { Event } from "~/types/tracker";
+import type { LiveSnapshot } from "~/types/live";
 
 import TimerControls from "~/components/TimerControls";
 import CommandPanel from "~/components/CommandPanel";
@@ -77,6 +78,12 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState<string>("");
+    const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
+    const [livePublicSlug, setLivePublicSlug] = useState<string | null>(null);
+    const [liveAdminToken, setLiveAdminToken] = useState<string | null>(null);
+    const [liveMessage, setLiveMessage] = useState<string>("");
+    const [liveBusy, setLiveBusy] = useState(false);
+    const publishTimerRef = useRef<number | null>(null);
     const contextInitializedRef = useRef(false);
     const prevContextRef = useRef<{ matchDay: string | number; championship: string; sport: string } | null>(null);
 
@@ -157,6 +164,10 @@ export default function Tracker() {
         setTeamTouchePerdue([0, 0]);
         setTeamMeleeGagnee([0, 0]);
         setTeamMeleePerdue([0, 0]);
+        setLiveMatchId(null);
+        setLivePublicSlug(null);
+        setLiveAdminToken(null);
+        setLiveMessage("");
     }
 
     useEffect(() => {
@@ -384,6 +395,134 @@ export default function Tracker() {
         });
     }
 
+    const canPublishLive = selectedTeams.length === 2 && Boolean(team1Id) && Boolean(team2Id) && team1Id !== team2Id;
+
+    const buildLiveSnapshot = useCallback((): LiveSnapshot => {
+        const displayedPenalties = getDisplayedPenalties();
+        const displayedEnAvant = getDisplayedEnAvant();
+
+        return {
+            currentTime: time,
+            running,
+            currentHalf,
+            matchEnded,
+            events,
+            teams: selectedTeams.map((team) => ({ id: team.id, name: team.name })),
+            team1Id,
+            team2Id,
+            scores: computeScores(),
+            penalties: displayedPenalties,
+            enAvant: displayedEnAvant,
+            toucheGagnee: teamToucheGagnee,
+            touchePerdue: teamTouchePerdue,
+            meleeGagnee: teamMeleeGagnee,
+            meleePerdue: teamMeleePerdue,
+        };
+    }, [
+        currentHalf,
+        events,
+        matchEnded,
+        running,
+        selectedTeams,
+        team1Id,
+        team2Id,
+        teamEnAvant,
+        teamMeleeGagnee,
+        teamMeleePerdue,
+        teamPenalties,
+        teamToucheGagnee,
+        teamTouchePerdue,
+        time,
+        manualEnAvantAdjustments,
+        manualPenaltyAdjustments,
+    ]);
+
+    const liveViewerUrl = useMemo(() => {
+        if (!livePublicSlug || typeof window === "undefined") return "";
+        return `${window.location.origin}/live/${livePublicSlug}`;
+    }, [livePublicSlug]);
+
+    async function activateLivePublic() {
+        if (!canPublishLive) {
+            setLiveMessage("Sélectionnez deux équipes différentes pour activer le live.");
+            return;
+        }
+
+        if (liveMatchId && liveAdminToken && livePublicSlug) {
+            setLiveMessage("Le live public est déjà actif.");
+            return;
+        }
+
+        setLiveBusy(true);
+        try {
+            const response = await fetch("/api/live-matches", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    championship,
+                    matchDay: typeof matchDay === "number" ? matchDay : parseInt(matchDay || "", 10),
+                    state: buildLiveSnapshot(),
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data?.ok) {
+                setLiveMessage("Impossible d'activer le live public.");
+                return;
+            }
+
+            setLiveMatchId(data.matchId);
+            setLivePublicSlug(data.publicSlug);
+            setLiveAdminToken(data.adminToken);
+            setLiveMessage("Live public activé.");
+        } catch {
+            setLiveMessage("Impossible d'activer le live public.");
+        } finally {
+            setLiveBusy(false);
+        }
+    }
+
+    async function publishLiveSnapshot() {
+        if (!liveMatchId || !liveAdminToken || !canPublishLive) return;
+
+        try {
+            await fetch(`/api/live-matches/${liveMatchId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-live-admin-token": liveAdminToken,
+                },
+                body: JSON.stringify({ state: buildLiveSnapshot() }),
+            });
+        } catch {
+            // Keep tracker usable even if publication fails temporarily.
+        }
+    }
+
+    useEffect(() => {
+        if (!liveMatchId || !liveAdminToken || !canPublishLive) return;
+
+        if (publishTimerRef.current) {
+            window.clearTimeout(publishTimerRef.current);
+        }
+
+        publishTimerRef.current = window.setTimeout(() => {
+            void publishLiveSnapshot();
+        }, 350);
+
+        return () => {
+            if (publishTimerRef.current) {
+                window.clearTimeout(publishTimerRef.current);
+                publishTimerRef.current = null;
+            }
+        };
+    }, [
+        liveMatchId,
+        liveAdminToken,
+        canPublishLive,
+        buildLiveSnapshot,
+    ]);
+
     function removeEvent(index: number) {
         setEvents((ev) => ev.filter((_, i) => i !== index));
     }
@@ -400,6 +539,16 @@ export default function Tracker() {
             resetTrackerInfos();
         }
         setTeam2Id(nextTeamId);
+    }
+
+    async function copyLiveViewerUrl() {
+        if (!liveViewerUrl) return;
+        try {
+            await navigator.clipboard.writeText(liveViewerUrl);
+            setLiveMessage("Lien spectateur copié.");
+        } catch {
+            setLiveMessage("Impossible de copier le lien.");
+        }
     }
 
     return (
@@ -464,6 +613,29 @@ export default function Tracker() {
                                 {saveMessage}
                             </p>
                         )}
+                        <div className="space-y-2 border border-neutral-700 rounded p-3 bg-neutral-900">
+                            <p className="text-sm text-neutral-300">Diffusion externe en lecture seule</p>
+                            {!livePublicSlug ? (
+                                <button
+                                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+                                    onClick={activateLivePublic}
+                                    disabled={!canPublishLive || liveBusy}
+                                >
+                                    {liveBusy ? "Activation..." : "Activer le live public"}
+                                </button>
+                            ) : (
+                                <>
+                                    <p className="text-xs break-all text-neutral-200">{liveViewerUrl}</p>
+                                    <button
+                                        className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                        onClick={copyLiveViewerUrl}
+                                    >
+                                        Copier le lien spectateur
+                                    </button>
+                                </>
+                            )}
+                            {liveMessage && <p className="text-sm text-green-700">{liveMessage}</p>}
+                        </div>
                     </>
                 )}
             </section>
