@@ -9,6 +9,8 @@ html,
 body {
   @apply bg-neutral-950 text-gray-400 text-base md:text-lg leading-relaxed;
   font-family: var(--font-sans);
+  max-width: 100%;
+  overflow-x: hidden;
 
   h1{
     @apply leading-[0.95] font-bold tracking-[-0.03em] text-xl md:text-2xl;
@@ -17,6 +19,10 @@ body {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 @layer base {

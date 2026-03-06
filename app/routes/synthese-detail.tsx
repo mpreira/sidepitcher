@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { Link, useLoaderData } from "react-router";
 import { useLayoutEffect, useState } from "react";
 import type { Event } from "~/types/tracker";
@@ -8,6 +6,7 @@ import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft } from "@fortawesome/free-solid-svg-icons";
+import { getSummaryById } from "~/utils/database.server";
 
 interface StoredSummary {
     id: string;
@@ -19,25 +18,17 @@ interface StoredSummary {
     matchDay?: number;
 }
 
-interface SummariesData {
-    summaries: StoredSummary[];
-}
-
-const filePath = path.join(process.cwd(), "data", "summaries.json");
-
 export async function loader({ params }: { params: { summaryId?: string } }) {
     const summaryId = params.summaryId;
-    try {
-        const content = await fs.promises.readFile(filePath, "utf-8");
-        const data = JSON.parse(content) as SummariesData;
-        const summary = data.summaries.find((item) => item.id === summaryId);
-        if (!summary) {
-            throw new Response("Not Found", { status: 404 });
-        }
-        return summary;
-    } catch (e) {
+    if (!summaryId) {
         throw new Response("Not Found", { status: 404 });
     }
+
+    const summary = (await getSummaryById(summaryId)) as StoredSummary | null;
+    if (!summary) {
+        throw new Response("Not Found", { status: 404 });
+    }
+    return summary;
 }
 
 export function meta() {
@@ -141,7 +132,7 @@ export default function SyntheseDetailPage() {
     const teamStats = getTeamStatsFromRecap();
 
     return (
-        <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
             <p className="text-sm text-gray-700">
                 Date: <FormattedDateTime dateString={summary.createdAt} />

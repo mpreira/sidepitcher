@@ -309,7 +309,7 @@ export default function RosterDetailPage() {
 
     if (!roster) {
         return (
-            <main className="p-6 max-w-screen-md mx-auto px-4 space-y-4">
+            <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
                 <p className="text-sm text-gray-700">Roster introuvable.</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white">
                     <FontAwesomeIcon icon={faCircleArrowLeft} />
@@ -328,7 +328,7 @@ export default function RosterDetailPage() {
     }, [roster.name]);
 
     return (
-        <main className="p-6 max-w-screen-md mx-auto px-4 space-y-6 text-base md:text-lg">
+        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 text-base md:text-lg overflow-x-hidden">
             <div className="space-y-1">
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
