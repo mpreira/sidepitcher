@@ -7,9 +7,10 @@ interface Props {
     currentTime: number;
     teams: Team[];
     matchDay?: number;
+    onSaved?: () => void;
 }
 
-export default function Summary({ events, currentTime, teams, matchDay }: Props) {
+export default function Summary({ events, currentTime, teams, matchDay, onSaved }: Props) {
     const summary = buildEventSummary(events);
 
     async function saveSummary() {
@@ -25,6 +26,7 @@ export default function Summary({ events, currentTime, teams, matchDay }: Props)
                     matchDay,
                 }),
             });
+            onSaved?.();
             alert("Synthese sauvegardee.");
         } catch (e) {
             alert("Impossible de sauvegarder la synthese.");

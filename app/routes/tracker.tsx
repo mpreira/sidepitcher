@@ -78,6 +78,7 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState<string>("");
+    const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
     const [livePublicSlug, setLivePublicSlug] = useState<string | null>(null);
     const [liveAdminToken, setLiveAdminToken] = useState<string | null>(null);
@@ -168,6 +169,7 @@ export default function Tracker() {
         setLivePublicSlug(null);
         setLiveAdminToken(null);
         setLiveMessage("");
+        setSavedTrackingSignature(null);
     }
 
     useEffect(() => {
@@ -393,6 +395,67 @@ export default function Tracker() {
             const total = count + (manualEnAvantAdjustments[idx] || 0);
             return Math.max(0, total); // cannot be negative
         });
+    }
+
+    const hasTrackingContent =
+        time !== 0 ||
+        running ||
+        currentHalf !== 1 ||
+        matchEnded ||
+        events.length > 0 ||
+        teamPenalties.some((value) => value !== 0) ||
+        manualPenaltyAdjustments.some((value) => value !== 0) ||
+        teamEnAvant.some((value) => value !== 0) ||
+        manualEnAvantAdjustments.some((value) => value !== 0) ||
+        teamToucheGagnee.some((value) => value !== 0) ||
+        teamTouchePerdue.some((value) => value !== 0) ||
+        teamMeleeGagnee.some((value) => value !== 0) ||
+        teamMeleePerdue.some((value) => value !== 0);
+
+    const getTrackingSignature = useCallback(() => {
+        return JSON.stringify({
+            time,
+            running,
+            currentHalf,
+            matchEnded,
+            events,
+            teamPenalties,
+            manualPenaltyAdjustments,
+            teamEnAvant,
+            manualEnAvantAdjustments,
+            teamToucheGagnee,
+            teamTouchePerdue,
+            teamMeleeGagnee,
+            teamMeleePerdue,
+        });
+    }, [
+        time,
+        running,
+        currentHalf,
+        matchEnded,
+        events,
+        teamPenalties,
+        manualPenaltyAdjustments,
+        teamEnAvant,
+        manualEnAvantAdjustments,
+        teamToucheGagnee,
+        teamTouchePerdue,
+        teamMeleeGagnee,
+        teamMeleePerdue,
+    ]);
+
+    function handleResetTracker() {
+        const currentSignature = getTrackingSignature();
+        const hasUnsavedSynthesis = hasTrackingContent && savedTrackingSignature !== currentSignature;
+
+        if (hasUnsavedSynthesis) {
+            const confirmed = window.confirm(
+                "La synthese n'est pas sauvegardee. Voulez-vous reinitialiser quand meme ?"
+            );
+            if (!confirmed) return;
+        }
+
+        resetTrackerInfos();
     }
 
     const canPublishLive = selectedTeams.length === 2 && Boolean(team1Id) && Boolean(team2Id) && team1Id !== team2Id;
@@ -666,10 +729,7 @@ export default function Tracker() {
                 running={running}
                 onStartStop={() => setRunning((r) => !r)}
                 onAdjust={adjustTime}
-                onReset={() => {
-                    setTime(currentHalf === 2 ? 40 * 60 : 0);
-                    setMatchEnded(false);
-                }}
+                onReset={handleResetTracker}
                 manualTimeInput={manualTimeInput}
                 onManualTimeInputChange={setManualTimeInput}
                 onApplyManualTime={applyManualTime}
@@ -793,7 +853,13 @@ export default function Tracker() {
                 <EventsList events={events} remove={removeEvent} />
             </section>
 
-            <Summary events={events} currentTime={time} teams={selectedTeams} matchDay={typeof matchDay === 'number' ? matchDay : undefined} />
+            <Summary
+                events={events}
+                currentTime={time}
+                teams={selectedTeams}
+                matchDay={typeof matchDay === 'number' ? matchDay : undefined}
+                onSaved={() => setSavedTrackingSignature(getTrackingSignature())}
+            />
         </main>
     );
 }
