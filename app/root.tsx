@@ -17,8 +17,11 @@ import {
   faFileLines,
   faGear,
   faUserShield,
+  faArrowUp,
+  faArrowDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useEffect, useState } from "react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -92,6 +95,8 @@ function AppContent() {
         <Outlet />
       </div>
 
+      <ScrollPageControls />
+
       <nav className="fixed inset-x-0 bottom-3 z-50 px-3">
         <div className="mx-auto max-w-screen-md">
           <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
@@ -140,6 +145,57 @@ function AppContent() {
         </div>
       </nav>
     </>
+  );
+}
+
+function ScrollPageControls() {
+  const { pathname } = useLocation();
+  const [isScrollable, setIsScrollable] = useState(false);
+
+  useEffect(() => {
+    function updateScrollability() {
+      const documentHeight = document.documentElement.scrollHeight;
+      const viewportHeight = window.innerHeight;
+      setIsScrollable(documentHeight > viewportHeight + 1);
+    }
+
+    updateScrollability();
+
+    window.addEventListener("resize", updateScrollability);
+
+    const timeoutId = window.setTimeout(updateScrollability, 50);
+
+    return () => {
+      window.removeEventListener("resize", updateScrollability);
+      window.clearTimeout(timeoutId);
+    };
+  }, [pathname]);
+
+  if (!isScrollable) return null;
+
+  return (
+    <div className="fixed bottom-28 right-4 z-40 flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 bg-neutral-900/95 text-white shadow-md"
+        aria-label="Aller en haut"
+        title="Aller en haut"
+      >
+        <FontAwesomeIcon icon={faArrowUp} />
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })
+        }
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 bg-neutral-900/95 text-white shadow-md"
+        aria-label="Aller en bas"
+        title="Aller en bas"
+      >
+        <FontAwesomeIcon icon={faArrowDown} />
+      </button>
+    </div>
   );
 }
 

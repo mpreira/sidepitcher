@@ -68,6 +68,10 @@ export default function RosterManager({
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
         setRosterFeedbackMessage("Effectif créé avec succès.");
+        closeCreateRosterForm();
+    }
+
+    function closeCreateRosterForm() {
         setShowCreateRosterForm(false);
         setNewRosterName("");
         setNewRosterCategory('Top 14');
@@ -232,6 +236,52 @@ export default function RosterManager({
                 Créer un effectif
             </button>
 
+            {showCreateRosterForm && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                    onClick={closeCreateRosterForm}
+                >
+                    <div
+                        className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <input
+                            id="newRosterName"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            placeholder="Nom de l'effectif"
+                            value={newRosterName}
+                            onChange={(e) => setNewRosterName(e.target.value)}
+                        />
+                        <select
+                            id="newRosterCategory"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            value={newRosterCategory}
+                            onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                        >
+                            {championshipOptions.map((option) => (
+                                <option key={option} value={option}>
+                                    {option}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="flex items-center justify-center gap-2">
+                            <button
+                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                onClick={createRoster}
+                            >
+                                Valider
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                onClick={closeCreateRosterForm}
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {rosters.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucun effectif existant</p>
             ) : filteredRosters.length === 0 ? (
@@ -251,36 +301,6 @@ export default function RosterManager({
                             </button>
                         </div>
                     ))}
-                </div>
-            )}
-
-            {showCreateRosterForm && (
-                <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-                    <input
-                        id="newRosterName"
-                        className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                        placeholder="Nom de l'effectif"
-                        value={newRosterName}
-                        onChange={(e) => setNewRosterName(e.target.value)}
-                    />
-                    <select
-                        id="newRosterCategory"
-                        className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                        value={newRosterCategory}
-                        onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
-                    >
-                        {championshipOptions.map((option) => (
-                            <option key={option} value={option}>
-                                {option}
-                            </option>
-                        ))}
-                    </select>
-                    <button
-                        className="px-3 py-2 bg-blue-500 text-white rounded"
-                        onClick={createRoster}
-                    >
-                        Valider
-                    </button>
                 </div>
             )}
 
