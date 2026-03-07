@@ -56,9 +56,13 @@ export const action: ActionFunction = async ({ request }) => {
         account: created.account,
       },
       {
-        headers: {
-          "Set-Cookie": created.setCookieHeaders,
-        },
+        headers: (() => {
+          const headers = new Headers();
+          for (const cookie of created.setCookieHeaders) {
+            headers.append("Set-Cookie", cookie);
+          }
+          return headers;
+        })(),
       }
     );
   }
@@ -82,9 +86,13 @@ export const action: ActionFunction = async ({ request }) => {
         account: logged.account,
       },
       {
-        headers: {
-          "Set-Cookie": logged.setCookieHeaders,
-        },
+        headers: (() => {
+          const headers = new Headers();
+          for (const cookie of logged.setCookieHeaders) {
+            headers.append("Set-Cookie", cookie);
+          }
+          return headers;
+        })(),
       }
     );
   }
@@ -108,9 +116,12 @@ export const action: ActionFunction = async ({ request }) => {
     return Response.json(
       { ok: true },
       {
-        headers: {
-          "Set-Cookie": [buildAccountLogoutCookie(), buildAnonymousLogoutCookie()],
-        },
+        headers: (() => {
+          const headers = new Headers();
+          headers.append("Set-Cookie", buildAccountLogoutCookie());
+          headers.append("Set-Cookie", buildAnonymousLogoutCookie());
+          return headers;
+        })(),
       }
     );
   }
