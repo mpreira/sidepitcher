@@ -602,6 +602,99 @@ export async function updateLiveMatchState(input: {
   };
 }
 
+export async function closeLiveMatchSession(input: {
+  matchId: string;
+  adminToken: string;
+}): Promise<LiveMatchUpdateResult> {
+  await ensureInitialized();
+  const pool = getPool();
+
+  const existingResult = await pool.query<{
+    id: string;
+    public_slug: string;
+    admin_token: string;
+    admin_token_hash: string | null;
+    championship: string | null;
+    match_day: number | null;
+    payload: string | null;
+    created_at: string;
+    updated_at: string;
+    expires_at: string | null;
+    closed_at: string | null;
+  }>(
+    `SELECT id, public_slug, admin_token, admin_token_hash, championship, match_day, payload, created_at, updated_at, expires_at, closed_at
+     FROM live_matches
+     WHERE id = $1`,
+    [input.matchId]
+  );
+
+  const existing = existingResult.rows[0];
+  if (!existing) {
+    return { record: null, error: "not-found" };
+  }
+
+  const storedHash = existing.admin_token_hash;
+  const incomingHash = hashLiveAdminToken(input.adminToken);
+  const validToken = storedHash
+    ? constantTimeEqual(storedHash, incomingHash)
+    : constantTimeEqual(existing.admin_token, input.adminToken);
+
+  if (!validToken) {
+    return { record: null, error: "invalid-token" };
+  }
+
+  const expiresAt = existing.expires_at
+    ? new Date(existing.expires_at).toISOString()
+    : new Date(Date.now() + getLiveSessionTtlMs()).toISOString();
+
+  if (isLiveMatchExpired(expiresAt)) {
+    return { record: null, error: "expired" };
+  }
+
+  if (existing.closed_at) {
+    return { record: null, error: "closed" };
+  }
+
+  const now = new Date().toISOString();
+  const parsedState = existing.payload ? parseJsonOrNull<LiveSnapshot>(existing.payload) : null;
+  const nextState = parsedState ? { ...parsedState, matchEnded: true, running: false } : null;
+
+  const result = await pool.query<{
+    id: string;
+    public_slug: string;
+    admin_token: string;
+    admin_token_hash: string | null;
+    championship: string | null;
+    match_day: number | null;
+    payload: string | null;
+    created_at: string;
+    updated_at: string;
+    expires_at: string | null;
+    closed_at: string | null;
+  }>(
+    `UPDATE live_matches
+     SET payload = COALESCE($2, payload),
+         updated_at = $3,
+         admin_token_hash = COALESCE(admin_token_hash, $4),
+         admin_token = CASE WHEN admin_token_hash IS NULL THEN '__redacted__' ELSE admin_token END,
+         expires_at = COALESCE(expires_at, $5),
+         closed_at = $3
+     WHERE id = $1
+     RETURNING id, public_slug, admin_token, admin_token_hash, championship, match_day, payload, created_at, updated_at, expires_at, closed_at`,
+    [input.matchId, nextState ? JSON.stringify(nextState) : null, now, incomingHash, expiresAt]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    return { record: null, error: "not-found" };
+  }
+
+  return {
+    record: mapLiveMatchRow(row),
+    error: null,
+  };
+}
+
 export function getLiveAvailability(record: LiveMatchRecord): "active" | "expired" | "closed" {
   if (record.closedAt) return "closed";
   if (isLiveMatchExpired(record.expiresAt)) return "expired";

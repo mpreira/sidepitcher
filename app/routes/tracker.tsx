@@ -615,6 +615,37 @@ export default function Tracker() {
         }
     }
 
+    async function closeLivePublic() {
+        if (!liveMatchId || !liveAdminToken) return;
+
+        const confirmed = window.confirm("Fermer la diffusion live pour les spectateurs ?");
+        if (!confirmed) return;
+
+        setLiveBusy(true);
+        try {
+            const response = await fetch(`/api/live-matches/${liveMatchId}/close`, {
+                method: "POST",
+                headers: {
+                    "x-live-admin-token": liveAdminToken,
+                },
+            });
+            const data = await response.json();
+            if (!response.ok || !data?.ok) {
+                setLiveMessage("Impossible de fermer le live.");
+                return;
+            }
+
+            setLiveMatchId(null);
+            setLivePublicSlug(null);
+            setLiveAdminToken(null);
+            setLiveMessage("Live fermé.");
+        } catch {
+            setLiveMessage("Impossible de fermer le live.");
+        } finally {
+            setLiveBusy(false);
+        }
+    }
+
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
@@ -699,6 +730,13 @@ export default function Tracker() {
                             onClick={copyLiveViewerUrl}
                         >
                             Copier le lien spectateur
+                        </button>
+                        <button
+                            className="w-full px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800 disabled:bg-gray-500"
+                            onClick={closeLivePublic}
+                            disabled={liveBusy}
+                        >
+                            Fermer le live
                         </button>
                     </>
                 )}
