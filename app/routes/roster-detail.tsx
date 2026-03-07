@@ -248,10 +248,14 @@ export default function RosterDetailPage() {
         const updatedRoster = addPlayerToRosterList(roster, player);
 
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        closeAddPlayerForm();
+        setPlayerMessage("Joueur ajouté à l'effectif.");
+    }
+
+    function closeAddPlayerForm() {
+        setShowAddPlayerForm(false);
         setNewPlayerFirst("");
         setNewPlayerLast("");
-        setShowAddPlayerForm(false);
-        setPlayerMessage("Joueur ajouté à l'effectif.");
         setNewPlayerFirstError("");
         setNewPlayerLastError("");
     }
@@ -555,6 +559,68 @@ export default function RosterDetailPage() {
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
                     Ajouter un joueur à l'effectif
                 </button>
+                {showAddPlayerForm && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        onClick={closeAddPlayerForm}
+                    >
+                        <div
+                            className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <label className="leading-none" data-slot="label" htmlFor="newPlayerFirst">Prénom</label>
+                            <input
+                                id="newPlayerFirst"
+                                className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
+                                    newPlayerFirstError ? "border-red-500" : "border-gray-600"
+                                }`}
+                                placeholder="ex. Jean"
+                                value={newPlayerFirst}
+                                onChange={(e) => {
+                                    const formatted = formatName(e.target.value);
+                                    setNewPlayerFirst(formatted);
+                                    setNewPlayerFirstError(validateName(formatted));
+                                }}
+                            />
+                            {newPlayerFirstError && (
+                                <p className="text-sm text-red-400">{newPlayerFirstError}</p>
+                            )}
+                            <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
+                            <label className="leading-none" data-slot="label" htmlFor="newPlayerLast">Nom</label>
+                            <input
+                                id="newPlayerLast"
+                                className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
+                                    newPlayerLastError ? "border-red-500" : "border-gray-600"
+                                }`}
+                                placeholder="ex. Dupont"
+                                value={newPlayerLast}
+                                onChange={(e) => {
+                                    const formatted = formatName(e.target.value);
+                                    setNewPlayerLast(formatted);
+                                    setNewPlayerLastError(validateName(formatted));
+                                }}
+                            />
+                            {newPlayerLastError && (
+                                <p className="text-sm text-red-400">{newPlayerLastError}</p>
+                            )}
+                            <div className="flex items-center justify-center gap-2">
+                                <button
+                                    className="px-3 py-2 bg-blue-500 text-white rounded"
+                                    onClick={addPlayerToRoster}
+                                    disabled={!newPlayerFirst && !newPlayerLast}
+                                >
+                                    Valider
+                                </button>
+                                <button
+                                    className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                    onClick={closeAddPlayerForm}
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {roster.players.length === 0 ? (
                     <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
                 ) : (
@@ -635,67 +701,6 @@ export default function RosterDetailPage() {
                             </li>
                         ))}
                     </ul>
-                )}
-
-                {showAddPlayerForm && (
-                    <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2">
-                        <label className="leading-none" data-slot="label" htmlFor="newPlayerFirst">Prénom</label>
-                        <input
-                            id="newPlayerFirst"
-                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                newPlayerFirstError ? "border-red-500" : "border-gray-600"
-                            }`}
-                            placeholder="ex. Jean"
-                            value={newPlayerFirst}
-                            onChange={(e) => {
-                                const formatted = formatName(e.target.value);
-                                setNewPlayerFirst(formatted);
-                                setNewPlayerFirstError(validateName(formatted));
-                            }}
-                        />
-                        {newPlayerFirstError && (
-                            <p className="text-sm text-red-400">{newPlayerFirstError}</p>
-                        )}
-                        <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
-                        <label className="leading-none" data-slot="label" htmlFor="newPlayerLast">Nom</label>
-                        <input
-                            id="newPlayerLast"
-                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                newPlayerLastError ? "border-red-500" : "border-gray-600"
-                            }`}
-                            placeholder="ex. Dupont"
-                            value={newPlayerLast}
-                            onChange={(e) => {
-                                const formatted = formatName(e.target.value);
-                                setNewPlayerLast(formatted);
-                                setNewPlayerLastError(validateName(formatted));
-                            }}
-                        />
-                        {newPlayerLastError && (
-                            <p className="text-sm text-red-400">{newPlayerLastError}</p>
-                        )}
-                        <div className="flex items-center justify-center gap-2">
-                            <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
-                                onClick={addPlayerToRoster}
-                                disabled={!newPlayerFirst && !newPlayerLast}
-                            >
-                                Valider
-                            </button>
-                            <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
-                                onClick={() => {
-                                    setShowAddPlayerForm(false);
-                                    setNewPlayerFirst("");
-                                    setNewPlayerLast("");
-                                    setNewPlayerFirstError("");
-                                    setNewPlayerLastError("");
-                                }}
-                            >
-                                Annuler
-                            </button>
-                        </div>
-                    </div>
                 )}
                 {playerMessage && (
                     <p className="text-sm text-green-700">
