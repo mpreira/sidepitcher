@@ -1,12 +1,16 @@
 import type { Team, Player } from "~/types/tracker";
 
+function sortByNumber<T extends { number: number }>(entries: T[]): T[] {
+    return [...entries].sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number);
+}
+
 /**
  * Add a starter player to a team
  */
 export function addStarterToTeam(team: Team, player: Player, number: number): Team {
     return {
         ...team,
-        starters: [...team.starters, { player, number }],
+        starters: sortByNumber([...team.starters, { player, number }]),
     };
 }
 
@@ -16,7 +20,7 @@ export function addStarterToTeam(team: Team, player: Player, number: number): Te
 export function addSubstituteToTeam(team: Team, player: Player, number: number): Team {
     return {
         ...team,
-        substitutes: [...team.substitutes, { player, number }],
+        substitutes: sortByNumber([...team.substitutes, { player, number }]),
     };
 }
 

@@ -1,6 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
 import type { Team, Player, CompositionEntry, Roster } from "~/types/tracker";
 
+function sortEntriesByNumber(entries: CompositionEntry[]): CompositionEntry[] {
+    return [...entries].sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number);
+}
+
 // Roster Operations
 export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2'): Roster {
     return {
@@ -88,10 +92,12 @@ export function deletePlayerFromTeamData(team: Team, playerId: string): Team {
 export function addPlayerToTeamData(team: Team, player: Player, number: number): Team {
     const isStarter = number <= 15;
     const entry: CompositionEntry = { player, number };
+    const starters = isStarter ? sortEntriesByNumber([...team.starters, entry]) : team.starters;
+    const substitutes = !isStarter ? sortEntriesByNumber([...team.substitutes, entry]) : team.substitutes;
     return {
         ...team,
-        starters: isStarter ? [...team.starters, entry] : team.starters,
-        substitutes: !isStarter ? [...team.substitutes, entry] : team.substitutes,
+        starters,
+        substitutes,
     };
 }
 
@@ -111,8 +117,8 @@ export function addMultiplePlayersToTeam(team: Team, players: Player[], playerNu
 
     return {
         ...team,
-        starters: newStarters,
-        substitutes: newSubstitutes,
+        starters: sortEntriesByNumber(newStarters),
+        substitutes: sortEntriesByNumber(newSubstitutes),
     };
 }
 
