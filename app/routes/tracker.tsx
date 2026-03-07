@@ -455,7 +455,8 @@ export default function Tracker() {
             if (!confirmed) return;
         }
 
-        resetTrackerInfos();
+        // Match user expectation: fully reinitialize the page state.
+        window.location.reload();
     }
 
     const canPublishLive = selectedTeams.length === 2 && Boolean(team1Id) && Boolean(team2Id) && team1Id !== team2Id;
