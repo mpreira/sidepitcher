@@ -1,8 +1,7 @@
 import { useState } from "react";
-import type { Route } from "./+types/settings";
 import { useAccount } from "~/context/AccountContext";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [{ title: "Reglages" }];
 }
 
