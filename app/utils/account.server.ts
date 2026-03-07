@@ -169,6 +169,7 @@ export async function updateManagedAccount(input: {
 export async function updateCurrentAccountProfile(input: {
   accountId: string;
   email: string;
+  currentPassword?: string;
   password?: string;
 }): Promise<Account> {
   return updateAccountCredentials(input);

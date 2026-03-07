@@ -787,6 +787,7 @@ export async function updateAccountByAdmin(input: {
 export async function updateAccountCredentials(input: {
   accountId: string;
   email: string;
+  currentPassword?: string;
   password?: string;
 }): Promise<Account> {
   await ensureInitialized();
@@ -795,6 +796,21 @@ export async function updateAccountCredentials(input: {
   const nextEmail = normalizeEmail(input.email);
   if (!nextEmail) {
     throw new Error("Email is required");
+  }
+
+  if (input.password?.trim()) {
+    if (!input.currentPassword) {
+      throw new Error("Current password is required");
+    }
+
+    const passwordCheck = await pool.query<{ password_hash: string }>(
+      `SELECT password_hash FROM accounts WHERE id = $1`,
+      [input.accountId]
+    );
+    const currentHash = passwordCheck.rows[0]?.password_hash;
+    if (!currentHash || !verifyPassword(input.currentPassword, currentHash)) {
+      throw new Error("Invalid current password");
+    }
   }
 
   const nextPasswordHash = input.password?.trim()

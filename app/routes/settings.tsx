@@ -10,6 +10,7 @@ export default function SettingsPage() {
   const { account, connected, loading, refreshAccount, logout } = useAccount();
   const [renameName, setRenameName] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
+  const [profileCurrentPassword, setProfileCurrentPassword] = useState("");
   const [profilePassword, setProfilePassword] = useState("");
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -26,6 +27,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setProfileEmail(account?.email ?? "");
+    setProfileCurrentPassword("");
     setProfilePassword("");
   }, [account?.id, account?.email]);
 
@@ -158,6 +160,10 @@ export default function SettingsPage() {
       setError("Entre une adresse email valide.");
       return;
     }
+    if (profilePassword.trim() && !profileCurrentPassword) {
+      setError("Entre ton mot de passe actuel pour definir un nouveau mot de passe.");
+      return;
+    }
 
     setBusy(true);
     setError("");
@@ -170,6 +176,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           intent: "update-profile",
           email: profileEmail,
+          currentPassword: profileCurrentPassword,
           password: profilePassword.trim() ? profilePassword : undefined,
         }),
       });
@@ -181,6 +188,7 @@ export default function SettingsPage() {
       }
 
       await refreshAccount();
+      setProfileCurrentPassword("");
       setProfilePassword("");
       setMessage("Profil mis a jour.");
     } catch {
@@ -226,6 +234,14 @@ export default function SettingsPage() {
           onChange={(event) => setProfileEmail(event.target.value)}
           className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
           placeholder="Adresse email"
+          disabled={!connected}
+        />
+        <input
+          type="password"
+          value={profileCurrentPassword}
+          onChange={(event) => setProfileCurrentPassword(event.target.value)}
+          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+          placeholder="Mot de passe actuel (obligatoire pour changer le mot de passe)"
           disabled={!connected}
         />
         <input

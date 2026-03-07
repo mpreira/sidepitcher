@@ -23,6 +23,7 @@ export const action: ActionFunction = async ({ request }) => {
     intent?: "create" | "login" | "rename" | "update-profile" | "logout";
     name?: string;
     email?: string;
+    currentPassword?: string;
     password?: string;
   };
 
@@ -126,6 +127,7 @@ export const action: ActionFunction = async ({ request }) => {
       const account = await updateCurrentAccountProfile({
         accountId: connectedAccount.id,
         email: body.email,
+        currentPassword: body.currentPassword,
         password: body.password,
       });
       return Response.json({ ok: true, account });
