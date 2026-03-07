@@ -83,6 +83,11 @@ export default function RosterDetailPage() {
         [teams, roster?.id]
     );
 
+    const compositionEditTeam = useMemo(
+        () => rosterTeams.find((team) => team.id === compositionEditTeamId) ?? null,
+        [rosterTeams, compositionEditTeamId]
+    );
+
     const compositionName = matchDay ? `${roster?.name} J${matchDay}` : null;
     const hasCompositionForDay = Boolean(
         compositionName && rosterTeams.some((team) => team.name === compositionName)
@@ -344,6 +349,103 @@ export default function RosterDetailPage() {
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Compositions</h2>
+                {compositionEditTeamId && compositionEditTeam && roster && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        onClick={closeCompositionEditor}
+                    >
+                        <div
+                            className="w-full max-w-2xl space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold">Ajouter des joueurs - {compositionEditTeam.name}</h3>
+                                <button
+                                    className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
+                                    onClick={closeCompositionEditor}
+                                >
+                                    <FontAwesomeIcon icon={faCircleXmark} />
+                                </button>
+                            </div>
+
+                            {(() => {
+                                const allEntries = [...compositionEditTeam.starters, ...compositionEditTeam.substitutes];
+                                const existingIds = new Set(allEntries.map((entry) => entry.player.id));
+                                const availablePlayers = roster.players.filter(
+                                    (player) => !existingIds.has(player.id)
+                                );
+
+                                if (availablePlayers.length === 0) {
+                                    return (
+                                        <p className="text-sm text-gray-600">
+                                            Aucun joueur disponible pour cette composition.
+                                        </p>
+                                    );
+                                }
+
+                                return (
+                                    <ul className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                                        {availablePlayers.map((player) => (
+                                            <li key={player.id} className="flex w-full items-center justify-between gap-3">
+                                                <label className="flex min-w-0 items-center gap-2 text-left">
+                                                    <input
+                                                        className="h-4 w-4 min-w-0 border-0 bg-transparent p-0 shadow-none focus:ring-0 focus:border-0"
+                                                        type="checkbox"
+                                                        checked={selectedPlayerIds.has(player.id)}
+                                                        onChange={() => togglePlayerSelection(player.id)}
+                                                    />
+                                                    <span className="truncate">{player.name}</span>
+                                                </label>
+                                                <label className="flex items-center gap-1 text-xs text-gray-400">
+                                                    <input
+                                                        type="radio"
+                                                        name={`captain-${compositionEditTeam.id}`}
+                                                        className="h-4 w-4"
+                                                        checked={selectedCaptainPlayerId === player.id}
+                                                        onChange={() => {
+                                                            if (!selectedPlayerIds.has(player.id)) {
+                                                                togglePlayerSelection(player.id);
+                                                            }
+                                                            setSelectedCaptainPlayerId(player.id);
+                                                        }}
+                                                        disabled={!selectedPlayerIds.has(player.id)}
+                                                    />
+                                                    Capitaine
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    max={23}
+                                                    className="h-auto w-20 min-w-[5rem] border-0 bg-transparent p-0 text-right text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                                                    value={playerNumbers[player.id] || 1}
+                                                    onChange={(e) =>
+                                                        updatePlayerNumber(player.id, Number(e.target.value))
+                                                    }
+                                                    disabled={!selectedPlayerIds.has(player.id)}
+                                                />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                );
+                            })()}
+
+                            <button
+                                className="px-3 py-2 bg-green-600 text-white rounded"
+                                onClick={() => addPlayersToComposition(compositionEditTeam)}
+                            >
+                                <FontAwesomeIcon icon={faPlus} className="mr-1" />
+                                Ajouter
+                            </button>
+
+                            {compositionEditMessage && (
+                                <p className="text-sm text-green-700">
+                                    <FontAwesomeIcon icon={faCircleCheck} className="mr-1" />
+                                    {compositionEditMessage}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
                 {rosterTeams.length === 0 ? (
                     <p className="text-sm text-gray-600">aucune composition disponible</p>
                 ) : (
@@ -383,96 +485,6 @@ export default function RosterDetailPage() {
 
                                 {expandedTeams.has(team.id) && (
                                     <>
-                                        {compositionEditTeamId === team.id && roster && (
-                                            <div className="space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3">
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="font-semibold">Ajouter des joueurs</h3>
-                                                    <button
-                                                        className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
-                                                        onClick={closeCompositionEditor}
-                                                    >
-                                                        <FontAwesomeIcon icon={faCircleXmark} />
-                                                    </button>
-                                                </div>
-
-                                                {(() => {
-                                                    const allEntries = [...team.starters, ...team.substitutes];
-                                                    const existingIds = new Set(allEntries.map((entry) => entry.player.id));
-                                                    const availablePlayers = roster.players.filter(
-                                                        (player) => !existingIds.has(player.id)
-                                                    );
-
-                                                    if (availablePlayers.length === 0) {
-                                                        return (
-                                                            <p className="text-sm text-gray-600">
-                                                                Aucun joueur disponible pour cette composition.
-                                                            </p>
-                                                        );
-                                                    }
-
-                                                    return (
-                                                        <ul className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-                                                            {availablePlayers.map((player) => (
-                                                                <li key={player.id} className="flex w-full items-center justify-between gap-3">
-                                                                    <label className="flex min-w-0 items-center gap-2 text-left">
-                                                                        <input
-                                                                            className="h-4 w-4 min-w-0 border-0 bg-transparent p-0 shadow-none focus:ring-0 focus:border-0"
-                                                                            type="checkbox"
-                                                                            checked={selectedPlayerIds.has(player.id)}
-                                                                            onChange={() => togglePlayerSelection(player.id)}
-                                                                        />
-                                                                        <span className="truncate">{player.name}</span>
-                                                                    </label>
-                                                                    <label className="flex items-center gap-1 text-xs text-gray-400">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name={`captain-${team.id}`}
-                                                                            className="h-4 w-4"
-                                                                            checked={selectedCaptainPlayerId === player.id}
-                                                                            onChange={() => {
-                                                                                if (!selectedPlayerIds.has(player.id)) {
-                                                                                    togglePlayerSelection(player.id);
-                                                                                }
-                                                                                setSelectedCaptainPlayerId(player.id);
-                                                                            }}
-                                                                            disabled={!selectedPlayerIds.has(player.id)}
-                                                                        />
-                                                                        Capitaine
-                                                                    </label>
-                                                                    <input
-                                                                        type="number"
-                                                                        min={1}
-                                                                        max={23}
-                                                                        className="h-auto w-20 min-w-[5rem] border-0 bg-transparent p-0 text-right text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                                                                        value={playerNumbers[player.id] || 1}
-                                                                        onChange={(e) =>
-                                                                            updatePlayerNumber(player.id, Number(e.target.value))
-                                                                        }
-                                                                        disabled={!selectedPlayerIds.has(player.id)}
-                                                                    />
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    );
-                                                })()}
-
-                                                <button
-                                                    className="px-3 py-2 bg-green-600 text-white rounded"
-                                                    onClick={() => addPlayersToComposition(team)}
-                                                >
-                                                    <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                                                    Ajouter
-                                                </button>
-
-                                                {compositionEditMessage && (
-                                                    <p className="text-sm text-green-700">
-                                                        <FontAwesomeIcon icon={faCircleCheck} className="mr-1" />
-                                                        {compositionEditMessage}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
-
                                         {team.starters.length + team.substitutes.length > 0 ? (
                                             <div className="space-y-2">
                                                 <h4 className="font-semibold text-sm">Composition actuelle</h4>
