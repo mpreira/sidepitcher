@@ -7,6 +7,10 @@ function encodeSse(data: unknown): Uint8Array {
   return new TextEncoder().encode(text);
 }
 
+function encodeSseText(data: unknown): string {
+  return `data: ${JSON.stringify(data)}\n\n`;
+}
+
 export const loader: LoaderFunction = async ({ params, request }) => {
   const publicSlug = params.publicSlug;
   if (!publicSlug) {
@@ -30,7 +34,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       updatedAt: match.updatedAt,
       availability,
     };
-    return new Response(encodeSse(payload), {
+    return new Response(encodeSseText(payload), {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache, no-transform",
