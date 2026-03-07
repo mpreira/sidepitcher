@@ -16,6 +16,7 @@ export default [
     route("api/match-day-teams", "routes/api/match-day-teams.ts"),
     route("api/live-matches", "routes/api/live-matches.ts"),
     route("api/live-matches/:matchId", "routes/api/live-match-update.ts"),
+    route("api/live-matches/:matchId/close", "routes/api/live-match-close.ts"),
     route("api/live/:publicSlug/state", "routes/api/live-public-state.ts"),
     route("api/live/:publicSlug/stream", "routes/api/live-stream.ts"),
 ] satisfies RouteConfig;

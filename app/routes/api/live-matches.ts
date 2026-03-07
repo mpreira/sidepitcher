@@ -45,5 +45,6 @@ export const action: ActionFunction = async ({ request }) => {
     matchId: record.id,
     publicSlug: record.publicSlug,
     adminToken: record.adminToken,
+    expiresAt: record.expiresAt,
   };
 };
