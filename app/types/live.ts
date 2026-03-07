@@ -27,4 +27,5 @@ export interface LiveStreamMessage {
   type: "snapshot";
   payload: LiveSnapshot;
   updatedAt: string;
+  availability?: "active" | "closed" | "expired";
 }
