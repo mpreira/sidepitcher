@@ -279,62 +279,66 @@ export default function SettingsPage() {
         </button>
       </section>
 
-      <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
-        <h2 className="font-semibold">Creer un compte</h2>
-        <input
-          type="text"
-          value={newName}
-          onChange={(event) => setNewName(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Nom d'utilisateur"
-        />
-        <input
-          type="email"
-          value={newEmail}
-          onChange={(event) => setNewEmail(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Adresse email"
-        />
-        <input
-          type="password"
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Mot de passe"
-        />
-        <button
-          onClick={createNewAccount}
-          disabled={busy}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-500"
-        >
-          {busy ? "Creation..." : "Creer et utiliser ce compte"}
-        </button>
-      </section>
+      {!connected && (
+        <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+          <h2 className="font-semibold">Creer un compte</h2>
+          <input
+            type="text"
+            value={newName}
+            onChange={(event) => setNewName(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Nom d'utilisateur"
+          />
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(event) => setNewEmail(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Adresse email"
+          />
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Mot de passe"
+          />
+          <button
+            onClick={createNewAccount}
+            disabled={busy}
+            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-500"
+          >
+            {busy ? "Creation..." : "Creer et utiliser ce compte"}
+          </button>
+        </section>
+      )}
 
-      <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
-        <h2 className="font-semibold">Se connecter</h2>
-        <input
-          type="email"
-          value={loginEmail}
-          onChange={(event) => setLoginEmail(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Adresse email"
-        />
-        <input
-          type="password"
-          value={loginPassword}
-          onChange={(event) => setLoginPassword(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Mot de passe"
-        />
-        <button
-          onClick={loginAccount}
-          disabled={busy}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-500"
-        >
-          {busy ? "Connexion..." : "Se connecter"}
-        </button>
-      </section>
+      {!connected && (
+        <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+          <h2 className="font-semibold">Se connecter</h2>
+          <input
+            type="email"
+            value={loginEmail}
+            onChange={(event) => setLoginEmail(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Adresse email"
+          />
+          <input
+            type="password"
+            value={loginPassword}
+            onChange={(event) => setLoginPassword(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Mot de passe"
+          />
+          <button
+            onClick={loginAccount}
+            disabled={busy}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-500"
+          >
+            {busy ? "Connexion..." : "Se connecter"}
+          </button>
+        </section>
+      )}
 
       {connected && account?.isAdmin && (
         <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
