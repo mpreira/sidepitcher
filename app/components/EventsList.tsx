@@ -27,14 +27,24 @@ export default function EventsList({ events, remove }: Props) {
               </>
             ) : (
               <>
-                {formatTime(e.time)} - {e.type} de{" "}
-                {e.player && (
+                {e.type === "Arbitrage Vidéo" ? (
                   <>
-                    <strong>{e.player.name}</strong>
-                    {e.playerNumber ? ` (#${e.playerNumber})` : ""}
+                    {formatTime(e.time)} - {e.type}
+                    {e.team && ` (${displayTeamName(e.team.name)})`}
+                    {e.videoReason && ` — raison: ${e.videoReason}`}
+                  </>
+                ) : (
+                  <>
+                    {formatTime(e.time)} - {e.type} de{" "}
+                    {e.player && (
+                      <>
+                        <strong>{e.player.name}</strong>
+                        {e.playerNumber ? ` (#${e.playerNumber})` : ""}
+                      </>
+                    )}
+                    {e.team && ` (${displayTeamName(e.team.name)})`}
                   </>
                 )}
-                {e.team && ` (${displayTeamName(e.team.name)})`}
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}

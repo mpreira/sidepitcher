@@ -29,6 +29,7 @@ export interface Event {
     type: string;
     time: number; // seconds since match start
     team?: Team;
+    videoReason?: "essai" | "jeu déloyal";
     player?: Player;
     playerNumber?: number;
     concussion?: boolean;

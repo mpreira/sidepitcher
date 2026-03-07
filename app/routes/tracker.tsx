@@ -29,6 +29,7 @@ const COMMAND_TYPES = [
     "Changement",
     "Saignement",
     "Blessure",
+    "Arbitrage Vidéo",
 ];
 
 const TRACKER_ACTION_TAB_STORAGE_KEY = "sidepitcher.tracker.actionTab";

@@ -181,14 +181,24 @@ export default function LiveViewPage() {
                     </>
                   ) : (
                     <>
-                      {formatTime(event.time)} - {event.type} de{" "}
-                      {event.player && (
+                      {event.type === "Arbitrage Vidéo" ? (
                         <>
-                          <strong>{event.player.name}</strong>
-                          {event.playerNumber ? ` (#${event.playerNumber})` : ""}
+                          {formatTime(event.time)} - {event.type}
+                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
+                          {event.videoReason && ` — raison: ${event.videoReason}`}
+                        </>
+                      ) : (
+                        <>
+                          {formatTime(event.time)} - {event.type} de{" "}
+                          {event.player && (
+                            <>
+                              <strong>{event.player.name}</strong>
+                              {event.playerNumber ? ` (#${event.playerNumber})` : ""}
+                            </>
+                          )}
+                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
                         </>
                       )}
-                      {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
                       {event.playerOut && event.playerIn && (
                         <>
                           {" — "}
