@@ -17,6 +17,7 @@ export interface RosterStatePayload {
 }
 
 export interface MatchDayTeamSelection {
+  accountId: string;
   championship: string;
   matchDay: number;
   team1Id: string;
@@ -25,6 +26,7 @@ export interface MatchDayTeamSelection {
 }
 
 export interface StoredSummary {
+  accountId: string;
   id: string;
   createdAt: string;
   currentTime: number;
@@ -32,6 +34,17 @@ export interface StoredSummary {
   events: unknown[];
   teams?: Array<{ id: string; name: string }>;
   matchDay?: number;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface CreateAccountResult {
+  account: Account;
+  accessCode: string;
 }
 
 export interface LiveMatchRecord {
@@ -60,6 +73,9 @@ export interface LiveMatchUpdateResult {
 }
 
 const dataDir = path.join(process.cwd(), "data");
+const LEGACY_ACCOUNT_ID = "legacy-account";
+const LEGACY_ACCOUNT_NAME = "Compte historique";
+const LEGACY_ACCOUNT_ACCESS_CODE = "SIDEPITCHERLEGACY";
 
 const defaultRosterState: RosterStatePayload = {
   rosters: [],
@@ -130,8 +146,67 @@ function isLiveMatchExpired(expiresAt: string): boolean {
   return Date.now() > new Date(expiresAt).getTime();
 }
 
+function normalizeAccessCode(code: string): string {
+  return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function hashAccountAccessCode(code: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(`account:${normalizeAccessCode(code)}`)
+    .digest("hex");
+}
+
+function generateAccountAccessCode(): string {
+  return `SP${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+}
+
+function trimAccountName(name?: string): string {
+  const trimmed = (name ?? "").trim();
+  if (!trimmed) {
+    return "Compte SidePitcher";
+  }
+  return trimmed.slice(0, 80);
+}
+
+function mapAccountRow(row: { id: string; name: string; created_at: string }): Account {
+  return {
+    id: row.id,
+    name: row.name,
+    createdAt: new Date(row.created_at).toISOString(),
+  };
+}
+
+async function ensureLegacyAccount(pool: Pool): Promise<void> {
+  const createdAt = new Date().toISOString();
+  await pool.query(
+    `INSERT INTO accounts (id, name, access_code_hash, created_at)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO NOTHING`,
+    [
+      LEGACY_ACCOUNT_ID,
+      LEGACY_ACCOUNT_NAME,
+      hashAccountAccessCode(LEGACY_ACCOUNT_ACCESS_CODE),
+      createdAt,
+    ]
+  );
+}
+
 async function initializeSchema(pool: Pool) {
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS accounts (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      access_code_hash TEXT UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS account_rosters_state (
+      account_id TEXT PRIMARY KEY,
+      payload TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS rosters_state (
       id INTEGER PRIMARY KEY,
       payload TEXT NOT NULL,
@@ -153,6 +228,8 @@ async function initializeSchema(pool: Pool) {
       payload TEXT NOT NULL
     );
 
+    ALTER TABLE summaries ADD COLUMN IF NOT EXISTS account_id TEXT;
+
     CREATE TABLE IF NOT EXISTS live_matches (
       id TEXT PRIMARY KEY,
       public_slug TEXT UNIQUE NOT NULL,
@@ -173,11 +250,29 @@ async function initializeSchema(pool: Pool) {
 
     CREATE INDEX IF NOT EXISTS idx_live_matches_public_slug ON live_matches(public_slug);
     CREATE INDEX IF NOT EXISTS idx_live_matches_expires_at ON live_matches(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_summaries_account_created_at ON summaries(account_id, created_at DESC);
+
+    ALTER TABLE match_day_selections ADD COLUMN IF NOT EXISTS account_id TEXT;
   `);
+
+  await pool.query(
+    `UPDATE match_day_selections
+     SET account_id = $1
+     WHERE account_id IS NULL`,
+    [LEGACY_ACCOUNT_ID]
+  );
+
+  await pool.query(`ALTER TABLE match_day_selections DROP CONSTRAINT IF EXISTS match_day_selections_pkey`);
+  await pool.query(`ALTER TABLE match_day_selections ALTER COLUMN account_id SET NOT NULL`);
+  await pool.query(`ALTER TABLE match_day_selections ADD PRIMARY KEY (account_id, championship, match_day)`);
 }
 
 async function migrateFromJsonFiles(pool: Pool) {
-  const rostersCountResult = await pool.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM rosters_state");
+  await ensureLegacyAccount(pool);
+
+  const rostersCountResult = await pool.query<{ count: string }>(
+    "SELECT COUNT(*)::text AS count FROM account_rosters_state"
+  );
   const summariesCountResult = await pool.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM summaries");
   const selectionsCountResult = await pool.query<{ count: string }>(
     "SELECT COUNT(*)::text AS count FROM match_day_selections"
@@ -188,17 +283,30 @@ async function migrateFromJsonFiles(pool: Pool) {
   const selectionsCount = Number(selectionsCountResult.rows[0]?.count ?? "0");
 
   if (rostersCount === 0) {
-    const legacyRostersPath = path.join(dataDir, "rosters.json");
-    if (fs.existsSync(legacyRostersPath)) {
-      const raw = fs.readFileSync(legacyRostersPath, "utf-8");
-      const parsed = parseJsonOrNull<RosterStatePayload>(raw);
-      if (parsed) {
-        await pool.query(
-          `INSERT INTO rosters_state (id, payload, updated_at)
-           VALUES (1, $1, $2)
-           ON CONFLICT(id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at`,
-          [JSON.stringify(parsed), new Date().toISOString()]
-        );
+    const legacyDbRostersResult = await pool.query<{ payload: string }>(
+      "SELECT payload FROM rosters_state WHERE id = 1"
+    );
+    const legacyDbPayload = legacyDbRostersResult.rows[0]?.payload;
+    if (legacyDbPayload) {
+      await pool.query(
+        `INSERT INTO account_rosters_state (account_id, payload, updated_at)
+         VALUES ($1, $2, $3)
+         ON CONFLICT(account_id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at`,
+        [LEGACY_ACCOUNT_ID, legacyDbPayload, new Date().toISOString()]
+      );
+    } else {
+      const legacyRostersPath = path.join(dataDir, "rosters.json");
+      if (fs.existsSync(legacyRostersPath)) {
+        const raw = fs.readFileSync(legacyRostersPath, "utf-8");
+        const parsed = parseJsonOrNull<RosterStatePayload>(raw);
+        if (parsed) {
+          await pool.query(
+            `INSERT INTO account_rosters_state (account_id, payload, updated_at)
+             VALUES ($1, $2, $3)
+             ON CONFLICT(account_id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at`,
+            [LEGACY_ACCOUNT_ID, JSON.stringify(parsed), new Date().toISOString()]
+          );
+        }
       }
     }
   }
@@ -211,14 +319,21 @@ async function migrateFromJsonFiles(pool: Pool) {
       if (parsed?.summaries?.length) {
         for (const summary of parsed.summaries) {
           await pool.query(
-            `INSERT INTO summaries (id, created_at, payload)
-             VALUES ($1, $2, $3)
+            `INSERT INTO summaries (id, created_at, payload, account_id)
+             VALUES ($1, $2, $3, $4)
              ON CONFLICT (id) DO NOTHING`,
-            [summary.id, summary.createdAt, JSON.stringify(summary)]
+            [summary.id, summary.createdAt, JSON.stringify({ ...summary, accountId: LEGACY_ACCOUNT_ID }), LEGACY_ACCOUNT_ID]
           );
         }
       }
     }
+  } else {
+    await pool.query(
+      `UPDATE summaries
+       SET account_id = $1
+       WHERE account_id IS NULL`,
+      [LEGACY_ACCOUNT_ID]
+    );
   }
 
   if (selectionsCount === 0) {
@@ -230,14 +345,15 @@ async function migrateFromJsonFiles(pool: Pool) {
         for (const selection of parsed.selections) {
           await pool.query(
             `INSERT INTO match_day_selections
-             (championship, match_day, team1_id, team2_id, saved_at)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (championship, match_day)
+             (account_id, championship, match_day, team1_id, team2_id, saved_at)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (account_id, championship, match_day)
              DO UPDATE SET
                team1_id = EXCLUDED.team1_id,
                team2_id = EXCLUDED.team2_id,
                saved_at = EXCLUDED.saved_at`,
             [
+              LEGACY_ACCOUNT_ID,
               selection.championship,
               selection.matchDay,
               selection.team1Id,
@@ -248,6 +364,13 @@ async function migrateFromJsonFiles(pool: Pool) {
         }
       }
     }
+  } else {
+    await pool.query(
+      `UPDATE match_day_selections
+       SET account_id = $1
+       WHERE account_id IS NULL`,
+      [LEGACY_ACCOUNT_ID]
+    );
   }
 }
 
@@ -267,9 +390,16 @@ async function ensureInitialized() {
 }
 
 export async function getRostersState(): Promise<RosterStatePayload> {
+  return getRostersStateForAccount(LEGACY_ACCOUNT_ID);
+}
+
+export async function getRostersStateForAccount(accountId: string): Promise<RosterStatePayload> {
   await ensureInitialized();
   const pool = getPool();
-  const result = await pool.query<{ payload: string }>("SELECT payload FROM rosters_state WHERE id = 1");
+  const result = await pool.query<{ payload: string }>(
+    "SELECT payload FROM account_rosters_state WHERE account_id = $1",
+    [accountId]
+  );
   const row = result.rows[0];
 
   if (!row) return defaultRosterState;
@@ -278,17 +408,87 @@ export async function getRostersState(): Promise<RosterStatePayload> {
 }
 
 export async function saveRostersState(payload: RosterStatePayload): Promise<void> {
+  return saveRostersStateForAccount(LEGACY_ACCOUNT_ID, payload);
+}
+
+export async function saveRostersStateForAccount(accountId: string, payload: RosterStatePayload): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
   await pool.query(
-    `INSERT INTO rosters_state (id, payload, updated_at)
-     VALUES (1, $1, $2)
-     ON CONFLICT(id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at`,
-    [JSON.stringify(payload), new Date().toISOString()]
+    `INSERT INTO account_rosters_state (account_id, payload, updated_at)
+     VALUES ($1, $2, $3)
+     ON CONFLICT(account_id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at`,
+    [accountId, JSON.stringify(payload), new Date().toISOString()]
   );
 }
 
+export async function getAccountById(accountId: string): Promise<Account | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query<{ id: string; name: string; created_at: string }>(
+    `SELECT id, name, created_at
+     FROM accounts
+     WHERE id = $1`,
+    [accountId]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return mapAccountRow(row);
+}
+
+export async function findAccountByAccessCode(accessCode: string): Promise<Account | null> {
+  await ensureInitialized();
+  const normalized = normalizeAccessCode(accessCode);
+  if (!normalized) return null;
+
+  const pool = getPool();
+  const result = await pool.query<{ id: string; name: string; created_at: string }>(
+    `SELECT id, name, created_at
+     FROM accounts
+     WHERE access_code_hash = $1`,
+    [hashAccountAccessCode(normalized)]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return mapAccountRow(row);
+}
+
+export async function createAccount(name?: string): Promise<CreateAccountResult> {
+  await ensureInitialized();
+  const pool = getPool();
+  const accountName = trimAccountName(name);
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const id = crypto.randomUUID();
+    const accessCode = generateAccountAccessCode();
+    const accessCodeHash = hashAccountAccessCode(accessCode);
+    const createdAt = new Date().toISOString();
+
+    try {
+      const result = await pool.query<{ id: string; name: string; created_at: string }>(
+        `INSERT INTO accounts (id, name, access_code_hash, created_at)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, created_at`,
+        [id, accountName, accessCodeHash, createdAt]
+      );
+
+      const account = mapAccountRow(result.rows[0]);
+      return { account, accessCode };
+    } catch (error) {
+      const code = (error as { code?: string } | null)?.code;
+      if (code !== "23505") {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error("Unable to create account");
+}
+
 export async function getMatchDaySelection(
+  accountId: string,
   championship: string,
   matchDay: number
 ): Promise<MatchDayTeamSelection | null> {
@@ -303,13 +503,14 @@ export async function getMatchDaySelection(
   }>(
     `SELECT championship, match_day, team1_id, team2_id, saved_at
      FROM match_day_selections
-     WHERE championship = $1 AND match_day = $2`,
-    [championship, matchDay]
+     WHERE account_id = $1 AND championship = $2 AND match_day = $3`,
+    [accountId, championship, matchDay]
   );
   const row = result.rows[0];
 
   if (!row) return null;
   return {
+    accountId,
     championship: row.championship,
     matchDay: row.match_day,
     team1Id: row.team1_id,
@@ -318,7 +519,7 @@ export async function getMatchDaySelection(
   };
 }
 
-export async function listMatchDaySelections(): Promise<MatchDayTeamSelection[]> {
+export async function listMatchDaySelections(accountId: string): Promise<MatchDayTeamSelection[]> {
   await ensureInitialized();
   const pool = getPool();
   const result = await pool.query<{
@@ -330,11 +531,14 @@ export async function listMatchDaySelections(): Promise<MatchDayTeamSelection[]>
   }>(
     `SELECT championship, match_day, team1_id, team2_id, saved_at
      FROM match_day_selections
-     ORDER BY saved_at DESC`
+      WHERE account_id = $1
+      ORDER BY saved_at DESC`,
+     [accountId]
   );
   const rows = result.rows;
 
   return rows.map((row) => ({
+    accountId,
     championship: row.championship,
     matchDay: row.match_day,
     team1Id: row.team1_id,
@@ -344,6 +548,7 @@ export async function listMatchDaySelections(): Promise<MatchDayTeamSelection[]>
 }
 
 export async function saveMatchDaySelection(input: {
+  accountId: string;
   championship: string;
   matchDay: number;
   team1Id: string;
@@ -353,56 +558,79 @@ export async function saveMatchDaySelection(input: {
   const pool = getPool();
   await pool.query(
     `INSERT INTO match_day_selections
-     (championship, match_day, team1_id, team2_id, saved_at)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (championship, match_day)
+     (account_id, championship, match_day, team1_id, team2_id, saved_at)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (account_id, championship, match_day)
      DO UPDATE SET
        team1_id = EXCLUDED.team1_id,
        team2_id = EXCLUDED.team2_id,
        saved_at = EXCLUDED.saved_at`,
-    [input.championship, input.matchDay, input.team1Id, input.team2Id, new Date().toISOString()]
+    [
+      input.accountId,
+      input.championship,
+      input.matchDay,
+      input.team1Id,
+      input.team2Id,
+      new Date().toISOString(),
+    ]
   );
 }
 
-export async function listSummaries(): Promise<StoredSummary[]> {
+export async function listSummaries(accountId: string): Promise<StoredSummary[]> {
   await ensureInitialized();
   const pool = getPool();
   const result = await pool.query<{ payload: string }>(
-    `SELECT payload FROM summaries ORDER BY created_at DESC`
+    `SELECT payload FROM summaries
+     WHERE account_id = $1
+     ORDER BY created_at DESC`,
+    [accountId]
   );
   const rows = result.rows;
 
   return rows
-    .map((row) => parseJsonOrNull<StoredSummary>(row.payload))
+    .map((row) => {
+      const parsed = parseJsonOrNull<StoredSummary>(row.payload);
+      if (!parsed) return null;
+      return {
+        ...parsed,
+        accountId: parsed.accountId ?? accountId,
+      };
+    })
     .filter((item): item is StoredSummary => Boolean(item));
 }
 
-export async function getSummaryById(summaryId: string): Promise<StoredSummary | null> {
+export async function getSummaryById(summaryId: string, accountId: string): Promise<StoredSummary | null> {
   await ensureInitialized();
   const pool = getPool();
   const result = await pool.query<{ payload: string }>(
-    `SELECT payload FROM summaries WHERE id = $1`,
-    [summaryId]
+    `SELECT payload FROM summaries WHERE id = $1 AND account_id = $2`,
+    [summaryId, accountId]
   );
   const row = result.rows[0];
   if (!row) return null;
-  return parseJsonOrNull<StoredSummary>(row.payload);
+  const parsed = parseJsonOrNull<StoredSummary>(row.payload);
+  if (!parsed) return null;
+  return {
+    ...parsed,
+    accountId: parsed.accountId ?? accountId,
+  };
 }
 
 export async function insertSummary(summary: StoredSummary): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
-  await pool.query(`INSERT INTO summaries (id, created_at, payload) VALUES ($1, $2, $3)`, [
+  await pool.query(`INSERT INTO summaries (id, created_at, payload, account_id) VALUES ($1, $2, $3, $4)`, [
     summary.id,
     summary.createdAt,
     JSON.stringify(summary),
+    summary.accountId,
   ]);
 }
 
-export async function deleteSummary(summaryId: string): Promise<void> {
+export async function deleteSummary(summaryId: string, accountId: string): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
-  await pool.query(`DELETE FROM summaries WHERE id = $1`, [summaryId]);
+  await pool.query(`DELETE FROM summaries WHERE id = $1 AND account_id = $2`, [summaryId, accountId]);
 }
 
 function mapLiveMatchRow(row: {

@@ -1,22 +1,26 @@
 import { Link, useLoaderData } from "react-router";
 import {
-  getRostersState,
+  getRostersStateForAccount,
   listMatchDaySelections,
   listSummaries,
 } from "~/utils/database.server";
+import { resolveAccountFromRequest } from "~/utils/account.server";
 
 export function meta() {
   return [{ title: "Diagnostic DB" }];
 }
 
-export async function loader() {
-  const rostersState = await getRostersState();
-  const selections = await listMatchDaySelections();
-  const summaries = await listSummaries();
+export async function loader({ request }: { request: Request }) {
+  const resolved = await resolveAccountFromRequest(request);
+  const rostersState = await getRostersStateForAccount(resolved.account.id);
+  const selections = await listMatchDaySelections(resolved.account.id);
+  const summaries = await listSummaries(resolved.account.id);
 
   return {
     rostersCount: Array.isArray(rostersState.rosters) ? rostersState.rosters.length : 0,
     teamsCount: Array.isArray(rostersState.teams) ? rostersState.teams.length : 0,
+    accountId: resolved.account.id,
+    accountName: resolved.account.name,
     activeRosterId: rostersState.activeRosterId,
     matchDay: rostersState.matchDay ?? "",
     sport: rostersState.sport ?? "Rugby",
@@ -51,6 +55,14 @@ export default function AdminDbPage() {
       <p className="text-sm text-gray-300">
         Page de lecture seule pour verifier les donnees PostgreSQL (Render).
       </p>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">Compte</h2>
+        <ul className="text-sm space-y-1">
+          <li>Nom: {data.accountName}</li>
+          <li className="break-all">ID: {data.accountId}</li>
+        </ul>
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">Etat effectifs</h2>

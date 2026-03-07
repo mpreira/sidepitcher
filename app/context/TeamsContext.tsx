@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { Team, Player, Roster } from "~/types/tracker";
 import { v4 as uuidv4 } from "uuid";
+import { useAccount } from "~/context/AccountContext";
 
 interface TeamsContextValue {
     rosters: Roster[];
@@ -20,6 +21,7 @@ interface TeamsContextValue {
 const TeamsContext = createContext<TeamsContextValue | null>(null);
 
 export function TeamsProvider({ children }: { children: React.ReactNode }) {
+    const { account, loading: accountLoading } = useAccount();
     const [rosters, setRosters] = useState<Roster[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [activeRosterId, setActiveRosterId] = useState<string | null>(null);
@@ -27,8 +29,20 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
     const [sport, setSport] = useState<'Rugby' | 'Football'>('Rugby');
     const [championship, setChampionship] = useState<'Top 14' | 'Pro D2'>('Top 14');
 
+    const lastSent = React.useRef<{
+        rosters: Roster[];
+        teams: Team[];
+        activeId: string | null;
+        matchDay: string;
+        sport: 'Rugby' | 'Football';
+        championship: 'Top 14' | 'Pro D2';
+    } | null>(null);
+
   // load from backend on mount
     useEffect(() => {
+        if (accountLoading) return;
+
+        lastSent.current = null;
         fetch("/api/rosters")
         .then((r) => r.json())
         .then((data) => {
@@ -42,19 +56,14 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         .catch(() => {
             // ignore
         });
-    }, []);
+    }, [account?.id, accountLoading]);
 
-  // sync to backend whenever anything changes
-    const lastSent = React.useRef<{
-        rosters: Roster[];
-        teams: Team[];
-        activeId: string | null;
-        matchDay: string;
-        sport: 'Rugby' | 'Football';
-        championship: 'Top 14' | 'Pro D2';
-    } | null>(null);
-
+    // sync to backend whenever anything changes
     useEffect(() => {
+        if (accountLoading || !account) {
+            return;
+        }
+
         if (
         rosters.length === 0 &&
         teams.length === 0 &&
@@ -102,7 +111,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             championship,
             };
         });
-    }, [rosters, teams, activeRosterId, matchDay, sport, championship]);
+    }, [rosters, teams, activeRosterId, matchDay, sport, championship, accountLoading, account]);
 
     return (
         <TeamsContext.Provider

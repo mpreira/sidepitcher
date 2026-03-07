@@ -4,6 +4,7 @@ import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { listSummaries } from "~/utils/database.server";
+import { resolveAccountFromRequest } from "~/utils/account.server";
 
 interface StoredSummaryListItem {
     id: string;
@@ -17,8 +18,9 @@ interface StoredSummaryListItem {
     }>;
 }
 
-export async function loader() {
-    return { summaries: (await listSummaries()) as StoredSummaryListItem[] };
+export async function loader({ request }: { request: Request }) {
+    const resolved = await resolveAccountFromRequest(request);
+    return { summaries: (await listSummaries(resolved.account.id)) as StoredSummaryListItem[] };
 }
 
 export function meta() {

@@ -1,4 +1,5 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
+import { resolveAccountFromRequest } from "~/utils/account.server";
 import {
     getMatchDaySelection,
     listMatchDaySelections,
@@ -6,6 +7,7 @@ import {
 } from "~/utils/database.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
+    const resolved = await resolveAccountFromRequest(request);
     const url = new URL(request.url);
     const championship = url.searchParams.get("championship");
     const matchDay = url.searchParams.get("matchDay");
@@ -15,13 +17,41 @@ export const loader: LoaderFunction = async ({ request }) => {
         if (Number.isNaN(normalizedMatchDay)) {
             return { selection: null };
         }
-        return { selection: await getMatchDaySelection(championship, normalizedMatchDay) };
+        const payload = {
+            selection: await getMatchDaySelection(
+                resolved.account.id,
+                championship,
+                normalizedMatchDay
+            ),
+        };
+
+        if (!resolved.setCookieHeader) {
+            return payload;
+        }
+
+        return Response.json(payload, {
+            headers: {
+                "Set-Cookie": resolved.setCookieHeader,
+            },
+        });
     }
 
-    return { selections: await listMatchDaySelections() };
+    const payload = { selections: await listMatchDaySelections(resolved.account.id) };
+
+    if (!resolved.setCookieHeader) {
+        return payload;
+    }
+
+    return Response.json(payload, {
+        headers: {
+            "Set-Cookie": resolved.setCookieHeader,
+        },
+    });
 };
 
 export const action: ActionFunction = async ({ request }) => {
+    const resolved = await resolveAccountFromRequest(request);
+
     if (request.method === "POST") {
         const payload = (await request.json()) as {
             championship?: string;
@@ -41,12 +71,24 @@ export const action: ActionFunction = async ({ request }) => {
         }
 
         await saveMatchDaySelection({
+            accountId: resolved.account.id,
             championship: payload.championship,
             matchDay: normalizedMatchDay,
             team1Id: payload.team1Id,
             team2Id: payload.team2Id,
         });
-        return { ok: true };
+        if (!resolved.setCookieHeader) {
+            return { ok: true };
+        }
+
+        return Response.json(
+            { ok: true },
+            {
+                headers: {
+                    "Set-Cookie": resolved.setCookieHeader,
+                },
+            }
+        );
     }
 
     return null;
