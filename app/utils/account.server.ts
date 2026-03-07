@@ -90,6 +90,7 @@ export async function resolveDataScopeFromRequest(request: Request): Promise<Dat
       scopeId: `anon:${existingSession}`,
       isAnonymous: true,
       account: null,
+      setCookieHeader: buildAnonymousSessionCookie(existingSession),
     };
   }
 
