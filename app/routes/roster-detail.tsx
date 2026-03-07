@@ -71,6 +71,7 @@ export default function RosterDetailPage() {
     const [selectedCaptainPlayerId, setSelectedCaptainPlayerId] = useState<string | null>(null);
     const [compositionEditMessage, setCompositionEditMessage] = useState("");
     const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+    const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(true);
 
     const rosterId = getRosterIdFromParam(rosterSlugId);
     const roster = useMemo(
@@ -589,14 +590,16 @@ export default function RosterDetailPage() {
             </section>
 
             <section className="space-y-2">
-                <h2 className="font-semibold">Effectif</h2>
-                <button
-                    className="px-3 py-1 bg-green-500 text-white rounded mb-6"
-                    onClick={() => setShowAddPlayerForm((value) => !value)}
-                >
-                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Ajouter un joueur à l'effectif
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        className="px-2 py-1 text-sm font-bold"
+                        onClick={() => setIsRosterPlayersExpanded((value) => !value)}
+                        aria-label={isRosterPlayersExpanded ? "Masquer la liste des joueurs" : "Afficher la liste des joueurs"}
+                    >
+                        {isRosterPlayersExpanded ? <FontAwesomeIcon icon={faAngleDown} /> : <FontAwesomeIcon icon={faAngleRight} />}
+                    </button>
+                    <h2 className="font-semibold">Effectif</h2>
+                </div>
                 {showAddPlayerForm && (
                     <div
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
@@ -659,86 +662,97 @@ export default function RosterDetailPage() {
                         </div>
                     </div>
                 )}
-                {roster.players.length === 0 ? (
-                    <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
-                ) : (
-                    <ul className="space-y-4">
-                        {roster.players.map((player) => (
-                            <li key={player.id} className="border-b w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
-                                <div className="flex items-center justify-between gap-2">
-                                    <span>{player.name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
-                                            onClick={() => startEditPlayer(player)}
-                                        >
-                                            <FontAwesomeIcon icon={faPenToSquare} />
-                                        </button>
-                                        <button
-                                            className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
-                                            onClick={() => deletePlayer(player.id, player.name)}
-                                        >
-                                            <FontAwesomeIcon icon={faTrashCan} />
-                                        </button>
-                                    </div>
-                                </div>
-                                {editingPlayerId === player.id && (
-                                    <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2">
-                                        <label className="leading-none" data-slot="label" htmlFor={`editingPlayerFirst-${player.id}`}>Prénom</label>
-                                        <input
-                                            id={`editingPlayerFirst-${player.id}`}
-                                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                                editingPlayerFirstError ? "border-red-500" : "border-gray-600"
-                                            }`}
-                                            placeholder="Prénom"
-                                            value={editingPlayerFirst}
-                                            onChange={(e) => {
-                                                const formatted = formatName(e.target.value);
-                                                setEditingPlayerFirst(formatted);
-                                                setEditingPlayerFirstError(validateName(formatted));
-                                            }}
-                                        />
-                                        {editingPlayerFirstError && (
-                                            <p className="text-sm text-red-400">{editingPlayerFirstError}</p>
-                                        )}
-                                        <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
-                                        <label className="leading-none" data-slot="label" htmlFor={`editingPlayerLast-${player.id}`}>Nom</label>
-                                        <input
-                                            id={`editingPlayerLast-${player.id}`}
-                                            className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                                editingPlayerLastError ? "border-red-500" : "border-gray-600"
-                                            }`}
-                                            placeholder="Nom"
-                                            value={editingPlayerLast}
-                                            onChange={(e) => {
-                                                const formatted = formatName(e.target.value);
-                                                setEditingPlayerLast(formatted);
-                                                setEditingPlayerLastError(validateName(formatted));
-                                            }}
-                                        />
-                                        {editingPlayerLastError && (
-                                            <p className="text-sm text-red-400">{editingPlayerLastError}</p>
-                                        )}
-                                        <div className="flex items-center justify-center gap-2">
-                                            <button
-                                                className="px-3 py-2 bg-blue-500 text-white rounded"
-                                                onClick={saveEditPlayer}
-                                                disabled={!editingPlayerFirst && !editingPlayerLast}
-                                            >
-                                                Valider
-                                            </button>
-                                            <button
-                                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
-                                                onClick={cancelEditPlayer}
-                                            >
-                                                Annuler
-                                            </button>
+                {isRosterPlayersExpanded && (
+                    <>
+                        {roster.players.length === 0 ? (
+                            <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
+                        ) : (
+                            <ul className="space-y-4">
+                                {roster.players.map((player) => (
+                                    <li key={player.id} className="border-b w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span>{player.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                                    onClick={() => startEditPlayer(player)}
+                                                >
+                                                    <FontAwesomeIcon icon={faPenToSquare} />
+                                                </button>
+                                                <button
+                                                    className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
+                                                    onClick={() => deletePlayer(player.id, player.name)}
+                                                >
+                                                    <FontAwesomeIcon icon={faTrashCan} />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
+                                        {editingPlayerId === player.id && (
+                                            <div className="flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2">
+                                                <label className="leading-none" data-slot="label" htmlFor={`editingPlayerFirst-${player.id}`}>Prénom</label>
+                                                <input
+                                                    id={`editingPlayerFirst-${player.id}`}
+                                                    className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
+                                                        editingPlayerFirstError ? "border-red-500" : "border-gray-600"
+                                                    }`}
+                                                    placeholder="Prénom"
+                                                    value={editingPlayerFirst}
+                                                    onChange={(e) => {
+                                                        const formatted = formatName(e.target.value);
+                                                        setEditingPlayerFirst(formatted);
+                                                        setEditingPlayerFirstError(validateName(formatted));
+                                                    }}
+                                                />
+                                                {editingPlayerFirstError && (
+                                                    <p className="text-sm text-red-400">{editingPlayerFirstError}</p>
+                                                )}
+                                                <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
+                                                <label className="leading-none" data-slot="label" htmlFor={`editingPlayerLast-${player.id}`}>Nom</label>
+                                                <input
+                                                    id={`editingPlayerLast-${player.id}`}
+                                                    className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
+                                                        editingPlayerLastError ? "border-red-500" : "border-gray-600"
+                                                    }`}
+                                                    placeholder="Nom"
+                                                    value={editingPlayerLast}
+                                                    onChange={(e) => {
+                                                        const formatted = formatName(e.target.value);
+                                                        setEditingPlayerLast(formatted);
+                                                        setEditingPlayerLastError(validateName(formatted));
+                                                    }}
+                                                />
+                                                {editingPlayerLastError && (
+                                                    <p className="text-sm text-red-400">{editingPlayerLastError}</p>
+                                                )}
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        className="px-3 py-2 bg-blue-500 text-white rounded"
+                                                        onClick={saveEditPlayer}
+                                                        disabled={!editingPlayerFirst && !editingPlayerLast}
+                                                    >
+                                                        Valider
+                                                    </button>
+                                                    <button
+                                                        className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                                        onClick={cancelEditPlayer}
+                                                    >
+                                                        Annuler
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <button
+                            className="px-3 py-1 bg-green-500 text-white rounded mt-2"
+                            onClick={() => setShowAddPlayerForm((value) => !value)}
+                        >
+                            <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                            Ajouter un joueur à l'effectif
+                        </button>
+                    </>
                 )}
                 {playerMessage && (
                     <p className="text-sm text-green-700">
