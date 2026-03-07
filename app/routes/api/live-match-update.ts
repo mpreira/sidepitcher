@@ -26,16 +26,20 @@ export const action: ActionFunction = async ({ request, params }) => {
     state: payload.state,
   });
 
-  if (!updated) {
-    return { ok: false, error: "unauthorized or unknown match" };
+  if (!updated.record) {
+    return { ok: false, error: updated.error ?? "update-failed" };
   }
 
-  if (updated.state) {
-    publishLiveMatch(updated.publicSlug, {
-      payload: updated.state,
-      updatedAt: updated.updatedAt,
+  if (updated.record.state) {
+    publishLiveMatch(updated.record.publicSlug, {
+      payload: updated.record.state,
+      updatedAt: updated.record.updatedAt,
     });
   }
 
-  return { ok: true, updatedAt: updated.updatedAt };
+  return {
+    ok: true,
+    updatedAt: updated.record.updatedAt,
+    closedAt: updated.record.closedAt,
+  };
 };
