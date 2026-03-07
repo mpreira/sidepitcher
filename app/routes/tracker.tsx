@@ -11,6 +11,7 @@ import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
+import { getTimelineMomentFromClock, getTimelineSortKey } from "~/utils/TimeUtils";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Side Pitcher" }];
@@ -103,6 +104,28 @@ export default function Tracker() {
     );
 
     const selectedTeamIds = useMemo(() => [team1Id, team2Id], [team1Id, team2Id]);
+
+    function getEventSortKey(event: Event): number {
+        if (event.timelineHalf && typeof event.timelineMinute === "number") {
+            return getTimelineSortKey({
+                half: event.timelineHalf,
+                minute: event.timelineMinute,
+                additionalMinute: event.timelineAdditionalMinute || 0,
+                second: event.timelineSecond || 0,
+            });
+        }
+
+        return event.time;
+    }
+
+    function sortEventsByTimeline(list: Event[]): Event[] {
+        return [...list].sort((firstEvent, secondEvent) => {
+            const firstSortKey = getEventSortKey(firstEvent);
+            const secondSortKey = getEventSortKey(secondEvent);
+            if (firstSortKey !== secondSortKey) return firstSortKey - secondSortKey;
+            return firstEvent.time - secondEvent.time;
+        });
+    }
 
     function getSelectedTeamIndex(teamId?: string): number {
         if (!teamId) return -1;
@@ -260,12 +283,13 @@ export default function Tracker() {
     }, [running]);
 
     function addEvent(e: Event) {
-        setEvents((ev) => [...ev, e]);
+        setEvents((ev) => sortEventsByTimeline([...ev, e]));
         setActiveCommand(null);
     }
 
     function addStatsSummary(halfLabel: string) {
         if (selectedTeams.length !== 2) return;
+        const summaryMoment = getTimelineMomentFromClock(time, currentHalf);
         const team1Name = selectedTeams[0].name.replace(/\s+J\d+$/, "");
         const team2Name = selectedTeams[1].name.replace(/\s+J\d+$/, "");
         const displayedPenalties = getDisplayedPenalties();
@@ -275,10 +299,14 @@ export default function Tracker() {
         const summaryEvent: Event = {
             type: "Récapitulatif",
             time: time,
+            timelineHalf: summaryMoment.half,
+            timelineMinute: summaryMoment.minute,
+            timelineAdditionalMinute: summaryMoment.additionalMinute,
+            timelineSecond: summaryMoment.second,
             summary: summary
         };
-        
-        setEvents((ev) => [...ev, summaryEvent]);
+
+        addEvent(summaryEvent);
     }
 
     function adjustTime(delta: number) {
@@ -998,6 +1026,7 @@ export default function Tracker() {
                                     type={activeCommand}
                                     teams={selectedTeams}
                                     currentTime={time}
+                                    currentHalf={currentHalf}
                                     onSubmit={addEvent}
                                     onCancel={() => setActiveCommand(null)}
                                 />
