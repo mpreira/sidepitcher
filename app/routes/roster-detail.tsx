@@ -745,15 +745,15 @@ export default function RosterDetailPage() {
                                 ))}
                             </ul>
                         )}
-                        <button
-                            className="px-3 py-1 bg-green-500 text-white rounded mt-2"
-                            onClick={() => setShowAddPlayerForm((value) => !value)}
-                        >
-                            <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                            Ajouter un joueur à l'effectif
-                        </button>
                     </>
                 )}
+                <button
+                    className="px-3 py-1 bg-green-500 text-white rounded mt-2"
+                    onClick={() => setShowAddPlayerForm((value) => !value)}
+                >
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    Ajouter un joueur à l'effectif
+                </button>
                 {playerMessage && (
                     <p className="text-sm text-green-700">
                         <FontAwesomeIcon icon={faCircleCheck} className="mr-1" />
