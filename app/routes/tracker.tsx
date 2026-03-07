@@ -839,80 +839,86 @@ export default function Tracker() {
                 </div>
             </section>
 
-            {actionTab === "stats" && selectedTeams.length === 2 && (() => {
-                const displayedPenalties = getDisplayedPenalties();
-                const displayedEnAvant = getDisplayedEnAvant();
+            {actionTab === "stats" && (
+                <section className="space-y-3">
+                    <h3 className="font-semibold text-center">Statistiques</h3>
+                    {selectedTeams.length !== 2 ? (
+                        <p className="text-sm text-gray-500 text-center">
+                            Sélectionne et valide deux équipes pour afficher les statistiques.
+                        </p>
+                    ) : (() => {
+                        const displayedPenalties = getDisplayedPenalties();
+                        const displayedEnAvant = getDisplayedEnAvant();
 
-                const teamStats = [
-                    {
-                        label: "Pénalité",
-                        values: displayedPenalties,
-                        onAdjust: adjustPenalties,
-                    },
-                    {
-                        label: "En Avant",
-                        values: displayedEnAvant,
-                        onAdjust: adjustEnAvant,
-                    },
-                    {
-                        label: "Touche Gagnée",
-                        values: teamToucheGagnee,
-                        onAdjust: adjustToucheGagnee,
-                    },
-                    {
-                        label: "Touche Perdue",
-                        values: teamTouchePerdue,
-                        onAdjust: adjustTouchePerdue,
-                    },
-                    {
-                        label: "Mêlée Gagnée",
-                        values: teamMeleeGagnee,
-                        onAdjust: adjustMeleeGagnee,
-                    },
-                    {
-                        label: "Mêlée Perdue",
-                        values: teamMeleePerdue,
-                        onAdjust: adjustMeleePerdue,
-                    },
-                ];
+                        const teamStats = [
+                            {
+                                label: "Pénalité",
+                                values: displayedPenalties,
+                                onAdjust: adjustPenalties,
+                            },
+                            {
+                                label: "En Avant",
+                                values: displayedEnAvant,
+                                onAdjust: adjustEnAvant,
+                            },
+                            {
+                                label: "Touche Gagnée",
+                                values: teamToucheGagnee,
+                                onAdjust: adjustToucheGagnee,
+                            },
+                            {
+                                label: "Touche Perdue",
+                                values: teamTouchePerdue,
+                                onAdjust: adjustTouchePerdue,
+                            },
+                            {
+                                label: "Mêlée Gagnée",
+                                values: teamMeleeGagnee,
+                                onAdjust: adjustMeleeGagnee,
+                            },
+                            {
+                                label: "Mêlée Perdue",
+                                values: teamMeleePerdue,
+                                onAdjust: adjustMeleePerdue,
+                            },
+                        ];
 
-                return (
-                    <section className="space-y-3">
-                        <h3 className="font-semibold text-center">Statistiques</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {selectedTeams.map((team, teamIdx) => (
-                                <div key={team.id} className="border-neutral-700 bg-neutral-900 rounded p-4 space-y-3">
-                                    <h4 className="text-sm font-semibold text-center">
-                                        {team.name.replace(/\s+J\d+$/, "")}
-                                    </h4>
-                                    <ul className="space-y-2">
-                                        {teamStats.map((stat) => (
-                                            <li key={stat.label} className="flex items-center justify-between gap-2">
-                                                <span className="text-sm">{stat.label}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-red-600"
-                                                        onClick={() => stat.onAdjust(teamIdx, -1)}
-                                                    >
-                                                        −
-                                                    </button>
-                                                    <span className="min-w-8 text-center font-semibold">{stat.values[teamIdx] || 0}</span>
-                                                    <button
-                                                        className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-green-600"
-                                                        onClick={() => stat.onAdjust(teamIdx, 1)}
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                );
-            })()}
+                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {selectedTeams.map((team, teamIdx) => (
+                                    <div key={team.id} className="border-neutral-700 bg-neutral-900 rounded p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-center">
+                                            {team.name.replace(/\s+J\d+$/, "")}
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {teamStats.map((stat) => (
+                                                <li key={stat.label} className="flex items-center justify-between gap-2">
+                                                    <span className="text-sm">{stat.label}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-red-600"
+                                                            onClick={() => stat.onAdjust(teamIdx, -1)}
+                                                        >
+                                                            −
+                                                        </button>
+                                                        <span className="min-w-8 text-center font-semibold">{stat.values[teamIdx] || 0}</span>
+                                                        <button
+                                                            className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-green-600"
+                                                            onClick={() => stat.onAdjust(teamIdx, 1)}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
+                </section>
+            )}
 
             {actionTab === "events" && (
                 <>
