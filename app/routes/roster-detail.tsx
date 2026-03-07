@@ -89,7 +89,7 @@ export default function RosterDetailPage() {
     );
 
     function formatName(value: string) {
-        const cleaned = value.replace(/\s+/g, " ").trim();
+        const cleaned = value.replace(/\s+/g, " ");
         if (!cleaned) return "";
         const lowered = cleaned.toLowerCase();
         return lowered.replace(/(^|[-' ])[A-Za-zÀ-ÖØ-öø-ÿ]/g, (match) => {
@@ -99,8 +99,9 @@ export default function RosterDetailPage() {
     }
 
     function validateName(value: string) {
-        if (!value) return "";
-        const valid = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*(?: [A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*)?$/.test(value);
+        const normalized = value.trim();
+        if (!normalized) return "";
+        const valid = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*(?: [A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*)?$/.test(normalized);
         return valid
             ? ""
             : "Utilise uniquement des lettres (y compris accentuees), un trait d'union, une apostrophe et au maximum un espace.";
@@ -234,8 +235,8 @@ export default function RosterDetailPage() {
 
     function addPlayerToRoster() {
         if (!roster) return;
-        const formattedFirst = formatName(newPlayerFirst);
-        const formattedLast = formatName(newPlayerLast);
+        const formattedFirst = formatName(newPlayerFirst).trim();
+        const formattedLast = formatName(newPlayerLast).trim();
         const firstError = validateName(formattedFirst);
         const lastError = validateName(formattedLast);
         setNewPlayerFirstError(firstError);
@@ -277,8 +278,8 @@ export default function RosterDetailPage() {
 
     function saveEditPlayer() {
         if (!roster || !editingPlayerId) return;
-        const formattedFirst = formatName(editingPlayerFirst);
-        const formattedLast = formatName(editingPlayerLast);
+        const formattedFirst = formatName(editingPlayerFirst).trim();
+        const formattedLast = formatName(editingPlayerLast).trim();
         const firstError = validateName(formattedFirst);
         const lastError = validateName(formattedLast);
         setEditingPlayerFirstError(firstError);
