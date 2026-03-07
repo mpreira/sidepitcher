@@ -31,6 +31,8 @@ const COMMAND_TYPES = [
     "Blessure",
 ];
 
+const TRACKER_ACTION_TAB_STORAGE_KEY = "sidepitcher.tracker.actionTab";
+
 export default function Tracker() {
     const { account } = useAccount();
     const [time, setTime] = useState(0);
@@ -118,6 +120,17 @@ export default function Tracker() {
     const [teamTouchePerdue, setTeamTouchePerdue] = useState<number[]>([0, 0]);
     const [teamMeleeGagnee, setTeamMeleeGagnee] = useState<number[]>([0, 0]);
     const [teamMeleePerdue, setTeamMeleePerdue] = useState<number[]>([0, 0]);
+
+    useEffect(() => {
+        const storedTab = window.localStorage.getItem(TRACKER_ACTION_TAB_STORAGE_KEY);
+        if (storedTab === "events" || storedTab === "stats") {
+            setActionTab(storedTab);
+        }
+    }, []);
+
+    useEffect(() => {
+        window.localStorage.setItem(TRACKER_ACTION_TAB_STORAGE_KEY, actionTab);
+    }, [actionTab]);
 
     // Load saved selection for the current championship/matchday.
     useEffect(() => {
