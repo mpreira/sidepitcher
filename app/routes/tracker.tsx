@@ -79,6 +79,7 @@ export default function Tracker() {
     const [team1Id, setTeam1Id] = useState<string>("");
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
+    const [actionTab, setActionTab] = useState<"events" | "stats">("events");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
@@ -797,7 +798,35 @@ export default function Tracker() {
                 }}
             />
 
-            {selectedTeams.length === 2 && (() => {
+            <section className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "events"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => setActionTab("events")}
+                    >
+                        Événements
+                    </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "stats"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("stats");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        Statistiques
+                    </button>
+                </div>
+            </section>
+
+            {actionTab === "stats" && selectedTeams.length === 2 && (() => {
                 const displayedPenalties = getDisplayedPenalties();
                 const displayedEnAvant = getDisplayedEnAvant();
 
@@ -872,24 +901,28 @@ export default function Tracker() {
                 );
             })()}
 
-            <CommandPanel
-                types={COMMAND_TYPES}
-                onSelect={(type) => setActiveCommand(type)}
-            />
+            {actionTab === "events" && (
+                <>
+                    <CommandPanel
+                        types={COMMAND_TYPES}
+                        onSelect={(type) => setActiveCommand(type)}
+                    />
 
-            {activeCommand && team1Id && team2Id && team1Id !== team2Id && (
-                <EventForm
-                type={activeCommand}
-                teams={selectedTeams}
-                currentTime={time}
-                onSubmit={addEvent}
-                onCancel={() => setActiveCommand(null)}
-                />
-            )}
-            {activeCommand && (!team1Id || !team2Id || team1Id === team2Id) && (
-                <p className="text-sm text-red-600">
-                    Sélectionne deux équipes différentes pour enregistrer un événement.
-                </p>
+                    {activeCommand && team1Id && team2Id && team1Id !== team2Id && (
+                        <EventForm
+                        type={activeCommand}
+                        teams={selectedTeams}
+                        currentTime={time}
+                        onSubmit={addEvent}
+                        onCancel={() => setActiveCommand(null)}
+                        />
+                    )}
+                    {activeCommand && (!team1Id || !team2Id || team1Id === team2Id) && (
+                        <p className="text-sm text-red-600">
+                            Sélectionne deux équipes différentes pour enregistrer un événement.
+                        </p>
+                    )}
+                </>
             )}
 
             <section className="space-y-2">
