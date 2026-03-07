@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useAccount } from "~/context/AccountContext";
 
 export function meta() {
@@ -7,7 +7,9 @@ export function meta() {
 }
 
 export default function SettingsPage() {
+  const location = useLocation();
   const { account, connected, loading, refreshAccount, logout } = useAccount();
+  const [authMode, setAuthMode] = useState<"create" | "login">("login");
   const [renameName, setRenameName] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
   const [profileCurrentPassword, setProfileCurrentPassword] = useState("");
@@ -24,6 +26,17 @@ export default function SettingsPage() {
   useEffect(() => {
     setRenameName(account?.name ?? "");
   }, [account?.id, account?.name]);
+
+  useEffect(() => {
+    if (connected) return;
+    if (location.hash === "#create-account") {
+      setAuthMode("create");
+      return;
+    }
+    if (location.hash === "#switch-account") {
+      setAuthMode("login");
+    }
+  }, [connected, location.hash]);
 
   useEffect(() => {
     setProfileEmail(account?.email ?? "");
@@ -204,6 +217,25 @@ export default function SettingsPage() {
         Reglages du compte
       </h1>
 
+      {!connected && (
+        <section className="border border-neutral-700 rounded p-2 bg-neutral-900 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setAuthMode("create")}
+            className={`px-3 py-2 rounded text-sm ${authMode === "create" ? "bg-green-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+          >
+            Creer un compte
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode("login")}
+            className={`px-3 py-2 rounded text-sm ${authMode === "login" ? "bg-blue-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+          >
+            Se connecter
+          </button>
+        </section>
+      )}
+
       <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-2">
         <h2 className="font-semibold">Compte actif</h2>
         {loading ? (
@@ -279,7 +311,7 @@ export default function SettingsPage() {
         </button>
       </section>
 
-      {!connected && (
+      {!connected && authMode === "create" && (
         <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
           <h2 className="font-semibold">Creer un compte</h2>
           <input
@@ -313,7 +345,7 @@ export default function SettingsPage() {
         </section>
       )}
 
-      {!connected && (
+      {!connected && authMode === "login" && (
         <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
           <h2 className="font-semibold">Se connecter</h2>
           <input
