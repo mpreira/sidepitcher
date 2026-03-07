@@ -98,6 +98,38 @@ Notes:
 - Use the Render PostgreSQL "External Database URL" as `DATABASE_URL`.
 - No local SQLite setup is needed in production.
 
+### Environment Variables (Auth + Email)
+
+Required:
+
+```bash
+DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DBNAME
+```
+
+Optional (live tracking security):
+
+```bash
+LIVE_TOKEN_PEPPER=change-me
+LIVE_SESSION_TTL_HOURS=12
+```
+
+Optional (email notification when a new account is created):
+
+```bash
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL="SidePitcher <onboarding@resend.dev>"
+```
+
+Admin seed at first startup:
+
+- Email: `mlpreira@gmail.com`
+- Password: `test01`
+
+Important:
+
+- Connect once with this admin account, then immediately change the password from the app.
+- If `RESEND_API_KEY` is missing, account creation still works but no notification email is sent.
+
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.

@@ -1,22 +1,26 @@
 import { Link, useLoaderData } from "react-router";
 import {
-  getRostersState,
+  getRostersStateForAccount,
   listMatchDaySelections,
   listSummaries,
 } from "~/utils/database.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
 export function meta() {
   return [{ title: "Diagnostic DB" }];
 }
 
-export async function loader() {
-  const rostersState = await getRostersState();
-  const selections = await listMatchDaySelections();
-  const summaries = await listSummaries();
+export async function loader({ request }: { request: Request }) {
+  const scope = await resolveDataScopeFromRequest(request);
+  const rostersState = await getRostersStateForAccount(scope.scopeId);
+  const selections = await listMatchDaySelections(scope.scopeId);
+  const summaries = await listSummaries(scope.scopeId);
 
-  return {
+  const payload = {
     rostersCount: Array.isArray(rostersState.rosters) ? rostersState.rosters.length : 0,
     teamsCount: Array.isArray(rostersState.teams) ? rostersState.teams.length : 0,
+    scopeId: scope.scopeId,
+    scopeLabel: scope.isAnonymous ? "Session anonyme (24h)" : scope.account?.name ?? "Compte",
     activeRosterId: rostersState.activeRosterId,
     matchDay: rostersState.matchDay ?? "",
     sport: rostersState.sport ?? "Rugby",
@@ -32,6 +36,16 @@ export async function loader() {
       eventsCount: Array.isArray(item.events) ? item.events.length : 0,
     })),
   };
+
+  if (!scope.setCookieHeader) {
+    return payload;
+  }
+
+  return Response.json(payload, {
+    headers: {
+      "Set-Cookie": scope.setCookieHeader,
+    },
+  });
 }
 
 function JsonBlock({ value }: { value: unknown }) {
@@ -51,6 +65,14 @@ export default function AdminDbPage() {
       <p className="text-sm text-gray-300">
         Page de lecture seule pour verifier les donnees PostgreSQL (Render).
       </p>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">Scope de donnees</h2>
+        <ul className="text-sm space-y-1">
+          <li>Libelle: {data.scopeLabel}</li>
+          <li className="break-all">ID: {data.scopeId}</li>
+        </ul>
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">Etat effectifs</h2>
