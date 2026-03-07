@@ -31,7 +31,7 @@ export default function EventsList({ events, remove }: Props) {
                   <>
                     {formatTime(e.time)} - {e.type}
                     {e.team && ` (${displayTeamName(e.team.name)})`}
-                    {e.videoReason && ` — raison: ${e.videoReason}`}
+                    {e.videoReason && ` — TMO - ${e.videoReason}`}
                   </>
                 ) : (
                   <>

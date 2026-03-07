@@ -83,7 +83,7 @@ export function exportSummaryToClipboard(
             if (e.playerOut && e.playerIn)
                 line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
             if (e.videoReason)
-                line += ` — raison: ${e.videoReason}`;
+                line += ` — TMO - ${e.videoReason}`;
             if (e.concussion) line += " 🚨 commotion";
             lines.push(line);
         }
@@ -128,7 +128,7 @@ export function exportSummaryToPdf(
             if (e.playerOut && e.playerIn)
                 line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
             if (e.videoReason)
-                line += ` — raison: ${e.videoReason}`;
+                line += ` — TMO - ${e.videoReason}`;
             if (e.concussion) line += " 🚨 commotion";
             doc.text(line, 10, y);
         }

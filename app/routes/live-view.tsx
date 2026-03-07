@@ -185,7 +185,7 @@ export default function LiveViewPage() {
                         <>
                           {formatTime(event.time)} - {event.type}
                           {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
-                          {event.videoReason && ` — raison: ${event.videoReason}`}
+                          {event.videoReason && ` — TMO - ${event.videoReason}`}
                         </>
                       ) : (
                         <>
