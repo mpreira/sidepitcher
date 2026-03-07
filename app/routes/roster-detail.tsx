@@ -91,20 +91,19 @@ export default function RosterDetailPage() {
     function formatName(value: string) {
         const cleaned = value.replace(/\s+/g, " ").trim();
         if (!cleaned) return "";
-        return cleaned
-            .split("-")
-            .map((part) =>
-                part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : ""
-            )
-            .join("-");
+        const lowered = cleaned.toLowerCase();
+        return lowered.replace(/(^|[-' ])[A-Za-zÀ-ÖØ-öø-ÿ]/g, (match) => {
+            if (match.length === 1) return match.toUpperCase();
+            return `${match.slice(0, -1)}${match.slice(-1).toUpperCase()}`;
+        });
     }
 
     function validateName(value: string) {
         if (!value) return "";
-        const valid = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:-[A-Za-zÀ-ÖØ-öø-ÿ]+)*$/.test(value);
+        const valid = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*(?: [A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*)?$/.test(value);
         return valid
             ? ""
-            : "Utilise uniquement des lettres (y compris accentuées) et le trait d'union.";
+            : "Utilise uniquement des lettres (y compris accentuees), un trait d'union, une apostrophe et au maximum un espace.";
     }
 
     function addTeam() {
