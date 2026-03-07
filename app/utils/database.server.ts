@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Pool } from "pg";
+import type { LiveSnapshot } from "~/types/live";
 
 type Sport = "Rugby" | "Football";
 type Championship = "Top 14" | "Pro D2";
@@ -30,6 +31,17 @@ export interface StoredSummary {
   events: unknown[];
   teams?: Array<{ id: string; name: string }>;
   matchDay?: number;
+}
+
+export interface LiveMatchRecord {
+  id: string;
+  publicSlug: string;
+  adminToken: string;
+  championship: string | null;
+  matchDay: number | null;
+  state: LiveSnapshot | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const dataDir = path.join(process.cwd(), "data");
@@ -99,6 +111,17 @@ async function initializeSchema(pool: Pool) {
       id TEXT PRIMARY KEY,
       created_at TIMESTAMPTZ NOT NULL,
       payload TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS live_matches (
+      id TEXT PRIMARY KEY,
+      public_slug TEXT UNIQUE NOT NULL,
+      admin_token TEXT NOT NULL,
+      championship TEXT,
+      match_day INTEGER,
+      payload TEXT,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
     );
   `);
 }
@@ -330,4 +353,120 @@ export async function deleteSummary(summaryId: string): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
   await pool.query(`DELETE FROM summaries WHERE id = $1`, [summaryId]);
+}
+
+function mapLiveMatchRow(row: {
+  id: string;
+  public_slug: string;
+  admin_token: string;
+  championship: string | null;
+  match_day: number | null;
+  payload: string | null;
+  created_at: string;
+  updated_at: string;
+}): LiveMatchRecord {
+  return {
+    id: row.id,
+    publicSlug: row.public_slug,
+    adminToken: row.admin_token,
+    championship: row.championship,
+    matchDay: row.match_day,
+    state: row.payload ? parseJsonOrNull<LiveSnapshot>(row.payload) : null,
+    createdAt: new Date(row.created_at).toISOString(),
+    updatedAt: new Date(row.updated_at).toISOString(),
+  };
+}
+
+export async function createLiveMatch(input: {
+  id: string;
+  publicSlug: string;
+  adminToken: string;
+  championship?: string;
+  matchDay?: number;
+  state: LiveSnapshot;
+}): Promise<LiveMatchRecord> {
+  await ensureInitialized();
+  const pool = getPool();
+  const now = new Date().toISOString();
+  const result = await pool.query<{
+    id: string;
+    public_slug: string;
+    admin_token: string;
+    championship: string | null;
+    match_day: number | null;
+    payload: string | null;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `INSERT INTO live_matches
+      (id, public_slug, admin_token, championship, match_day, payload, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING id, public_slug, admin_token, championship, match_day, payload, created_at, updated_at`,
+    [
+      input.id,
+      input.publicSlug,
+      input.adminToken,
+      input.championship ?? null,
+      input.matchDay ?? null,
+      JSON.stringify(input.state),
+      now,
+      now,
+    ]
+  );
+
+  return mapLiveMatchRow(result.rows[0]);
+}
+
+export async function getLiveMatchByPublicSlug(publicSlug: string): Promise<LiveMatchRecord | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query<{
+    id: string;
+    public_slug: string;
+    admin_token: string;
+    championship: string | null;
+    match_day: number | null;
+    payload: string | null;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `SELECT id, public_slug, admin_token, championship, match_day, payload, created_at, updated_at
+     FROM live_matches
+     WHERE public_slug = $1`,
+    [publicSlug]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return mapLiveMatchRow(row);
+}
+
+export async function updateLiveMatchState(input: {
+  matchId: string;
+  adminToken: string;
+  state: LiveSnapshot;
+}): Promise<LiveMatchRecord | null> {
+  await ensureInitialized();
+  const pool = getPool();
+
+  const result = await pool.query<{
+    id: string;
+    public_slug: string;
+    admin_token: string;
+    championship: string | null;
+    match_day: number | null;
+    payload: string | null;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `UPDATE live_matches
+     SET payload = $3, updated_at = $4
+     WHERE id = $1 AND admin_token = $2
+     RETURNING id, public_slug, admin_token, championship, match_day, payload, created_at, updated_at`,
+    [input.matchId, input.adminToken, JSON.stringify(input.state), new Date().toISOString()]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+  return mapLiveMatchRow(row);
 }
