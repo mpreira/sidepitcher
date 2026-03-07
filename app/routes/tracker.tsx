@@ -989,13 +989,20 @@ export default function Tracker() {
                     />
 
                     {activeCommand && team1Id && team2Id && team1Id !== team2Id && (
-                        <EventForm
-                        type={activeCommand}
-                        teams={selectedTeams}
-                        currentTime={time}
-                        onSubmit={addEvent}
-                        onCancel={() => setActiveCommand(null)}
-                        />
+                        <div
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                            onClick={() => setActiveCommand(null)}
+                        >
+                            <div onClick={(event) => event.stopPropagation()}>
+                                <EventForm
+                                    type={activeCommand}
+                                    teams={selectedTeams}
+                                    currentTime={time}
+                                    onSubmit={addEvent}
+                                    onCancel={() => setActiveCommand(null)}
+                                />
+                            </div>
+                        </div>
                     )}
                     {activeCommand && (!team1Id || !team2Id || team1Id === team2Id) && (
                         <p className="text-sm text-red-600">
