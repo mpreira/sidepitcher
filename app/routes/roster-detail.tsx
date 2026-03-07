@@ -514,7 +514,9 @@ export default function RosterDetailPage() {
                                                     <div>
                                                         <p className="text-xs font-semibold text-gray-600 mb-1">Titulaires (1-15)</p>
                                                         <ul className="space-y-1 text-base">
-                                                            {team.starters.map((entry) => (
+                                                            {[...team.starters]
+                                                                .sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number)
+                                                                .map((entry) => (
                                                                 <li key={entry.player.id} className="flex items-center gap-2">
                                                                     <span className="font-bold text-white w-6">{entry.number}</span>
                                                                     <span className="flex-1 inline-flex items-center gap-1">
@@ -536,7 +538,9 @@ export default function RosterDetailPage() {
                                                     <div>
                                                         <p className="text-xs font-semibold text-gray-600 mb-1">Remplaçants (16-23)</p>
                                                         <ul className="space-y-1 text-base">
-                                                            {team.substitutes.map((entry) => (
+                                                            {[...team.substitutes]
+                                                                .sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number)
+                                                                .map((entry) => (
                                                                 <li key={entry.player.id} className="flex items-center gap-2">
                                                                     <span className="font-bold text-white w-6">{entry.number}</span>
                                                                     <span className="flex-1 inline-flex items-center gap-1">
