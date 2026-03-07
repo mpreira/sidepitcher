@@ -1,10 +1,14 @@
 import { useTeams } from "~/context/TeamsContext";
+import { useAccount } from "~/context/AccountContext";
 import logoSP from "~/assets/images/logo_800.svg";
 import { useState } from "react";
+import { Link } from "react-router";
 
 export function Welcome() {
+  const { account, connected, logout } = useAccount();
   const { matchDay, sport, championship, setMatchDay, setSport, setChampionship } = useTeams();
   const [successMessage, setSuccessMessage] = useState("");
+  const [accountMessage, setAccountMessage] = useState("");
 
   const sportOptions = ["Rugby", "Football"] as const;
   const championshipOptions = ["Top 14", "Pro D2"] as const;
@@ -14,8 +18,53 @@ export function Welcome() {
     setSuccessMessage("Formulaire validé avec succès.");
   }
 
+  async function handleLogout() {
+    try {
+      await logout();
+      setAccountMessage("Deconnexion effectuee.");
+    } catch {
+      setAccountMessage("Impossible de se deconnecter.");
+    }
+  }
+
   return (
-    <main className="flex h-full min-h-0 w-full items-center justify-center py-4">
+    <main className="relative flex h-full min-h-0 w-full items-center justify-center py-4">
+      <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
+        {connected && account ? (
+          <>
+            <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
+              Compte: {account.name}
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded bg-red-700 px-3 py-1 text-xs text-white hover:bg-red-800"
+            >
+              Deconnexion
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/settings#switch-account"
+              className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
+            >
+              Se connecter
+            </Link>
+            <Link
+              to="/settings#create-account"
+              className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
+            >
+              Creer un compte
+            </Link>
+          </>
+        )}
+      </div>
+      {!connected && (
+        <p className="absolute left-4 top-4 z-20 rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
+          Mode invite: les donnees sont conservees 24h.
+        </p>
+      )}
       <div className="flex w-full flex-1 flex-col items-center gap-16 min-h-0">
         <header className="flex w-full flex-col items-center gap-9">
             <div className="mx-auto w-full max-w-[1100px] px-2">
@@ -79,6 +128,7 @@ export function Welcome() {
               Valider
             </button>
             {successMessage && <p className="text-sm text-green-400">{successMessage}</p>}
+            {accountMessage && <p className="text-sm text-neutral-300">{accountMessage}</p>}
           </form>
         </header>
         {/*<div className="max-w-[300px] w-full space-y-6 px-4">
