@@ -167,20 +167,29 @@ export default function RosterDetailPage() {
             const next = new Set(prev);
             if (next.has(playerId)) {
                 next.delete(playerId);
+                setPlayerNumbers((numbers) => {
+                    const { [playerId]: _removed, ...rest } = numbers;
+                    return rest;
+                });
                 setSelectedCaptainPlayerId((currentCaptainId) =>
                     currentCaptainId === playerId ? null : currentCaptainId
                 );
             } else {
                 next.add(playerId);
-                setPlayerNumbers((numbers) =>
-                    numbers[playerId] ? numbers : { ...numbers, [playerId]: 1 }
-                );
             }
             return next;
         });
     }
 
-    function updatePlayerNumber(playerId: string, value: number) {
+    function updatePlayerNumber(playerId: string, value: number | null) {
+        if (value === null || Number.isNaN(value)) {
+            setPlayerNumbers((prev) => {
+                const { [playerId]: _removed, ...rest } = prev;
+                return rest;
+            });
+            return;
+        }
+
         const clamped = Math.min(23, Math.max(1, value));
         setPlayerNumbers((prev) => ({ ...prev, [playerId]: clamped }));
     }
@@ -204,7 +213,11 @@ export default function RosterDetailPage() {
         }
 
         for (const player of selectedPlayers) {
-            const number = playerNumbers[player.id] || 1;
+            const number = playerNumbers[player.id];
+            if (number === undefined) {
+                setCompositionEditMessage("Renseigne un numero pour chaque joueur selectionne.");
+                return;
+            }
             if (number < 1 || number > 23) {
                 setCompositionEditMessage("Les numéros doivent être compris entre 1 et 23.");
                 return;
@@ -384,9 +397,15 @@ export default function RosterDetailPage() {
                                 }
 
                                 return (
-                                    <ul className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                                    <div className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                                        <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
+                                            <span>Joueur</span>
+                                            <span className="text-center">Capitaine</span>
+                                            <span className="text-right">Numero</span>
+                                        </div>
+                                        <ul className="space-y-2">
                                         {availablePlayers.map((player) => (
-                                            <li key={player.id} className="flex w-full items-center justify-between gap-3">
+                                            <li key={player.id} className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3">
                                                 <label className="flex min-w-0 items-center gap-2 text-left">
                                                     <input
                                                         className="h-4 w-4 min-w-0 border-0 bg-transparent p-0 shadow-none focus:ring-0 focus:border-0"
@@ -396,7 +415,7 @@ export default function RosterDetailPage() {
                                                     />
                                                     <span className="truncate">{player.name}</span>
                                                 </label>
-                                                <label className="flex items-center gap-1 text-xs text-gray-400">
+                                                <label className="flex items-center justify-center gap-1 text-xs text-gray-400">
                                                     <input
                                                         type="radio"
                                                         name={`captain-${compositionEditTeam.id}`}
@@ -417,15 +436,18 @@ export default function RosterDetailPage() {
                                                     min={1}
                                                     max={23}
                                                     className="h-auto w-20 min-w-[5rem] border-0 bg-transparent p-0 text-right text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                                                    value={playerNumbers[player.id] || 1}
-                                                    onChange={(e) =>
-                                                        updatePlayerNumber(player.id, Number(e.target.value))
-                                                    }
+                                                    value={playerNumbers[player.id] ?? ""}
+                                                    onChange={(e) => {
+                                                        const raw = e.target.value;
+                                                        updatePlayerNumber(player.id, raw === "" ? null : Number(raw));
+                                                    }}
+                                                    placeholder="-"
                                                     disabled={!selectedPlayerIds.has(player.id)}
                                                 />
                                             </li>
                                         ))}
-                                    </ul>
+                                        </ul>
+                                    </div>
                                 );
                             })()}
 
