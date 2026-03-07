@@ -60,7 +60,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
 
     // sync to backend whenever anything changes
     useEffect(() => {
-        if (accountLoading || !account) {
+        if (accountLoading) {
             return;
         }
 
@@ -111,7 +111,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             championship,
             };
         });
-    }, [rosters, teams, activeRosterId, matchDay, sport, championship, accountLoading, account]);
+    }, [rosters, teams, activeRosterId, matchDay, sport, championship, accountLoading]);
 
     return (
         <TeamsContext.Provider

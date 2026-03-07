@@ -57,7 +57,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 import { TeamsProvider } from "~/context/TeamsContext";
 import { AccountProvider } from "~/context/AccountContext";
-import { useAccount } from "~/context/AccountContext";
 
 const navigationItems = [
   { href: "/", label: "Accueil", icon: faHouse, active: true },
@@ -79,7 +78,6 @@ export default function App() {
 
 function AppContent() {
   const { pathname } = useLocation();
-  const { account } = useAccount();
   const isHome = pathname === "/";
 
   return (
@@ -89,10 +87,7 @@ function AppContent() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-3 z-50 px-3">
-        <div className="mx-auto max-w-screen-md space-y-1">
-          {account?.name && (
-            <p className="px-2 text-center text-[11px] text-neutral-400">Compte actif: {account.name}</p>
-          )}
+        <div className="mx-auto max-w-screen-md">
           <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
             {navigationItems.map((item) => {
               const isSelected =

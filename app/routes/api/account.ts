@@ -1,30 +1,24 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
 import {
   createAndAssignAccount,
-  resolveAccountFromRequest,
+  getConnectedAccountFromRequest,
   switchAccountFromAccessCode,
   buildAccountCookie,
+  buildAccountLogoutCookie,
   renameCurrentAccount,
 } from "~/utils/account.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const resolved = await resolveAccountFromRequest(request);
-  const payload = { account: resolved.account };
-
-  if (!resolved.setCookieHeader) {
-    return payload;
+  const connectedAccount = await getConnectedAccountFromRequest(request);
+  if (!connectedAccount) {
+    return { connected: false, account: null };
   }
-
-  return Response.json(payload, {
-    headers: {
-      "Set-Cookie": resolved.setCookieHeader,
-    },
-  });
+  return { connected: true, account: connectedAccount };
 };
 
 export const action: ActionFunction = async ({ request }) => {
   const body = (await request.json()) as {
-    intent?: "create" | "switch" | "rename";
+    intent?: "create" | "switch" | "rename" | "logout";
     name?: string;
     accessCode?: string;
   };
@@ -73,18 +67,22 @@ export const action: ActionFunction = async ({ request }) => {
       return Response.json({ ok: false, error: "missing-name" }, { status: 400 });
     }
 
-    const resolved = await resolveAccountFromRequest(request);
-    const account = await renameCurrentAccount(resolved.account.id, body.name);
-
-    if (!resolved.setCookieHeader) {
-      return Response.json({ ok: true, account });
+    const connectedAccount = await getConnectedAccountFromRequest(request);
+    if (!connectedAccount) {
+      return Response.json({ ok: false, error: "not-connected" }, { status: 401 });
     }
 
+    const account = await renameCurrentAccount(connectedAccount.id, body.name);
+
+    return Response.json({ ok: true, account });
+  }
+
+  if (body.intent === "logout") {
     return Response.json(
-      { ok: true, account },
+      { ok: true },
       {
         headers: {
-          "Set-Cookie": resolved.setCookieHeader,
+          "Set-Cookie": buildAccountLogoutCookie(),
         },
       }
     );

@@ -149,7 +149,7 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+      <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
         <h2 className="font-semibold">Renommer le compte actif</h2>
         <input
           type="text"
@@ -167,7 +167,7 @@ export default function SettingsPage() {
         </button>
       </section>
 
-      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+      <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
         <h2 className="font-semibold">Creer un compte</h2>
         <input
           type="text"
@@ -198,7 +198,7 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+      <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
         <h2 className="font-semibold">Changer de compte</h2>
         <input
           type="text"

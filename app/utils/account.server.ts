@@ -33,6 +33,19 @@ export function buildAccountCookie(accountId: string): string {
   return `${ACCOUNT_COOKIE_NAME}=${encodeURIComponent(accountId)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ACCOUNT_COOKIE_MAX_AGE_SECONDS}${secureFlag}`;
 }
 
+export function buildAccountLogoutCookie(): string {
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${ACCOUNT_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`;
+}
+
+export async function getConnectedAccountFromRequest(request: Request): Promise<Account | null> {
+  const cookieHeader = request.headers.get("cookie");
+  const cookies = parseCookies(cookieHeader);
+  const accountId = cookies[ACCOUNT_COOKIE_NAME];
+  if (!accountId) return null;
+  return getAccountById(accountId);
+}
+
 export async function resolveAccountFromRequest(request: Request): Promise<{
   account: Account;
   setCookieHeader?: string;
