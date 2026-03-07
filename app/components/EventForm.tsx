@@ -22,6 +22,7 @@ export default function EventForm({
     const [concussion, setConcussion] = useState(false);
     const [outPlayerId, setOutPlayerId] = useState("");
     const [inPlayerId, setInPlayerId] = useState("");
+    const [videoReason, setVideoReason] = useState<"essai" | "jeu déloyal">("essai");
 
     useEffect(() => {
         // reset when type or teams change
@@ -29,6 +30,7 @@ export default function EventForm({
         setConcussion(false);
         setOutPlayerId("");
         setInPlayerId("");
+        setVideoReason("essai");
     }, [type, teams]);
 
     const team = teams[teamIdx];
@@ -40,7 +42,15 @@ export default function EventForm({
       : [];
 
     function handleSubmit() {
-        if (type === "Changement") {
+        if (type === "Arbitrage Vidéo") {
+            if (!team) return;
+            onSubmit({
+                type,
+                time: currentTime,
+                team,
+                videoReason,
+            });
+        } else if (type === "Changement") {
             const playerOut = players.find((p) => p.id === outPlayerId);
             const playerIn = players.find((p) => p.id === inPlayerId);
             const event = createSubstitutionEvent(currentTime, team, playerOut, playerIn, concussion);
@@ -72,7 +82,20 @@ export default function EventForm({
                 ))}
             </select>
             </div>
-            {type === "Changement" ? (
+            {type === "Arbitrage Vidéo" ? (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <label className="leading-none" htmlFor="videoReasonSelect">Raison</label>
+                <select
+                    id="videoReasonSelect"
+                    className="flex-1 text-base font-light text-neutral-300"
+                    value={videoReason}
+                    onChange={(e) => setVideoReason(e.target.value as "essai" | "jeu déloyal")}
+                >
+                    <option value="essai">essai</option>
+                    <option value="jeu déloyal">jeu déloyal</option>
+                </select>
+            </div>
+            ) : type === "Changement" ? (
             <>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <label className="leading-none" htmlFor="outPlayerSelect">Sortant</label>

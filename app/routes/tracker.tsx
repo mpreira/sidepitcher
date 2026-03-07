@@ -29,7 +29,10 @@ const COMMAND_TYPES = [
     "Changement",
     "Saignement",
     "Blessure",
+    "Arbitrage Vidéo",
 ];
+
+const TRACKER_ACTION_TAB_STORAGE_KEY = "sidepitcher.tracker.actionTab";
 
 export default function Tracker() {
     const { account } = useAccount();
@@ -79,6 +82,7 @@ export default function Tracker() {
     const [team1Id, setTeam1Id] = useState<string>("");
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
+    const [actionTab, setActionTab] = useState<"events" | "stats">("events");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
@@ -117,6 +121,20 @@ export default function Tracker() {
     const [teamTouchePerdue, setTeamTouchePerdue] = useState<number[]>([0, 0]);
     const [teamMeleeGagnee, setTeamMeleeGagnee] = useState<number[]>([0, 0]);
     const [teamMeleePerdue, setTeamMeleePerdue] = useState<number[]>([0, 0]);
+    const [teamTurnover, setTeamTurnover] = useState<number[]>([0, 0]);
+    const [teamOffloads, setTeamOffloads] = useState<number[]>([0, 0]);
+    const [teamJeuAuPied, setTeamJeuAuPied] = useState<number[]>([0, 0]);
+
+    useEffect(() => {
+        const storedTab = window.localStorage.getItem(TRACKER_ACTION_TAB_STORAGE_KEY);
+        if (storedTab === "events" || storedTab === "stats") {
+            setActionTab(storedTab);
+        }
+    }, []);
+
+    useEffect(() => {
+        window.localStorage.setItem(TRACKER_ACTION_TAB_STORAGE_KEY, actionTab);
+    }, [actionTab]);
 
     // Load saved selection for the current championship/matchday.
     useEffect(() => {
@@ -167,6 +185,9 @@ export default function Tracker() {
         setTeamTouchePerdue([0, 0]);
         setTeamMeleeGagnee([0, 0]);
         setTeamMeleePerdue([0, 0]);
+        setTeamTurnover([0, 0]);
+        setTeamOffloads([0, 0]);
+        setTeamJeuAuPied([0, 0]);
         setLiveMatchId(null);
         setLivePublicSlug(null);
         setLiveAdminToken(null);
@@ -249,7 +270,7 @@ export default function Tracker() {
         const team2Name = selectedTeams[1].name.replace(/\s+J\d+$/, "");
         const displayedPenalties = getDisplayedPenalties();
         const displayedEnAvant = getDisplayedEnAvant();
-        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamToucheGagnee[0] || 0} touches gagnées, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleeGagnee[0] || 0} mêlées gagnées, ${teamMeleePerdue[0] || 0} mêlées perdues / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamToucheGagnee[1] || 0} touches gagnées, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleeGagnee[1] || 0} mêlées gagnées, ${teamMeleePerdue[1] || 0} mêlées perdues`;
+        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamToucheGagnee[0] || 0} touches volées, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleeGagnee[0] || 0} mêlées gagnées, ${teamMeleePerdue[0] || 0} mêlées perdues, ${teamTurnover[0] || 0} turnovers, ${teamOffloads[0] || 0} offloads, ${teamJeuAuPied[0] || 0} jeux au pied / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamToucheGagnee[1] || 0} touches volées, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleeGagnee[1] || 0} mêlées gagnées, ${teamMeleePerdue[1] || 0} mêlées perdues, ${teamTurnover[1] || 0} turnovers, ${teamOffloads[1] || 0} offloads, ${teamJeuAuPied[1] || 0} jeux au pied`;
         
         const summaryEvent: Event = {
             type: "Récapitulatif",
@@ -385,6 +406,30 @@ export default function Tracker() {
         });
     }
 
+    function adjustTurnover(idx: number, delta: number) {
+        setTeamTurnover((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
+    function adjustOffloads(idx: number, delta: number) {
+        setTeamOffloads((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
+    function adjustJeuAuPied(idx: number, delta: number) {
+        setTeamJeuAuPied((prev) => {
+            const copy = [...prev];
+            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
+            return copy;
+        });
+    }
+
     function getDisplayedPenalties(): number[] {
         return teamPenalties.map((count, idx) => {
             const total = count + (manualPenaltyAdjustments[idx] || 0);
@@ -412,7 +457,10 @@ export default function Tracker() {
         teamToucheGagnee.some((value) => value !== 0) ||
         teamTouchePerdue.some((value) => value !== 0) ||
         teamMeleeGagnee.some((value) => value !== 0) ||
-        teamMeleePerdue.some((value) => value !== 0);
+        teamMeleePerdue.some((value) => value !== 0) ||
+        teamTurnover.some((value) => value !== 0) ||
+        teamOffloads.some((value) => value !== 0) ||
+        teamJeuAuPied.some((value) => value !== 0);
 
     const getTrackingSignature = useCallback(() => {
         return JSON.stringify({
@@ -429,6 +477,9 @@ export default function Tracker() {
             teamTouchePerdue,
             teamMeleeGagnee,
             teamMeleePerdue,
+            teamTurnover,
+            teamOffloads,
+            teamJeuAuPied,
         });
     }, [
         time,
@@ -444,6 +495,9 @@ export default function Tracker() {
         teamTouchePerdue,
         teamMeleeGagnee,
         teamMeleePerdue,
+        teamTurnover,
+        teamOffloads,
+        teamJeuAuPied,
     ]);
 
     function handleResetTracker() {
@@ -483,6 +537,9 @@ export default function Tracker() {
             touchePerdue: teamTouchePerdue,
             meleeGagnee: teamMeleeGagnee,
             meleePerdue: teamMeleePerdue,
+            turnover: teamTurnover,
+            offloads: teamOffloads,
+            jeuAuPied: teamJeuAuPied,
         };
     }, [
         currentHalf,
@@ -498,6 +555,9 @@ export default function Tracker() {
         teamPenalties,
         teamToucheGagnee,
         teamTouchePerdue,
+        teamTurnover,
+        teamOffloads,
+        teamJeuAuPied,
         time,
         manualEnAvantAdjustments,
         manualPenaltyAdjustments,
@@ -797,104 +857,166 @@ export default function Tracker() {
                 }}
             />
 
-            {selectedTeams.length === 2 && (() => {
-                const displayedPenalties = getDisplayedPenalties();
-                const displayedEnAvant = getDisplayedEnAvant();
+            <section className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "events"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => setActionTab("events")}
+                    >
+                        Événements
+                    </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "stats"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("stats");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        Statistiques
+                    </button>
+                </div>
+            </section>
 
-                const teamStats = [
-                    {
-                        label: "Pénalité",
-                        values: displayedPenalties,
-                        onAdjust: adjustPenalties,
-                    },
-                    {
-                        label: "En Avant",
-                        values: displayedEnAvant,
-                        onAdjust: adjustEnAvant,
-                    },
-                    {
-                        label: "Touche Gagnée",
-                        values: teamToucheGagnee,
-                        onAdjust: adjustToucheGagnee,
-                    },
-                    {
-                        label: "Touche Perdue",
-                        values: teamTouchePerdue,
-                        onAdjust: adjustTouchePerdue,
-                    },
-                    {
-                        label: "Mêlée Gagnée",
-                        values: teamMeleeGagnee,
-                        onAdjust: adjustMeleeGagnee,
-                    },
-                    {
-                        label: "Mêlée Perdue",
-                        values: teamMeleePerdue,
-                        onAdjust: adjustMeleePerdue,
-                    },
-                ];
+            {actionTab === "stats" && (
+                <section className="space-y-3">
+                    <h3 className="font-semibold text-center">Statistiques</h3>
+                    {selectedTeams.length !== 2 ? (
+                        <p className="text-sm text-gray-500 text-center">
+                            Sélectionne et valide deux équipes pour afficher les statistiques.
+                        </p>
+                    ) : (() => {
+                        const displayedPenalties = getDisplayedPenalties();
+                        const displayedEnAvant = getDisplayedEnAvant();
 
-                return (
-                    <section className="space-y-3">
-                        <h3 className="font-semibold text-center">Statistiques</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {selectedTeams.map((team, teamIdx) => (
-                                <div key={team.id} className="border-neutral-700 bg-neutral-900 rounded p-4 space-y-3">
-                                    <h4 className="text-sm font-semibold text-center">
-                                        {team.name.replace(/\s+J\d+$/, "")}
-                                    </h4>
-                                    <ul className="space-y-2">
-                                        {teamStats.map((stat) => (
-                                            <li key={stat.label} className="flex items-center justify-between gap-2">
-                                                <span className="text-sm">{stat.label}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-red-600"
-                                                        onClick={() => stat.onAdjust(teamIdx, -1)}
-                                                    >
-                                                        −
-                                                    </button>
-                                                    <span className="min-w-8 text-center font-semibold">{stat.values[teamIdx] || 0}</span>
-                                                    <button
-                                                        className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-green-600"
-                                                        onClick={() => stat.onAdjust(teamIdx, 1)}
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                );
-            })()}
+                        const teamStats = [
+                            {
+                                label: "Pénalité",
+                                values: displayedPenalties,
+                                onAdjust: adjustPenalties,
+                            },
+                            {
+                                label: "En Avant",
+                                values: displayedEnAvant,
+                                onAdjust: adjustEnAvant,
+                            },
+                            {
+                                label: "Touche volée",
+                                values: teamToucheGagnee,
+                                onAdjust: adjustToucheGagnee,
+                            },
+                            {
+                                label: "Touche Perdue",
+                                values: teamTouchePerdue,
+                                onAdjust: adjustTouchePerdue,
+                            },
+                            {
+                                label: "Mêlée Gagnée",
+                                values: teamMeleeGagnee,
+                                onAdjust: adjustMeleeGagnee,
+                            },
+                            {
+                                label: "Mêlée Perdue",
+                                values: teamMeleePerdue,
+                                onAdjust: adjustMeleePerdue,
+                            },
+                            {
+                                label: "Turnover",
+                                values: teamTurnover,
+                                onAdjust: adjustTurnover,
+                            },
+                            {
+                                label: "Offloads",
+                                values: teamOffloads,
+                                onAdjust: adjustOffloads,
+                            },
+                            {
+                                label: "Jeu au pied",
+                                values: teamJeuAuPied,
+                                onAdjust: adjustJeuAuPied,
+                            },
+                        ];
 
-            <CommandPanel
-                types={COMMAND_TYPES}
-                onSelect={(type) => setActiveCommand(type)}
-            />
-
-            {activeCommand && team1Id && team2Id && team1Id !== team2Id && (
-                <EventForm
-                type={activeCommand}
-                teams={selectedTeams}
-                currentTime={time}
-                onSubmit={addEvent}
-                onCancel={() => setActiveCommand(null)}
-                />
+                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {selectedTeams.map((team, teamIdx) => (
+                                    <div key={team.id} className="border-neutral-700 bg-neutral-900 rounded p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-center">
+                                            {team.name.replace(/\s+J\d+$/, "")}
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {teamStats.map((stat) => (
+                                                <li key={stat.label} className="flex items-center justify-between gap-2">
+                                                    <span className="text-sm">{stat.label}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-red-600"
+                                                            onClick={() => stat.onAdjust(teamIdx, -1)}
+                                                        >
+                                                            −
+                                                        </button>
+                                                        <span className="min-w-8 text-center font-semibold">{stat.values[teamIdx] || 0}</span>
+                                                        <button
+                                                            className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-green-600"
+                                                            onClick={() => stat.onAdjust(teamIdx, 1)}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
+                </section>
             )}
-            {activeCommand && (!team1Id || !team2Id || team1Id === team2Id) && (
-                <p className="text-sm text-red-600">
-                    Sélectionne deux équipes différentes pour enregistrer un événement.
-                </p>
+
+            {actionTab === "events" && (
+                <>
+                    <CommandPanel
+                        types={COMMAND_TYPES}
+                        onSelect={(type) => setActiveCommand(type)}
+                    />
+
+                    {activeCommand && team1Id && team2Id && team1Id !== team2Id && (
+                        <div
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                            onClick={() => setActiveCommand(null)}
+                        >
+                            <div onClick={(event) => event.stopPropagation()}>
+                                <EventForm
+                                    type={activeCommand}
+                                    teams={selectedTeams}
+                                    currentTime={time}
+                                    onSubmit={addEvent}
+                                    onCancel={() => setActiveCommand(null)}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    {activeCommand && (!team1Id || !team2Id || team1Id === team2Id) && (
+                        <p className="text-sm text-red-600">
+                            Sélectionne deux équipes différentes pour enregistrer un événement.
+                        </p>
+                    )}
+                </>
             )}
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Faits de match</h2>
-                <EventsList events={events} remove={removeEvent} />
+                <div className="max-h-[28rem] overflow-y-auto pr-1">
+                    <EventsList events={events} remove={removeEvent} />
+                </div>
             </section>
 
             <Summary
