@@ -57,6 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 import { TeamsProvider } from "~/context/TeamsContext";
 import { AccountProvider } from "~/context/AccountContext";
+import { useAccount } from "~/context/AccountContext";
 
 const navigationItems = [
   { href: "/", label: "Accueil", icon: faHouse, active: true },
@@ -67,18 +68,32 @@ const navigationItems = [
 ] as const;
 
 export default function App() {
-  const { pathname } = useLocation();
-  const isHome = pathname === "/";
-
   return (
     <AccountProvider>
       <TeamsProvider>
-        <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden" : "min-h-screen w-full max-w-full pb-32 overflow-x-hidden"}>
-          <Outlet />
-        </div>
+        <AppContent />
+      </TeamsProvider>
+    </AccountProvider>
+  );
+}
 
-        <nav className="fixed inset-x-0 bottom-3 z-50 px-3">
-          <div className="mx-auto flex max-w-screen-md items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
+function AppContent() {
+  const { pathname } = useLocation();
+  const { account } = useAccount();
+  const isHome = pathname === "/";
+
+  return (
+    <>
+      <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden" : "min-h-screen w-full max-w-full pb-32 overflow-x-hidden"}>
+        <Outlet />
+      </div>
+
+      <nav className="fixed inset-x-0 bottom-3 z-50 px-3">
+        <div className="mx-auto max-w-screen-md space-y-1">
+          {account?.name && (
+            <p className="px-2 text-center text-[11px] text-neutral-400">Compte actif: {account.name}</p>
+          )}
+          <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
             {navigationItems.map((item) => {
               const isSelected =
                 item.active &&
@@ -121,9 +136,9 @@ export default function App() {
               );
             })}
           </div>
-        </nav>
-      </TeamsProvider>
-    </AccountProvider>
+        </div>
+      </nav>
+    </>
   );
 }
 
