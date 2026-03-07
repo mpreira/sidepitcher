@@ -16,6 +16,7 @@ import {
   faUsers,
   faFileLines,
   faGear,
+  faUserShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -57,14 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 import { TeamsProvider } from "~/context/TeamsContext";
 import { AccountProvider } from "~/context/AccountContext";
-
-const navigationItems = [
-  { href: "/", label: "Accueil", icon: faHouse, active: true },
-  { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
-  { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
-  { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
-  { href: "/settings", label: "Réglages", icon: faGear, active: true },
-] as const;
+import { useAccount } from "~/context/AccountContext";
 
 export default function App() {
   return (
@@ -77,8 +71,20 @@ export default function App() {
 }
 
 function AppContent() {
+  const { connected, account } = useAccount();
   const { pathname } = useLocation();
   const isHome = pathname === "/";
+
+  const navigationItems = [
+    { href: "/", label: "Accueil", icon: faHouse, active: true },
+    { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
+    { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
+    { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
+    { href: "/settings", label: "Réglages", icon: faGear, active: true },
+    ...(connected && account?.isAdmin
+      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
+      : []),
+  ] as const;
 
   return (
     <>
