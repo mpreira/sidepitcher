@@ -89,22 +89,22 @@ export default function RosterDetailPage() {
     );
 
     function formatName(value: string) {
-        const cleaned = value.replace(/\s+/g, " ").trim();
+        const cleaned = value.replace(/\s+/g, " ");
         if (!cleaned) return "";
-        return cleaned
-            .split("-")
-            .map((part) =>
-                part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : ""
-            )
-            .join("-");
+        const lowered = cleaned.toLowerCase();
+        return lowered.replace(/(^|[-' ])[A-Za-zÀ-ÖØ-öø-ÿ]/g, (match) => {
+            if (match.length === 1) return match.toUpperCase();
+            return `${match.slice(0, -1)}${match.slice(-1).toUpperCase()}`;
+        });
     }
 
     function validateName(value: string) {
-        if (!value) return "";
-        const valid = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:-[A-Za-zÀ-ÖØ-öø-ÿ]+)*$/.test(value);
+        const normalized = value.trim();
+        if (!normalized) return "";
+        const valid = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*(?: [A-Za-zÀ-ÖØ-öø-ÿ]+(?:[-'][A-Za-zÀ-ÖØ-öø-ÿ]+)*)?$/.test(normalized);
         return valid
             ? ""
-            : "Utilise uniquement des lettres (y compris accentuées) et le trait d'union.";
+            : "Utilise uniquement des lettres (y compris accentuees), un trait d'union, une apostrophe et au maximum un espace.";
     }
 
     function addTeam() {
@@ -235,8 +235,8 @@ export default function RosterDetailPage() {
 
     function addPlayerToRoster() {
         if (!roster) return;
-        const formattedFirst = formatName(newPlayerFirst);
-        const formattedLast = formatName(newPlayerLast);
+        const formattedFirst = formatName(newPlayerFirst).trim();
+        const formattedLast = formatName(newPlayerLast).trim();
         const firstError = validateName(formattedFirst);
         const lastError = validateName(formattedLast);
         setNewPlayerFirstError(firstError);
@@ -278,8 +278,8 @@ export default function RosterDetailPage() {
 
     function saveEditPlayer() {
         if (!roster || !editingPlayerId) return;
-        const formattedFirst = formatName(editingPlayerFirst);
-        const formattedLast = formatName(editingPlayerLast);
+        const formattedFirst = formatName(editingPlayerFirst).trim();
+        const formattedLast = formatName(editingPlayerLast).trim();
         const firstError = validateName(formattedFirst);
         const lastError = validateName(formattedLast);
         setEditingPlayerFirstError(firstError);
