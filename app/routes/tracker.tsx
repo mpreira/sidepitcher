@@ -1014,7 +1014,9 @@ export default function Tracker() {
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Faits de match</h2>
-                <EventsList events={events} remove={removeEvent} />
+                <div className="max-h-[28rem] overflow-y-auto pr-1">
+                    <EventsList events={events} remove={removeEvent} />
+                </div>
             </section>
 
             <Summary
