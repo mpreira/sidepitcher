@@ -236,80 +236,86 @@ export default function SettingsPage() {
         </section>
       )}
 
-      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-2">
-        <h2 className="font-semibold">Compte actif</h2>
-        {loading ? (
-          <p className="text-sm text-neutral-300">Chargement du compte...</p>
-        ) : connected && account ? (
-          <>
-            <p className="text-sm text-neutral-200">Nom: {account.name}</p>
-            <p className="text-sm text-neutral-200">Email: {account.email}</p>
-            <p className="text-sm text-neutral-200">Role: {account.isAdmin ? "Admin" : "Utilisateur"}</p>
-            <p className="text-xs text-neutral-400 break-all">ID: {account.id}</p>
-            <button
-              onClick={disconnect}
-              className="mt-2 px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800"
-            >
-              Deconnexion
-            </button>
-          </>
-        ) : (
-          <p className="text-sm text-neutral-300">Aucun compte connecte (mode invite).</p>
-        )}
-      </section>
+      {connected && (
+        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-2">
+          <h2 className="font-semibold">Compte actif</h2>
+          {loading ? (
+            <p className="text-sm text-neutral-300">Chargement du compte...</p>
+          ) : account ? (
+            <>
+              <p className="text-sm text-neutral-200">Nom: {account.name}</p>
+              <p className="text-sm text-neutral-200">Email: {account.email}</p>
+              <p className="text-sm text-neutral-200">Role: {account.isAdmin ? "Admin" : "Utilisateur"}</p>
+              <p className="text-xs text-neutral-400 break-all">ID: {account.id}</p>
+              <button
+                onClick={disconnect}
+                className="mt-2 px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800"
+              >
+                Deconnexion
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-neutral-300">Aucun compte connecte (mode invite).</p>
+          )}
+        </section>
+      )}
 
-      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
-        <h2 className="font-semibold">Profil (email et mot de passe)</h2>
-        <input
-          type="email"
-          value={profileEmail}
-          onChange={(event) => setProfileEmail(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Adresse email"
-          disabled={!connected}
-        />
-        <input
-          type="password"
-          value={profileCurrentPassword}
-          onChange={(event) => setProfileCurrentPassword(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Mot de passe actuel (obligatoire pour changer le mot de passe)"
-          disabled={!connected}
-        />
-        <input
-          type="password"
-          value={profilePassword}
-          onChange={(event) => setProfilePassword(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Nouveau mot de passe (laisser vide pour conserver)"
-          disabled={!connected}
-        />
-        <button
-          onClick={updateProfile}
-          disabled={busy || !connected}
-          className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
-        >
-          {busy ? "Mise a jour..." : "Mettre a jour le profil"}
-        </button>
-      </section>
+      {connected && (
+        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+          <h2 className="font-semibold">Profil (email et mot de passe)</h2>
+          <input
+            type="email"
+            value={profileEmail}
+            onChange={(event) => setProfileEmail(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Adresse email"
+            disabled={!connected}
+          />
+          <input
+            type="password"
+            value={profileCurrentPassword}
+            onChange={(event) => setProfileCurrentPassword(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Mot de passe actuel (obligatoire pour changer le mot de passe)"
+            disabled={!connected}
+          />
+          <input
+            type="password"
+            value={profilePassword}
+            onChange={(event) => setProfilePassword(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Nouveau mot de passe (laisser vide pour conserver)"
+            disabled={!connected}
+          />
+          <button
+            onClick={updateProfile}
+            disabled={busy || !connected}
+            className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+          >
+            {busy ? "Mise a jour..." : "Mettre a jour le profil"}
+          </button>
+        </section>
+      )}
 
-      <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
-        <h2 className="font-semibold">Renommer le compte actif</h2>
-        <input
-          type="text"
-          value={renameName}
-          onChange={(event) => setRenameName(event.target.value)}
-          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-          placeholder="Nom du compte"
-        />
-        <button
-          onClick={renameAccount}
-          disabled={busy || loading || !connected || !account}
-          className="w-full px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:bg-gray-500"
-        >
-          {busy ? "Mise a jour..." : "Mettre a jour le nom"}
-        </button>
-      </section>
+      {connected && (
+        <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+          <h2 className="font-semibold">Renommer le compte actif</h2>
+          <input
+            type="text"
+            value={renameName}
+            onChange={(event) => setRenameName(event.target.value)}
+            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+            placeholder="Nom du compte"
+          />
+          <button
+            onClick={renameAccount}
+            disabled={busy || loading || !connected || !account}
+            className="w-full px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:bg-gray-500"
+          >
+            {busy ? "Mise a jour..." : "Mettre a jour le nom"}
+          </button>
+        </section>
+      )}
 
       {!connected && authMode === "create" && (
         <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
