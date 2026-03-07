@@ -7,7 +7,7 @@ import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
-import { resolveAccountFromRequest } from "~/utils/account.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
 interface StoredSummary {
     id: string;
@@ -25,12 +25,21 @@ export async function loader({ request, params }: { request: Request; params: { 
         throw new Response("Not Found", { status: 404 });
     }
 
-    const resolved = await resolveAccountFromRequest(request);
-    const summary = (await getSummaryById(summaryId, resolved.account.id)) as StoredSummary | null;
+    const scope = await resolveDataScopeFromRequest(request);
+    const summary = (await getSummaryById(summaryId, scope.scopeId)) as StoredSummary | null;
     if (!summary) {
         throw new Response("Not Found", { status: 404 });
     }
-    return summary;
+
+    if (!scope.setCookieHeader) {
+        return summary;
+    }
+
+    return Response.json(summary, {
+        headers: {
+            "Set-Cookie": scope.setCookieHeader,
+        },
+    });
 }
 
 export function meta() {

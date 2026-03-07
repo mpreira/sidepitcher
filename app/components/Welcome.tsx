@@ -60,6 +60,11 @@ export function Welcome() {
           </>
         )}
       </div>
+      {!connected && (
+        <p className="absolute left-4 top-4 z-20 rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
+          Mode invite: les donnees sont conservees 24h.
+        </p>
+      )}
       <div className="flex w-full flex-1 flex-col items-center gap-16 min-h-0">
         <header className="flex w-full flex-col items-center gap-9">
             <div className="mx-auto w-full max-w-[1100px] px-2">

@@ -76,6 +76,9 @@ const dataDir = path.join(process.cwd(), "data");
 const LEGACY_ACCOUNT_ID = "legacy-account";
 const LEGACY_ACCOUNT_NAME = "Compte historique";
 const LEGACY_ACCOUNT_ACCESS_CODE = "SIDEPITCHERLEGACY";
+const ANONYMOUS_SCOPE_PREFIX = "anon:";
+const ANONYMOUS_DATA_TTL_MS = 24 * 60 * 60 * 1000;
+const ANONYMOUS_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
 const defaultRosterState: RosterStatePayload = {
   rosters: [],
@@ -88,6 +91,7 @@ const defaultRosterState: RosterStatePayload = {
 
 let singletonPool: Pool | null = null;
 let initializationPromise: Promise<void> | null = null;
+let lastAnonymousCleanupAt = 0;
 
 const DEFAULT_LIVE_SESSION_TTL_HOURS = 12;
 
@@ -175,6 +179,35 @@ function mapAccountRow(row: { id: string; name: string; created_at: string }): A
     name: row.name,
     createdAt: new Date(row.created_at).toISOString(),
   };
+}
+
+function isAnonymousScopeId(scopeId: string): boolean {
+  return scopeId.startsWith(ANONYMOUS_SCOPE_PREFIX);
+}
+
+async function cleanupExpiredAnonymousData(pool: Pool): Promise<void> {
+  const now = Date.now();
+  if (now - lastAnonymousCleanupAt < ANONYMOUS_CLEANUP_INTERVAL_MS) {
+    return;
+  }
+  lastAnonymousCleanupAt = now;
+
+  const thresholdIso = new Date(now - ANONYMOUS_DATA_TTL_MS).toISOString();
+  await pool.query(
+    `DELETE FROM account_rosters_state
+     WHERE account_id LIKE $1 AND updated_at < $2`,
+    [`${ANONYMOUS_SCOPE_PREFIX}%`, thresholdIso]
+  );
+  await pool.query(
+    `DELETE FROM match_day_selections
+     WHERE account_id LIKE $1 AND saved_at < $2`,
+    [`${ANONYMOUS_SCOPE_PREFIX}%`, thresholdIso]
+  );
+  await pool.query(
+    `DELETE FROM summaries
+     WHERE account_id LIKE $1 AND created_at < $2`,
+    [`${ANONYMOUS_SCOPE_PREFIX}%`, thresholdIso]
+  );
 }
 
 async function ensureLegacyAccount(pool: Pool): Promise<void> {
@@ -396,6 +429,7 @@ export async function getRostersState(): Promise<RosterStatePayload> {
 export async function getRostersStateForAccount(accountId: string): Promise<RosterStatePayload> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   const result = await pool.query<{ payload: string }>(
     "SELECT payload FROM account_rosters_state WHERE account_id = $1",
     [accountId]
@@ -414,6 +448,7 @@ export async function saveRostersState(payload: RosterStatePayload): Promise<voi
 export async function saveRostersStateForAccount(accountId: string, payload: RosterStatePayload): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   await pool.query(
     `INSERT INTO account_rosters_state (account_id, payload, updated_at)
      VALUES ($1, $2, $3)
@@ -515,6 +550,7 @@ export async function getMatchDaySelection(
 ): Promise<MatchDayTeamSelection | null> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   const result = await pool.query<{
     championship: string;
     match_day: number;
@@ -543,6 +579,7 @@ export async function getMatchDaySelection(
 export async function listMatchDaySelections(accountId: string): Promise<MatchDayTeamSelection[]> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   const result = await pool.query<{
     championship: string;
     match_day: number;
@@ -577,6 +614,7 @@ export async function saveMatchDaySelection(input: {
 }): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   await pool.query(
     `INSERT INTO match_day_selections
      (account_id, championship, match_day, team1_id, team2_id, saved_at)
@@ -600,6 +638,7 @@ export async function saveMatchDaySelection(input: {
 export async function listSummaries(accountId: string): Promise<StoredSummary[]> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   const result = await pool.query<{ payload: string }>(
     `SELECT payload FROM summaries
      WHERE account_id = $1
@@ -623,6 +662,7 @@ export async function listSummaries(accountId: string): Promise<StoredSummary[]>
 export async function getSummaryById(summaryId: string, accountId: string): Promise<StoredSummary | null> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   const result = await pool.query<{ payload: string }>(
     `SELECT payload FROM summaries WHERE id = $1 AND account_id = $2`,
     [summaryId, accountId]
@@ -640,6 +680,7 @@ export async function getSummaryById(summaryId: string, accountId: string): Prom
 export async function insertSummary(summary: StoredSummary): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   await pool.query(`INSERT INTO summaries (id, created_at, payload, account_id) VALUES ($1, $2, $3, $4)`, [
     summary.id,
     summary.createdAt,
@@ -651,6 +692,7 @@ export async function insertSummary(summary: StoredSummary): Promise<void> {
 export async function deleteSummary(summaryId: string, accountId: string): Promise<void> {
   await ensureInitialized();
   const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
   await pool.query(`DELETE FROM summaries WHERE id = $1 AND account_id = $2`, [summaryId, accountId]);
 }
 

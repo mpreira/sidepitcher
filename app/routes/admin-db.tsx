@@ -4,23 +4,23 @@ import {
   listMatchDaySelections,
   listSummaries,
 } from "~/utils/database.server";
-import { resolveAccountFromRequest } from "~/utils/account.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
 export function meta() {
   return [{ title: "Diagnostic DB" }];
 }
 
 export async function loader({ request }: { request: Request }) {
-  const resolved = await resolveAccountFromRequest(request);
-  const rostersState = await getRostersStateForAccount(resolved.account.id);
-  const selections = await listMatchDaySelections(resolved.account.id);
-  const summaries = await listSummaries(resolved.account.id);
+  const scope = await resolveDataScopeFromRequest(request);
+  const rostersState = await getRostersStateForAccount(scope.scopeId);
+  const selections = await listMatchDaySelections(scope.scopeId);
+  const summaries = await listSummaries(scope.scopeId);
 
-  return {
+  const payload = {
     rostersCount: Array.isArray(rostersState.rosters) ? rostersState.rosters.length : 0,
     teamsCount: Array.isArray(rostersState.teams) ? rostersState.teams.length : 0,
-    accountId: resolved.account.id,
-    accountName: resolved.account.name,
+    scopeId: scope.scopeId,
+    scopeLabel: scope.isAnonymous ? "Session anonyme (24h)" : scope.account?.name ?? "Compte",
     activeRosterId: rostersState.activeRosterId,
     matchDay: rostersState.matchDay ?? "",
     sport: rostersState.sport ?? "Rugby",
@@ -36,6 +36,16 @@ export async function loader({ request }: { request: Request }) {
       eventsCount: Array.isArray(item.events) ? item.events.length : 0,
     })),
   };
+
+  if (!scope.setCookieHeader) {
+    return payload;
+  }
+
+  return Response.json(payload, {
+    headers: {
+      "Set-Cookie": scope.setCookieHeader,
+    },
+  });
 }
 
 function JsonBlock({ value }: { value: unknown }) {
@@ -57,10 +67,10 @@ export default function AdminDbPage() {
       </p>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Compte</h2>
+        <h2 className="font-semibold">Scope de donnees</h2>
         <ul className="text-sm space-y-1">
-          <li>Nom: {data.accountName}</li>
-          <li className="break-all">ID: {data.accountId}</li>
+          <li>Libelle: {data.scopeLabel}</li>
+          <li className="break-all">ID: {data.scopeId}</li>
         </ul>
       </section>
 

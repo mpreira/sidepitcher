@@ -5,7 +5,7 @@ import { useAccount } from "~/context/AccountContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { listSummaries } from "~/utils/database.server";
-import { resolveAccountFromRequest } from "~/utils/account.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
 interface StoredSummaryListItem {
     id: string;
@@ -20,8 +20,17 @@ interface StoredSummaryListItem {
 }
 
 export async function loader({ request }: { request: Request }) {
-    const resolved = await resolveAccountFromRequest(request);
-    return { summaries: (await listSummaries(resolved.account.id)) as StoredSummaryListItem[] };
+    const scope = await resolveDataScopeFromRequest(request);
+    const payload = { summaries: (await listSummaries(scope.scopeId)) as StoredSummaryListItem[] };
+    if (!scope.setCookieHeader) {
+        return payload;
+    }
+
+    return Response.json(payload, {
+        headers: {
+            "Set-Cookie": scope.setCookieHeader,
+        },
+    });
 }
 
 export function meta() {

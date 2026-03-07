@@ -1,5 +1,5 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
-import { resolveAccountFromRequest } from "~/utils/account.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 import {
     getRostersStateForAccount,
     saveRostersStateForAccount,
@@ -7,26 +7,26 @@ import {
 } from "~/utils/database.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
-    const resolved = await resolveAccountFromRequest(request);
-    const payload = await getRostersStateForAccount(resolved.account.id);
+    const scope = await resolveDataScopeFromRequest(request);
+    const payload = await getRostersStateForAccount(scope.scopeId);
 
-    if (!resolved.setCookieHeader) {
+    if (!scope.setCookieHeader) {
         return payload;
     }
 
     return Response.json(payload, {
         headers: {
-            "Set-Cookie": resolved.setCookieHeader,
+            "Set-Cookie": scope.setCookieHeader,
         },
     });
 };
 
 export const action: ActionFunction = async ({ request }) => {
-    const resolved = await resolveAccountFromRequest(request);
+    const scope = await resolveDataScopeFromRequest(request);
     const data: RosterStatePayload = await request.json();
-    await saveRostersStateForAccount(resolved.account.id, data);
+    await saveRostersStateForAccount(scope.scopeId, data);
 
-    if (!resolved.setCookieHeader) {
+    if (!scope.setCookieHeader) {
         return null;
     }
 
@@ -34,7 +34,7 @@ export const action: ActionFunction = async ({ request }) => {
         { ok: true },
         {
             headers: {
-                "Set-Cookie": resolved.setCookieHeader,
+                "Set-Cookie": scope.setCookieHeader,
             },
         }
     );

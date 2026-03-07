@@ -1,5 +1,5 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
-import { resolveAccountFromRequest } from "~/utils/account.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 import {
     getMatchDaySelection,
     listMatchDaySelections,
@@ -7,7 +7,7 @@ import {
 } from "~/utils/database.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
-    const resolved = await resolveAccountFromRequest(request);
+    const scope = await resolveDataScopeFromRequest(request);
     const url = new URL(request.url);
     const championship = url.searchParams.get("championship");
     const matchDay = url.searchParams.get("matchDay");
@@ -19,38 +19,38 @@ export const loader: LoaderFunction = async ({ request }) => {
         }
         const payload = {
             selection: await getMatchDaySelection(
-                resolved.account.id,
+                scope.scopeId,
                 championship,
                 normalizedMatchDay
             ),
         };
 
-        if (!resolved.setCookieHeader) {
+        if (!scope.setCookieHeader) {
             return payload;
         }
 
         return Response.json(payload, {
             headers: {
-                "Set-Cookie": resolved.setCookieHeader,
+                "Set-Cookie": scope.setCookieHeader,
             },
         });
     }
 
-    const payload = { selections: await listMatchDaySelections(resolved.account.id) };
+    const payload = { selections: await listMatchDaySelections(scope.scopeId) };
 
-    if (!resolved.setCookieHeader) {
+    if (!scope.setCookieHeader) {
         return payload;
     }
 
     return Response.json(payload, {
         headers: {
-            "Set-Cookie": resolved.setCookieHeader,
+            "Set-Cookie": scope.setCookieHeader,
         },
     });
 };
 
 export const action: ActionFunction = async ({ request }) => {
-    const resolved = await resolveAccountFromRequest(request);
+    const scope = await resolveDataScopeFromRequest(request);
 
     if (request.method === "POST") {
         const payload = (await request.json()) as {
@@ -71,13 +71,13 @@ export const action: ActionFunction = async ({ request }) => {
         }
 
         await saveMatchDaySelection({
-            accountId: resolved.account.id,
+            accountId: scope.scopeId,
             championship: payload.championship,
             matchDay: normalizedMatchDay,
             team1Id: payload.team1Id,
             team2Id: payload.team2Id,
         });
-        if (!resolved.setCookieHeader) {
+        if (!scope.setCookieHeader) {
             return { ok: true };
         }
 
@@ -85,7 +85,7 @@ export const action: ActionFunction = async ({ request }) => {
             { ok: true },
             {
                 headers: {
-                    "Set-Cookie": resolved.setCookieHeader,
+                    "Set-Cookie": scope.setCookieHeader,
                 },
             }
         );
