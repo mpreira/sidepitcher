@@ -1,6 +1,7 @@
 import { Link, useLoaderData } from "react-router";
 import { useState, useLayoutEffect } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { useAccount } from "~/context/AccountContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { listSummaries } from "~/utils/database.server";
@@ -44,6 +45,7 @@ function FormattedDate({ dateString }: { dateString: string }) {
 }
 
 export default function SynthesesPage() {
+    const { account } = useAccount();
     const data = useLoaderData<typeof loader>();
     const [summaries, setSummaries] = useState<StoredSummaryListItem[]>(() => data.summaries || []);
     const [deleteMessage, setDeleteMessage] = useState("");
@@ -115,6 +117,7 @@ export default function SynthesesPage() {
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <h1 className="text-2xl font-bold">Anciennes syntheses</h1>
+            {account?.name && <p className="text-xs text-neutral-400">Compte: {account.name}</p>}
             {summaries.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucune synthese disponible.</p>
             ) : (

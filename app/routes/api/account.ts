@@ -4,6 +4,7 @@ import {
   resolveAccountFromRequest,
   switchAccountFromAccessCode,
   buildAccountCookie,
+  renameCurrentAccount,
 } from "~/utils/account.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -23,7 +24,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const action: ActionFunction = async ({ request }) => {
   const body = (await request.json()) as {
-    intent?: "create" | "switch";
+    intent?: "create" | "switch" | "rename";
     name?: string;
     accessCode?: string;
   };
@@ -62,6 +63,28 @@ export const action: ActionFunction = async ({ request }) => {
       {
         headers: {
           "Set-Cookie": buildAccountCookie(account.id),
+        },
+      }
+    );
+  }
+
+  if (body.intent === "rename") {
+    if (!body.name?.trim()) {
+      return Response.json({ ok: false, error: "missing-name" }, { status: 400 });
+    }
+
+    const resolved = await resolveAccountFromRequest(request);
+    const account = await renameCurrentAccount(resolved.account.id, body.name);
+
+    if (!resolved.setCookieHeader) {
+      return Response.json({ ok: true, account });
+    }
+
+    return Response.json(
+      { ok: true, account },
+      {
+        headers: {
+          "Set-Cookie": resolved.setCookieHeader,
         },
       }
     );

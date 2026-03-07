@@ -2,6 +2,7 @@ import {
   createAccount,
   findAccountByAccessCode,
   getAccountById,
+  renameAccount,
   type Account,
 } from "~/utils/database.server";
 
@@ -74,4 +75,8 @@ export async function createAndAssignAccount(name?: string): Promise<{
     accessCode: created.accessCode,
     setCookieHeader: buildAccountCookie(created.account.id),
   };
+}
+
+export async function renameCurrentAccount(accountId: string, name: string): Promise<Account> {
+  return renameAccount(accountId, name);
 }

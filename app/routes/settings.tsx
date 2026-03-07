@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccount } from "~/context/AccountContext";
 
 export function meta() {
@@ -7,12 +7,17 @@ export function meta() {
 
 export default function SettingsPage() {
   const { account, loading, refreshAccount } = useAccount();
+  const [renameName, setRenameName] = useState("");
   const [newName, setNewName] = useState("");
   const [accessCodeInput, setAccessCodeInput] = useState("");
   const [newAccountCode, setNewAccountCode] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setRenameName(account?.name ?? "");
+  }, [account?.id, account?.name]);
 
   async function createNewAccount() {
     setBusy(true);
@@ -45,6 +50,48 @@ export default function SettingsPage() {
       setError("Impossible de creer le compte.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function renameAccount() {
+    if (!renameName.trim()) {
+      setError("Entre un nom de compte.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "rename", name: renameName }),
+      });
+
+      const data = (await response.json()) as { ok?: boolean };
+      if (!response.ok || !data.ok) {
+        setError("Impossible de renommer le compte.");
+        return;
+      }
+
+      await refreshAccount();
+      setMessage("Nom du compte mis a jour.");
+    } catch {
+      setError("Impossible de renommer le compte.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyAccessCode() {
+    if (!newAccountCode) return;
+    try {
+      await navigator.clipboard.writeText(newAccountCode);
+      setMessage("Code d'acces copie.");
+    } catch {
+      setError("Impossible de copier le code d'acces.");
     }
   }
 
@@ -103,6 +150,24 @@ export default function SettingsPage() {
       </section>
 
       <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <h2 className="font-semibold">Renommer le compte actif</h2>
+        <input
+          type="text"
+          value={renameName}
+          onChange={(event) => setRenameName(event.target.value)}
+          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+          placeholder="Nom du compte"
+        />
+        <button
+          onClick={renameAccount}
+          disabled={busy || loading || !account}
+          className="w-full px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:bg-gray-500"
+        >
+          {busy ? "Mise a jour..." : "Mettre a jour le nom"}
+        </button>
+      </section>
+
+      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
         <h2 className="font-semibold">Creer un compte</h2>
         <input
           type="text"
@@ -119,9 +184,17 @@ export default function SettingsPage() {
           {busy ? "Creation..." : "Creer et utiliser ce compte"}
         </button>
         {newAccountCode && (
-          <p className="text-sm text-green-400 break-all">
-            Code d'acces a conserver: <span className="font-semibold">{newAccountCode}</span>
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-green-400 break-all">
+              Code d'acces a conserver: <span className="font-semibold">{newAccountCode}</span>
+            </p>
+            <button
+              onClick={copyAccessCode}
+              className="w-full px-4 py-2 bg-neutral-700 text-white rounded hover:bg-neutral-600"
+            >
+              Copier le code d'acces
+            </button>
+          </div>
         )}
       </section>
 

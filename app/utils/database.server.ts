@@ -487,6 +487,27 @@ export async function createAccount(name?: string): Promise<CreateAccountResult>
   throw new Error("Unable to create account");
 }
 
+export async function renameAccount(accountId: string, name: string): Promise<Account> {
+  await ensureInitialized();
+  const pool = getPool();
+  const nextName = trimAccountName(name);
+
+  const result = await pool.query<{ id: string; name: string; created_at: string }>(
+    `UPDATE accounts
+     SET name = $2
+     WHERE id = $1
+     RETURNING id, name, created_at`,
+    [accountId, nextName]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    throw new Error("Account not found");
+  }
+
+  return mapAccountRow(row);
+}
+
 export async function getMatchDaySelection(
   accountId: string,
   championship: string,
