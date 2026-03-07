@@ -3,7 +3,10 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface AccountInfo {
   id: string;
   name: string;
+  email: string;
+  isAdmin: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 interface AccountContextValue {

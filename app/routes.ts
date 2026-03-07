@@ -13,6 +13,7 @@ export default [
     route("live/:publicSlug", "routes/live-view.tsx"),
     route("admin/db", "routes/admin-db.tsx"),
     route("api/account", "routes/api/account.ts"),
+    route("api/admin/accounts", "routes/api/admin-accounts.ts"),
     route("api/rosters", "routes/api/rosters.ts"),
     route("api/summaries", "routes/api/summaries.ts"),
     route("api/match-day-teams", "routes/api/match-day-teams.ts"),

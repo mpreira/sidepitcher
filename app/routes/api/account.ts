@@ -1,12 +1,13 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
 import {
+  authenticateAndAssignAccount,
   createAndAssignAccount,
   getConnectedAccountFromRequest,
-  switchAccountFromAccessCode,
-  buildAccountCookie,
   buildAccountLogoutCookie,
+  buildAnonymousLogoutCookie,
   renameCurrentAccount,
 } from "~/utils/account.server";
+import { sendNewAccountNotificationEmail } from "~/utils/mailer.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const connectedAccount = await getConnectedAccountFromRequest(request);
@@ -18,45 +19,71 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const action: ActionFunction = async ({ request }) => {
   const body = (await request.json()) as {
-    intent?: "create" | "switch" | "rename" | "logout";
+    intent?: "create" | "login" | "rename" | "logout";
     name?: string;
-    accessCode?: string;
+    email?: string;
+    password?: string;
   };
 
   if (body.intent === "create") {
-    const created = await createAndAssignAccount(body.name);
+    if (!body.name?.trim() || !body.email?.trim() || !body.password) {
+      return Response.json({ ok: false, error: "missing-fields" }, { status: 400 });
+    }
+
+    let created;
+    try {
+      created = await createAndAssignAccount({
+        name: body.name,
+        email: body.email,
+        password: body.password,
+      });
+    } catch {
+      return Response.json({ ok: false, error: "create-failed" }, { status: 400 });
+    }
+
+    try {
+      await sendNewAccountNotificationEmail({
+        accountName: created.account.name,
+        accountEmail: created.account.email,
+      });
+    } catch {
+      // Notification failures should not block account creation.
+    }
+
     return Response.json(
       {
         ok: true,
         account: created.account,
-        accessCode: created.accessCode,
       },
       {
         headers: {
-          "Set-Cookie": created.setCookieHeader,
+          "Set-Cookie": created.setCookieHeaders,
         },
       }
     );
   }
 
-  if (body.intent === "switch") {
-    if (!body.accessCode) {
-      return Response.json({ ok: false, error: "missing-access-code" }, { status: 400 });
+  if (body.intent === "login") {
+    if (!body.email?.trim() || !body.password) {
+      return Response.json({ ok: false, error: "missing-credentials" }, { status: 400 });
     }
 
-    const account = await switchAccountFromAccessCode(body.accessCode);
-    if (!account) {
-      return Response.json({ ok: false, error: "account-not-found" }, { status: 404 });
+    const logged = await authenticateAndAssignAccount({
+      email: body.email,
+      password: body.password,
+    });
+    if (!logged.account) {
+      return Response.json({ ok: false, error: "invalid-credentials" }, { status: 401 });
     }
 
     return Response.json(
       {
         ok: true,
-        account,
+        account: logged.account,
       },
       {
         headers: {
-          "Set-Cookie": buildAccountCookie(account.id),
+          "Set-Cookie": logged.setCookieHeaders,
         },
       }
     );
@@ -82,7 +109,7 @@ export const action: ActionFunction = async ({ request }) => {
       { ok: true },
       {
         headers: {
-          "Set-Cookie": buildAccountLogoutCookie(),
+          "Set-Cookie": [buildAccountLogoutCookie(), buildAnonymousLogoutCookie()],
         },
       }
     );

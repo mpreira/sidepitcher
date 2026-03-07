@@ -1,15 +1,18 @@
 import crypto from "crypto";
 import {
+  authenticateAccountByEmail,
   createAccount,
-  findAccountByAccessCode,
   getAccountById,
+  listAccountsForAdmin,
   renameAccount,
+  updateAccountByAdmin,
+  deleteAccountByAdmin,
+  type AccountListItem,
   type Account,
 } from "~/utils/database.server";
 
 const ACCOUNT_COOKIE_NAME = "sp_account_id";
 const ANONYMOUS_COOKIE_NAME = "sp_anon_session";
-const LEGACY_ACCOUNT_ID = "legacy-account";
 const ACCOUNT_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 const ANONYMOUS_DATA_TTL_SECONDS = 60 * 60 * 24;
 
@@ -63,6 +66,11 @@ export function buildAccountLogoutCookie(): string {
   return `${ACCOUNT_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`;
 }
 
+export function buildAnonymousLogoutCookie(): string {
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${ANONYMOUS_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`;
+}
+
 export async function getConnectedAccountFromRequest(request: Request): Promise<Account | null> {
   const cookieHeader = request.headers.get("cookie");
   const cookies = parseCookies(cookieHeader);
@@ -103,50 +111,60 @@ export async function resolveDataScopeFromRequest(request: Request): Promise<Dat
   };
 }
 
-export async function resolveAccountFromRequest(request: Request): Promise<{
+export async function createAndAssignAccount(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<{
   account: Account;
-  setCookieHeader?: string;
+  setCookieHeaders: string[];
 }> {
-  const cookieHeader = request.headers.get("cookie");
-  const cookies = parseCookies(cookieHeader);
-  const accountId = cookies[ACCOUNT_COOKIE_NAME];
-
-  if (accountId) {
-    const account = await getAccountById(accountId);
-    if (account) {
-      return { account };
-    }
-  }
-
-  const fallback = await getAccountById(LEGACY_ACCOUNT_ID);
-  if (fallback) {
-    return { account: fallback };
-  }
-
-  const created = await createAccount("Compte SidePitcher");
+  const created = await createAccount(input);
   return {
     account: created.account,
-    setCookieHeader: buildAccountCookie(created.account.id),
+    setCookieHeaders: [
+      buildAccountCookie(created.account.id),
+      buildAnonymousLogoutCookie(),
+    ],
   };
 }
 
-export async function switchAccountFromAccessCode(accessCode: string): Promise<Account | null> {
-  return findAccountByAccessCode(accessCode);
-}
-
-export async function createAndAssignAccount(name?: string): Promise<{
-  account: Account;
-  accessCode: string;
-  setCookieHeader: string;
+export async function authenticateAndAssignAccount(input: {
+  email: string;
+  password: string;
+}): Promise<{
+  account: Account | null;
+  setCookieHeaders: string[];
 }> {
-  const created = await createAccount(name);
+  const account = await authenticateAccountByEmail(input);
+  if (!account) {
+    return { account: null, setCookieHeaders: [] };
+  }
+
   return {
-    account: created.account,
-    accessCode: created.accessCode,
-    setCookieHeader: buildAccountCookie(created.account.id),
+    account,
+    setCookieHeaders: [buildAccountCookie(account.id), buildAnonymousLogoutCookie()],
   };
 }
 
 export async function renameCurrentAccount(accountId: string, name: string): Promise<Account> {
   return renameAccount(accountId, name);
+}
+
+export async function listAdminAccounts(): Promise<AccountListItem[]> {
+  return listAccountsForAdmin();
+}
+
+export async function updateManagedAccount(input: {
+  accountId: string;
+  name?: string;
+  email?: string;
+  password?: string;
+  isAdmin?: boolean;
+}): Promise<Account> {
+  return updateAccountByAdmin(input);
+}
+
+export async function deleteManagedAccount(accountId: string): Promise<void> {
+  return deleteAccountByAdmin(accountId);
 }

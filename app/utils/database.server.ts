@@ -39,12 +39,23 @@ export interface StoredSummary {
 export interface Account {
   id: string;
   name: string;
+  email: string;
+  isAdmin: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateAccountResult {
   account: Account;
-  accessCode: string;
+}
+
+export interface AccountListItem {
+  id: string;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LiveMatchRecord {
@@ -76,6 +87,12 @@ const dataDir = path.join(process.cwd(), "data");
 const LEGACY_ACCOUNT_ID = "legacy-account";
 const LEGACY_ACCOUNT_NAME = "Compte historique";
 const LEGACY_ACCOUNT_ACCESS_CODE = "SIDEPITCHERLEGACY";
+const LEGACY_ACCOUNT_EMAIL = "legacy@sidepitcher.local";
+const LEGACY_ACCOUNT_PASSWORD = "legacy-unsafe-password";
+const ADMIN_ACCOUNT_ID = "admin-account";
+const ADMIN_ACCOUNT_NAME = "Admin";
+const ADMIN_ACCOUNT_EMAIL = "mlpreira@gmail.com";
+const ADMIN_ACCOUNT_PASSWORD = "test01";
 const ANONYMOUS_SCOPE_PREFIX = "anon:";
 const ANONYMOUS_DATA_TTL_MS = 24 * 60 * 60 * 1000;
 const ANONYMOUS_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
@@ -150,6 +167,10 @@ function isLiveMatchExpired(expiresAt: string): boolean {
   return Date.now() > new Date(expiresAt).getTime();
 }
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 function normalizeAccessCode(code: string): string {
   return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
@@ -159,6 +180,23 @@ function hashAccountAccessCode(code: string): string {
     .createHash("sha256")
     .update(`account:${normalizeAccessCode(code)}`)
     .digest("hex");
+}
+
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const derived = crypto.scryptSync(password, salt, 64);
+  return `${salt}:${derived.toString("hex")}`;
+}
+
+function verifyPassword(password: string, hash: string): boolean {
+  const separatorIndex = hash.indexOf(":");
+  if (separatorIndex === -1) return false;
+  const salt = hash.slice(0, separatorIndex);
+  const expectedHex = hash.slice(separatorIndex + 1);
+  const computed = crypto.scryptSync(password, salt, 64);
+  const expected = Buffer.from(expectedHex, "hex");
+  if (expected.length !== computed.length) return false;
+  return crypto.timingSafeEqual(expected, computed);
 }
 
 function generateAccountAccessCode(): string {
@@ -173,11 +211,27 @@ function trimAccountName(name?: string): string {
   return trimmed.slice(0, 80);
 }
 
-function mapAccountRow(row: { id: string; name: string; created_at: string }): Account {
+function validatePasswordInput(password: string): void {
+  if (password.trim().length < 6) {
+    throw new Error("Password must contain at least 6 characters");
+  }
+}
+
+function mapAccountRow(row: {
+  id: string;
+  name: string;
+  email: string;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+}): Account {
   return {
     id: row.id,
     name: row.name,
+    email: row.email,
+    isAdmin: row.is_admin,
     createdAt: new Date(row.created_at).toISOString(),
+    updatedAt: new Date(row.updated_at).toISOString(),
   };
 }
 
@@ -213,14 +267,45 @@ async function cleanupExpiredAnonymousData(pool: Pool): Promise<void> {
 async function ensureLegacyAccount(pool: Pool): Promise<void> {
   const createdAt = new Date().toISOString();
   await pool.query(
-    `INSERT INTO accounts (id, name, access_code_hash, created_at)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO accounts (id, name, email, password_hash, is_admin, access_code_hash, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, FALSE, $5, $6, $6)
+     ON CONFLICT (id)
+     DO UPDATE SET
+       name = EXCLUDED.name,
+       email = COALESCE(accounts.email, EXCLUDED.email),
+       password_hash = COALESCE(accounts.password_hash, EXCLUDED.password_hash),
+       access_code_hash = COALESCE(accounts.access_code_hash, EXCLUDED.access_code_hash),
+       updated_at = EXCLUDED.updated_at`,
     [
       LEGACY_ACCOUNT_ID,
       LEGACY_ACCOUNT_NAME,
+      LEGACY_ACCOUNT_EMAIL,
+      hashPassword(LEGACY_ACCOUNT_PASSWORD),
       hashAccountAccessCode(LEGACY_ACCOUNT_ACCESS_CODE),
       createdAt,
+    ]
+  );
+}
+
+async function ensureAdminAccount(pool: Pool): Promise<void> {
+  const now = new Date().toISOString();
+  await pool.query(
+    `INSERT INTO accounts (id, name, email, password_hash, is_admin, access_code_hash, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, TRUE, $5, $6, $6)
+     ON CONFLICT (id)
+     DO UPDATE SET
+       name = COALESCE(accounts.name, EXCLUDED.name),
+       email = COALESCE(accounts.email, EXCLUDED.email),
+       password_hash = COALESCE(accounts.password_hash, EXCLUDED.password_hash),
+       is_admin = TRUE,
+       updated_at = EXCLUDED.updated_at`,
+    [
+      ADMIN_ACCOUNT_ID,
+      ADMIN_ACCOUNT_NAME,
+      ADMIN_ACCOUNT_EMAIL,
+      hashPassword(ADMIN_ACCOUNT_PASSWORD),
+      hashAccountAccessCode("ADMINACCESS"),
+      now,
     ]
   );
 }
@@ -230,9 +315,18 @@ async function initializeSchema(pool: Pool) {
     CREATE TABLE IF NOT EXISTS accounts (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      email TEXT,
+      password_hash TEXT,
+      is_admin BOOLEAN NOT NULL DEFAULT FALSE,
       access_code_hash TEXT UNIQUE NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
     CREATE TABLE IF NOT EXISTS account_rosters_state (
       account_id TEXT PRIMARY KEY,
@@ -289,6 +383,28 @@ async function initializeSchema(pool: Pool) {
   `);
 
   await pool.query(
+    `UPDATE accounts
+     SET email = CONCAT(id, '@sidepitcher.local')
+     WHERE email IS NULL OR TRIM(email) = ''`
+  );
+  await pool.query(
+    `UPDATE accounts
+     SET password_hash = $1
+     WHERE password_hash IS NULL OR TRIM(password_hash) = ''`,
+    [hashPassword("temporary-password")]
+  );
+  await pool.query(
+    `UPDATE accounts
+     SET updated_at = COALESCE(updated_at, created_at, NOW())`
+  );
+  await pool.query(`ALTER TABLE accounts ALTER COLUMN email SET NOT NULL`);
+  await pool.query(`ALTER TABLE accounts ALTER COLUMN password_hash SET NOT NULL`);
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email_unique
+     ON accounts ((LOWER(email)))`
+  );
+
+  await pool.query(
     `UPDATE match_day_selections
      SET account_id = $1
      WHERE account_id IS NULL`,
@@ -302,6 +418,7 @@ async function initializeSchema(pool: Pool) {
 
 async function migrateFromJsonFiles(pool: Pool) {
   await ensureLegacyAccount(pool);
+  await ensureAdminAccount(pool);
 
   const rostersCountResult = await pool.query<{ count: string }>(
     "SELECT COUNT(*)::text AS count FROM account_rosters_state"
@@ -460,8 +577,15 @@ export async function saveRostersStateForAccount(accountId: string, payload: Ros
 export async function getAccountById(accountId: string): Promise<Account | null> {
   await ensureInitialized();
   const pool = getPool();
-  const result = await pool.query<{ id: string; name: string; created_at: string }>(
-    `SELECT id, name, created_at
+  const result = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `SELECT id, name, email, is_admin, created_at, updated_at
      FROM accounts
      WHERE id = $1`,
     [accountId]
@@ -472,28 +596,54 @@ export async function getAccountById(accountId: string): Promise<Account | null>
   return mapAccountRow(row);
 }
 
-export async function findAccountByAccessCode(accessCode: string): Promise<Account | null> {
+export async function authenticateAccountByEmail(input: {
+  email: string;
+  password: string;
+}): Promise<Account | null> {
   await ensureInitialized();
-  const normalized = normalizeAccessCode(accessCode);
+  const normalized = normalizeEmail(input.email);
   if (!normalized) return null;
 
   const pool = getPool();
-  const result = await pool.query<{ id: string; name: string; created_at: string }>(
-    `SELECT id, name, created_at
+  const result = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+    password_hash: string;
+  }>(
+    `SELECT id, name, email, is_admin, created_at, updated_at, password_hash
      FROM accounts
-     WHERE access_code_hash = $1`,
-    [hashAccountAccessCode(normalized)]
+     WHERE LOWER(email) = $1`,
+    [normalized]
   );
 
   const row = result.rows[0];
   if (!row) return null;
+  const valid = verifyPassword(input.password, row.password_hash);
+  if (!valid) return null;
   return mapAccountRow(row);
 }
 
-export async function createAccount(name?: string): Promise<CreateAccountResult> {
+export async function createAccount(input: {
+  name: string;
+  email: string;
+  password: string;
+  isAdmin?: boolean;
+}): Promise<CreateAccountResult> {
   await ensureInitialized();
   const pool = getPool();
-  const accountName = trimAccountName(name);
+  const accountName = trimAccountName(input.name);
+  const email = normalizeEmail(input.email);
+  validatePasswordInput(input.password);
+  if (!email) {
+    throw new Error("Email is required");
+  }
+
+  const passwordHash = hashPassword(input.password);
+  const isAdmin = Boolean(input.isAdmin);
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const id = crypto.randomUUID();
@@ -502,15 +652,22 @@ export async function createAccount(name?: string): Promise<CreateAccountResult>
     const createdAt = new Date().toISOString();
 
     try {
-      const result = await pool.query<{ id: string; name: string; created_at: string }>(
-        `INSERT INTO accounts (id, name, access_code_hash, created_at)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, name, created_at`,
-        [id, accountName, accessCodeHash, createdAt]
+      const result = await pool.query<{
+        id: string;
+        name: string;
+        email: string;
+        is_admin: boolean;
+        created_at: string;
+        updated_at: string;
+      }>(
+        `INSERT INTO accounts (id, name, email, password_hash, is_admin, access_code_hash, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+         RETURNING id, name, email, is_admin, created_at, updated_at`,
+        [id, accountName, email, passwordHash, isAdmin, accessCodeHash, createdAt]
       );
 
       const account = mapAccountRow(result.rows[0]);
-      return { account, accessCode };
+      return { account };
     } catch (error) {
       const code = (error as { code?: string } | null)?.code;
       if (code !== "23505") {
@@ -527,12 +684,20 @@ export async function renameAccount(accountId: string, name: string): Promise<Ac
   const pool = getPool();
   const nextName = trimAccountName(name);
 
-  const result = await pool.query<{ id: string; name: string; created_at: string }>(
+  const result = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+  }>(
     `UPDATE accounts
-     SET name = $2
+     SET name = $2,
+         updated_at = $3
      WHERE id = $1
-     RETURNING id, name, created_at`,
-    [accountId, nextName]
+     RETURNING id, name, email, is_admin, created_at, updated_at`,
+    [accountId, nextName, new Date().toISOString()]
   );
 
   const row = result.rows[0];
@@ -541,6 +706,93 @@ export async function renameAccount(accountId: string, name: string): Promise<Ac
   }
 
   return mapAccountRow(row);
+}
+
+export async function listAccountsForAdmin(): Promise<AccountListItem[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `SELECT id, name, email, is_admin, created_at, updated_at
+     FROM accounts
+     ORDER BY created_at DESC`
+  );
+
+  return result.rows.map((row) => mapAccountRow(row));
+}
+
+export async function updateAccountByAdmin(input: {
+  accountId: string;
+  name?: string;
+  email?: string;
+  password?: string;
+  isAdmin?: boolean;
+}): Promise<Account> {
+  await ensureInitialized();
+  const pool = getPool();
+  const existing = await getAccountById(input.accountId);
+  if (!existing) {
+    throw new Error("Account not found");
+  }
+
+  const nextName = input.name ? trimAccountName(input.name) : existing.name;
+  const nextEmail = input.email ? normalizeEmail(input.email) : existing.email;
+  const nextIsAdmin = typeof input.isAdmin === "boolean" ? input.isAdmin : existing.isAdmin;
+  const nextPasswordHash = input.password?.trim()
+    ? (() => {
+        validatePasswordInput(input.password ?? "");
+        return hashPassword(input.password ?? "");
+      })()
+    : null;
+
+  const result = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `UPDATE accounts
+     SET name = $2,
+         email = $3,
+         is_admin = $4,
+         password_hash = COALESCE($5, password_hash),
+         updated_at = $6
+     WHERE id = $1
+     RETURNING id, name, email, is_admin, created_at, updated_at`,
+    [
+      input.accountId,
+      nextName,
+      nextEmail,
+      nextIsAdmin,
+      nextPasswordHash,
+      new Date().toISOString(),
+    ]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    throw new Error("Account not found");
+  }
+  return mapAccountRow(row);
+}
+
+export async function deleteAccountByAdmin(accountId: string): Promise<void> {
+  await ensureInitialized();
+  const pool = getPool();
+  await cleanupExpiredAnonymousData(pool);
+
+  await pool.query(`DELETE FROM account_rosters_state WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM match_day_selections WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM summaries WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM accounts WHERE id = $1`, [accountId]);
 }
 
 export async function getMatchDaySelection(
