@@ -6,6 +6,7 @@ import {
   buildAccountLogoutCookie,
   buildAnonymousLogoutCookie,
   renameCurrentAccount,
+  updateCurrentAccountProfile,
 } from "~/utils/account.server";
 import { sendNewAccountNotificationEmail } from "~/utils/mailer.server";
 
@@ -19,7 +20,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const action: ActionFunction = async ({ request }) => {
   const body = (await request.json()) as {
-    intent?: "create" | "login" | "rename" | "logout";
+    intent?: "create" | "login" | "rename" | "update-profile" | "logout";
     name?: string;
     email?: string;
     password?: string;
@@ -110,6 +111,27 @@ export const action: ActionFunction = async ({ request }) => {
     const account = await renameCurrentAccount(connectedAccount.id, body.name);
 
     return Response.json({ ok: true, account });
+  }
+
+  if (body.intent === "update-profile") {
+    const connectedAccount = await getConnectedAccountFromRequest(request);
+    if (!connectedAccount) {
+      return Response.json({ ok: false, error: "not-connected" }, { status: 401 });
+    }
+    if (!body.email?.trim()) {
+      return Response.json({ ok: false, error: "missing-email" }, { status: 400 });
+    }
+
+    try {
+      const account = await updateCurrentAccountProfile({
+        accountId: connectedAccount.id,
+        email: body.email,
+        password: body.password,
+      });
+      return Response.json({ ok: true, account });
+    } catch {
+      return Response.json({ ok: false, error: "update-profile-failed" }, { status: 400 });
+    }
   }
 
   if (body.intent === "logout") {

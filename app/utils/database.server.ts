@@ -784,6 +784,50 @@ export async function updateAccountByAdmin(input: {
   return mapAccountRow(row);
 }
 
+export async function updateAccountCredentials(input: {
+  accountId: string;
+  email: string;
+  password?: string;
+}): Promise<Account> {
+  await ensureInitialized();
+  const pool = getPool();
+
+  const nextEmail = normalizeEmail(input.email);
+  if (!nextEmail) {
+    throw new Error("Email is required");
+  }
+
+  const nextPasswordHash = input.password?.trim()
+    ? (() => {
+        validatePasswordInput(input.password ?? "");
+        return hashPassword(input.password ?? "");
+      })()
+    : null;
+
+  const result = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `UPDATE accounts
+     SET email = $2,
+         password_hash = COALESCE($3, password_hash),
+         updated_at = $4
+     WHERE id = $1
+     RETURNING id, name, email, is_admin, created_at, updated_at`,
+    [input.accountId, nextEmail, nextPasswordHash, new Date().toISOString()]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    throw new Error("Account not found");
+  }
+  return mapAccountRow(row);
+}
+
 export async function deleteAccountByAdmin(accountId: string): Promise<void> {
   await ensureInitialized();
   const pool = getPool();

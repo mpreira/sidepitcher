@@ -6,6 +6,7 @@ import {
   listAccountsForAdmin,
   renameAccount,
   updateAccountByAdmin,
+  updateAccountCredentials,
   deleteAccountByAdmin,
   type AccountListItem,
   type Account,
@@ -163,6 +164,14 @@ export async function updateManagedAccount(input: {
   isAdmin?: boolean;
 }): Promise<Account> {
   return updateAccountByAdmin(input);
+}
+
+export async function updateCurrentAccountProfile(input: {
+  accountId: string;
+  email: string;
+  password?: string;
+}): Promise<Account> {
+  return updateAccountCredentials(input);
 }
 
 export async function deleteManagedAccount(accountId: string): Promise<void> {

@@ -9,6 +9,8 @@ export function meta() {
 export default function SettingsPage() {
   const { account, connected, loading, refreshAccount, logout } = useAccount();
   const [renameName, setRenameName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePassword, setProfilePassword] = useState("");
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -21,6 +23,11 @@ export default function SettingsPage() {
   useEffect(() => {
     setRenameName(account?.name ?? "");
   }, [account?.id, account?.name]);
+
+  useEffect(() => {
+    setProfileEmail(account?.email ?? "");
+    setProfilePassword("");
+  }, [account?.id, account?.email]);
 
   async function createNewAccount() {
     if (!newName.trim() || !newEmail.trim() || !newPassword) {
@@ -142,6 +149,47 @@ export default function SettingsPage() {
     }
   }
 
+  async function updateProfile() {
+    if (!connected || !account) {
+      setError("Tu dois etre connecte.");
+      return;
+    }
+    if (!profileEmail.trim()) {
+      setError("Entre une adresse email valide.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "update-profile",
+          email: profileEmail,
+          password: profilePassword.trim() ? profilePassword : undefined,
+        }),
+      });
+
+      const data = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok || !data.ok) {
+        setError("Impossible de mettre a jour le profil (email deja utilise ou mot de passe invalide).");
+        return;
+      }
+
+      await refreshAccount();
+      setProfilePassword("");
+      setMessage("Profil mis a jour.");
+    } catch {
+      setError("Impossible de mettre a jour le profil.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
       <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">
@@ -168,6 +216,33 @@ export default function SettingsPage() {
         ) : (
           <p className="text-sm text-neutral-300">Aucun compte connecte (mode invite).</p>
         )}
+      </section>
+
+      <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <h2 className="font-semibold">Profil (email et mot de passe)</h2>
+        <input
+          type="email"
+          value={profileEmail}
+          onChange={(event) => setProfileEmail(event.target.value)}
+          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+          placeholder="Adresse email"
+          disabled={!connected}
+        />
+        <input
+          type="password"
+          value={profilePassword}
+          onChange={(event) => setProfilePassword(event.target.value)}
+          className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
+          placeholder="Nouveau mot de passe (laisser vide pour conserver)"
+          disabled={!connected}
+        />
+        <button
+          onClick={updateProfile}
+          disabled={busy || !connected}
+          className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+        >
+          {busy ? "Mise a jour..." : "Mettre a jour le profil"}
+        </button>
       </section>
 
       <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
