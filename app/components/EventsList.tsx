@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
 import type { Event } from "~/types/tracker";
-import { formatTime } from "~/utils/TimeUtils";
+import { formatTimelineMoment } from "~/utils/TimeUtils";
 
 interface Props {
   events: Event[];
@@ -16,6 +16,14 @@ export default function EventsList({ events, remove }: Props) {
 
   const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
 
+  const formatEventTimeline = (event: Event) => {
+    if (typeof event.timelineMinute === "number") {
+      return formatTimelineMoment(event.timelineMinute, event.timelineAdditionalMinute || 0);
+    }
+
+    return `${Math.floor(event.time / 60)}'`;
+  };
+
   return (
     <ul className="space-y-1">
       {events.map((e, idx) => (
@@ -23,19 +31,19 @@ export default function EventsList({ events, remove }: Props) {
           <span className="min-w-0 break-words">
             {e.summary ? (
               <>
-                {formatTime(e.time)} - <strong>{e.summary}</strong>
+                {formatEventTimeline(e)} - <strong>{e.summary}</strong>
               </>
             ) : (
               <>
                 {e.type === "Arbitrage Vidéo" ? (
                   <>
-                    {formatTime(e.time)} - {e.type}
+                    {formatEventTimeline(e)} - {e.type}
                     {e.team && ` (${displayTeamName(e.team.name)})`}
                     {e.videoReason && ` — TMO - ${e.videoReason}`}
                   </>
                 ) : (
                   <>
-                    {formatTime(e.time)} - {e.type} de{" "}
+                    {formatEventTimeline(e)} - {e.type} de{" "}
                     {e.player && (
                       <>
                         <strong>{e.player.name}</strong>

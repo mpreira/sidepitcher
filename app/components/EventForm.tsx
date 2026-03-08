@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { Team, Player, Event } from "~/types/tracker";
 import { createPlayerEvent, createSubstitutionEvent, findPlayerNumberInTeam } from "~/utils/EventUtils";
+import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
 
 interface Props {
     type: string;
@@ -8,6 +9,7 @@ interface Props {
     onSubmit: (event: Event) => void;
     onCancel: () => void;
     currentTime: number;
+    currentHalf: 1 | 2;
 }
 
 export default function EventForm({
@@ -16,6 +18,7 @@ export default function EventForm({
     onSubmit,
     onCancel,
     currentTime,
+    currentHalf,
     }: Props) {
     const [teamIdx, setTeamIdx] = useState(0);
     const [playerId, setPlayerId] = useState("");
@@ -23,6 +26,12 @@ export default function EventForm({
     const [outPlayerId, setOutPlayerId] = useState("");
     const [inPlayerId, setInPlayerId] = useState("");
     const [videoReason, setVideoReason] = useState<"essai" | "jeu déloyal">("essai");
+    const [useManualMoment, setUseManualMoment] = useState(false);
+    const [manualHalf, setManualHalf] = useState<1 | 2>(currentHalf);
+    const [manualMinute, setManualMinute] = useState("");
+    const [manualSecond, setManualSecond] = useState("");
+    const [manualAdditionalMinute, setManualAdditionalMinute] = useState("");
+    const [timeError, setTimeError] = useState("");
 
     useEffect(() => {
         // reset when type or teams change
@@ -31,7 +40,13 @@ export default function EventForm({
         setOutPlayerId("");
         setInPlayerId("");
         setVideoReason("essai");
-    }, [type, teams]);
+        setUseManualMoment(false);
+        setManualHalf(currentHalf);
+        setManualMinute("");
+        setManualSecond("");
+        setManualAdditionalMinute("");
+        setTimeError("");
+    }, [type, teams, currentHalf]);
 
     const team = teams[teamIdx];
     const players: Player[] = team
@@ -41,25 +56,101 @@ export default function EventForm({
         ]
       : [];
 
+    function buildEventTiming(): {
+        eventTime: number;
+        timelineHalf: 1 | 2;
+        timelineMinute: number;
+        timelineAdditionalMinute: number;
+        timelineSecond: number;
+    } | null {
+        if (!useManualMoment) {
+            const autoMoment = getTimelineMomentFromClock(currentTime, currentHalf);
+            return {
+                eventTime: currentTime,
+                timelineHalf: autoMoment.half,
+                timelineMinute: autoMoment.minute,
+                timelineAdditionalMinute: autoMoment.additionalMinute,
+                timelineSecond: autoMoment.second,
+            };
+        }
+
+        const parsedMinute = parseInt(manualMinute, 10);
+        if (Number.isNaN(parsedMinute) || parsedMinute < 0) {
+            setTimeError("Renseigne une minute valide.");
+            return null;
+        }
+
+        const parsedSecond = manualSecond.trim()
+            ? parseInt(manualSecond, 10)
+            : 0;
+
+        if (Number.isNaN(parsedSecond) || parsedSecond < 0 || parsedSecond > 59) {
+            setTimeError("Les secondes doivent être entre 0 et 59.");
+            return null;
+        }
+
+        const parsedAdditional = manualAdditionalMinute.trim()
+            ? parseInt(manualAdditionalMinute, 10)
+            : 0;
+
+        if (Number.isNaN(parsedAdditional) || parsedAdditional < 0) {
+            setTimeError("Le temps additionnel doit être positif.");
+            return null;
+        }
+
+        const timelineMinute = parsedAdditional > 0
+            ? (manualHalf === 1 ? 40 : 80)
+            : parsedMinute;
+        const eventDisplayMinute = timelineMinute + parsedAdditional;
+
+        return {
+            eventTime: (eventDisplayMinute * 60) + parsedSecond,
+            timelineHalf: manualHalf,
+            timelineMinute,
+            timelineAdditionalMinute: parsedAdditional,
+            timelineSecond: parsedSecond,
+        };
+    }
+
     function handleSubmit() {
+        const timing = buildEventTiming();
+        if (!timing) return;
+        setTimeError("");
+
         if (type === "Arbitrage Vidéo") {
             if (!team) return;
             onSubmit({
                 type,
-                time: currentTime,
+                time: timing.eventTime,
+                timelineHalf: timing.timelineHalf,
+                timelineMinute: timing.timelineMinute,
+                timelineAdditionalMinute: timing.timelineAdditionalMinute,
+                timelineSecond: timing.timelineSecond,
                 team,
                 videoReason,
             });
         } else if (type === "Changement") {
             const playerOut = players.find((p) => p.id === outPlayerId);
             const playerIn = players.find((p) => p.id === inPlayerId);
-            const event = createSubstitutionEvent(currentTime, team, playerOut, playerIn, concussion);
-            onSubmit(event);
+            const event = createSubstitutionEvent(timing.eventTime, team, playerOut, playerIn, concussion);
+            onSubmit({
+                ...event,
+                timelineHalf: timing.timelineHalf,
+                timelineMinute: timing.timelineMinute,
+                timelineAdditionalMinute: timing.timelineAdditionalMinute,
+                timelineSecond: timing.timelineSecond,
+            });
         } else {
             const player = players.find((p) => p.id === playerId);
             const playerNumber = team && player ? findPlayerNumberInTeam(team, player.id) : undefined;
-            const event = createPlayerEvent(type, currentTime, team, player, playerNumber, concussion);
-            onSubmit(event);
+            const event = createPlayerEvent(type, timing.eventTime, team, player, playerNumber, concussion);
+            onSubmit({
+                ...event,
+                timelineHalf: timing.timelineHalf,
+                timelineMinute: timing.timelineMinute,
+                timelineAdditionalMinute: timing.timelineAdditionalMinute,
+                timelineSecond: timing.timelineSecond,
+            });
         }
     }
 
@@ -67,6 +158,71 @@ export default function EventForm({
         <div className="p-4 border rounded-md bg-neutral-800 text-white w-full max-w-md mx-auto">
         <h3 className="font-bold text-xl mb-4">{type}</h3>
         <div className="space-y-2">
+            <div className="rounded border border-neutral-700 p-2 space-y-2">
+                <label className="leading-none" htmlFor="manualMomentCheckbox">
+                    <input
+                        id="manualMomentCheckbox"
+                        type="checkbox"
+                        checked={useManualMoment}
+                        onChange={(e) => setUseManualMoment(e.target.checked)}
+                        className="mr-2"
+                    />
+                    Définir l'heure manuellement
+                </label>
+                {useManualMoment && (
+                    <>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <label className="leading-none" htmlFor="manualHalfSelect">Mi-temps</label>
+                            <select
+                                id="manualHalfSelect"
+                                className="flex-1 text-base font-light text-neutral-300"
+                                value={manualHalf}
+                                onChange={(e) => setManualHalf(Number(e.target.value) as 1 | 2)}
+                            >
+                                <option value={1}>Première</option>
+                                <option value={2}>Deuxième</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div className="flex flex-col gap-1">
+                                <label className="leading-none" htmlFor="manualMinuteInput">Minute</label>
+                                <input
+                                    id="manualMinuteInput"
+                                    type="number"
+                                    min={0}
+                                    placeholder={manualHalf === 1 ? "ex. 37" : "ex. 65"}
+                                    value={manualMinute}
+                                    onChange={(e) => setManualMinute(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="leading-none" htmlFor="manualSecondInput">Secondes</label>
+                                <input
+                                    id="manualSecondInput"
+                                    type="number"
+                                    min={0}
+                                    max={59}
+                                    placeholder="ex. 30"
+                                    value={manualSecond}
+                                    onChange={(e) => setManualSecond(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="leading-none" htmlFor="manualAdditionalInput">Additionnel</label>
+                                <input
+                                    id="manualAdditionalInput"
+                                    type="number"
+                                    min={0}
+                                    placeholder={manualHalf === 1 ? "ex. 2 (40'+2)" : "ex. 1 (80'+1)"}
+                                    value={manualAdditionalMinute}
+                                    onChange={(e) => setManualAdditionalMinute(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
+                {timeError && <p className="text-sm text-red-400">{timeError}</p>}
+            </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <label className="leading-none">Équipe</label>
             <select
