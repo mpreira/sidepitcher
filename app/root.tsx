@@ -77,15 +77,20 @@ function AppContent() {
   const { connected, account } = useAccount();
   const { pathname } = useLocation();
   const isHome = pathname === "/";
+  const isLiveRoute = pathname.startsWith("/live/");
+  const liveSlug = isLiveRoute ? pathname.split("/")[2] || "" : "";
+  const rosterHref = isLiveRoute && liveSlug
+    ? `/roster?live=1&slug=${encodeURIComponent(liveSlug)}`
+    : "/roster";
 
   const navigationItems = [
-    { href: "/", label: "Accueil", icon: faHouse, active: true },
-    { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
-    { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
-    { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
-    { href: "/settings", label: "Réglages", icon: faGear, active: true },
+    { href: "/", label: "Accueil", icon: faHouse, active: !isLiveRoute },
+    { href: rosterHref, label: "Effectifs", icon: faUsers, active: true },
+    { href: "/tracker", label: "Match", icon: faStopwatch, active: !isLiveRoute },
+    { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: !isLiveRoute },
+    { href: "/settings", label: "Réglages", icon: faGear, active: !isLiveRoute },
     ...(connected && account?.isAdmin
-      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
+      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: !isLiveRoute }]
       : []),
   ] as const;
 
@@ -101,11 +106,12 @@ function AppContent() {
         <div className="mx-auto max-w-screen-md">
           <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
             {navigationItems.map((item) => {
+              const itemPathname = item.href.split("?")[0];
               const isSelected =
                 item.active &&
-                (item.href === "/"
+                (itemPathname === "/"
                   ? pathname === "/"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`));
+                  : pathname === itemPathname || pathname.startsWith(`${itemPathname}/`));
 
               return (
                 <a

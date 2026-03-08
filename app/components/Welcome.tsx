@@ -4,6 +4,7 @@ import logoSP from "~/assets/images/logo_800.svg";
 import { useState } from "react";
 import { Link } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleUser } from "@fortawesome/free-solid-svg-icons";
 
 export function Welcome() {
   const { account, connected, logout } = useAccount();
@@ -34,7 +35,7 @@ export function Welcome() {
         {connected && account ? (
           <>
             <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
-              <FontAwesomeIcon icon={["fas", "circle-user"]} /> {account.name}
+              <FontAwesomeIcon icon={faCircleUser} /> {account.name}
             </span>
             <button
               type="button"
@@ -56,7 +57,7 @@ export function Welcome() {
               to="/settings#create-account"
               className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
             >
-              <FontAwesomeIcon icon={["fas", "circle-user"]} />
+              <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
               Creer un compte
             </Link>
           </>
@@ -77,7 +78,7 @@ export function Welcome() {
             />
           </div>
           {/* reglages de journee/championnat */}
-          <form className="mx-auto w-5/6 max-w-sm space-y-3 text-left md:w-full" onSubmit={handleSubmit}>
+          <form className="mx-auto w-5/6 max-w-sm space-y-3 text-left mb-4 md:w-full" onSubmit={handleSubmit}>
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
               <label className="self-center leading-none" htmlFor="sportSelect">Sport</label>
               <select
@@ -133,92 +134,7 @@ export function Welcome() {
             {accountMessage && <p className="text-sm text-neutral-300">{accountMessage}</p>}
           </form>
         </header>
-        {/*<div className="max-w-[300px] w-full space-y-6 px-4">
-          <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
-            <ul>
-              {resources.map(({ href, text, icon }) => (
-                <li key={href}>
-                  <a
-                    className="group flex items-center gap-3 self-stretch p-3 leading-normal text-blue-700 hover:underline dark:text-blue-500"
-                    href={href}
-                  >
-                    {icon}
-                    {text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>*/}
       </div>
     </main>
   );
-}
-
-{/*const resources = [
-  {
-    href: "/",
-    text: "Accueil",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        fill="none"
-        stroke="currentColor"
-        className="stroke-gray-600 group-hover:stroke-current dark:stroke-gray-300"
-      >
-        <path
-          d="M3 9.75L12 4l9 5.75M4.5 10.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.625h4.5v4.625h5.625A1.125 1.125 0 0021 20.875V10.75M4.5 10.75L12 15l7.5-4.25"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    href: "/tracker",
-    text: "Feuille de match",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        className="stroke-gray-600 group-hover:stroke-current dark:stroke-gray-300"
-      >
-        <path
-          d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M8 11h8M8 15h4M12 3v4"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    href: "/roster",
-    text: "Effectifs",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        fill="none"
-        stroke="currentColor"
-        className="stroke-gray-600 group-hover:stroke-current dark:stroke-gray-300"
-      >
-        <circle cx="12" cy="7" r="4" strokeWidth="1.5" />
-        <path d="M5.5 21a6.5 6.5 0 0113 0" strokeWidth="1.5" />
-      </svg>
-    ),
-  }
-]*/};
+};
