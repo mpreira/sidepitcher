@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useAccount } from "~/context/AccountContext";
 
 export function meta() {
@@ -22,10 +22,6 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-
-  if (!loading && !connected) {
-    return <Navigate to="/" replace />;
-  }
 
   useEffect(() => {
     setRenameName(account?.name ?? "");
