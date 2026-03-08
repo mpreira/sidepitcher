@@ -29,6 +29,7 @@ export default function EventForm({
     const [useManualMoment, setUseManualMoment] = useState(false);
     const [manualHalf, setManualHalf] = useState<1 | 2>(currentHalf);
     const [manualMinute, setManualMinute] = useState("");
+    const [manualSecond, setManualSecond] = useState("");
     const [manualAdditionalMinute, setManualAdditionalMinute] = useState("");
     const [timeError, setTimeError] = useState("");
 
@@ -42,6 +43,7 @@ export default function EventForm({
         setUseManualMoment(false);
         setManualHalf(currentHalf);
         setManualMinute("");
+        setManualSecond("");
         setManualAdditionalMinute("");
         setTimeError("");
     }, [type, teams, currentHalf]);
@@ -78,6 +80,15 @@ export default function EventForm({
             return null;
         }
 
+        const parsedSecond = manualSecond.trim()
+            ? parseInt(manualSecond, 10)
+            : 0;
+
+        if (Number.isNaN(parsedSecond) || parsedSecond < 0 || parsedSecond > 59) {
+            setTimeError("Les secondes doivent être entre 0 et 59.");
+            return null;
+        }
+
         const parsedAdditional = manualAdditionalMinute.trim()
             ? parseInt(manualAdditionalMinute, 10)
             : 0;
@@ -93,11 +104,11 @@ export default function EventForm({
         const eventDisplayMinute = timelineMinute + parsedAdditional;
 
         return {
-            eventTime: eventDisplayMinute * 60,
+            eventTime: (eventDisplayMinute * 60) + parsedSecond,
             timelineHalf: manualHalf,
             timelineMinute,
             timelineAdditionalMinute: parsedAdditional,
-            timelineSecond: 0,
+            timelineSecond: parsedSecond,
         };
     }
 
@@ -172,7 +183,7 @@ export default function EventForm({
                                 <option value={2}>Deuxième</option>
                             </select>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div className="flex flex-col gap-1">
                                 <label className="leading-none" htmlFor="manualMinuteInput">Minute</label>
                                 <input
@@ -182,6 +193,18 @@ export default function EventForm({
                                     placeholder={manualHalf === 1 ? "ex. 37" : "ex. 65"}
                                     value={manualMinute}
                                     onChange={(e) => setManualMinute(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="leading-none" htmlFor="manualSecondInput">Secondes</label>
+                                <input
+                                    id="manualSecondInput"
+                                    type="number"
+                                    min={0}
+                                    max={59}
+                                    placeholder="ex. 30"
+                                    value={manualSecond}
+                                    onChange={(e) => setManualSecond(e.target.value)}
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
