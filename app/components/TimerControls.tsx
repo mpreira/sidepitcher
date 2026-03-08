@@ -1,4 +1,4 @@
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 
@@ -41,7 +41,17 @@ export default function TimerControls({
           className={`px-4 py-2 text-white rounded shrink-0 ${running ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}`}
           onClick={onStartStop}
         >
-          {running ? "Pause" : "Départ"}
+          {running ? (
+            <>
+              <FontAwesomeIcon icon={faPause} className="sm:mr-2" />
+              <span className="hidden sm:inline">Pause</span>
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faPlay} className="sm:mr-2" />
+              <span className="hidden sm:inline">Départ</span>
+            </>
+          )}
         </button>
         <button
           id="halfSelect"
@@ -68,7 +78,7 @@ export default function TimerControls({
           onClick={onEndMatch}
           disabled={matchEnded || currentHalf === 1}
         >
-          <span className="sm:hidden">Fin</span>
+          <FontAwesomeIcon icon={faStop} className="sm:mr-2" />
           <span className="hidden sm:inline">Fin de match</span>
         </button>
       </div>

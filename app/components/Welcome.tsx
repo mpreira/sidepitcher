@@ -3,6 +3,7 @@ import { useAccount } from "~/context/AccountContext";
 import logoSP from "~/assets/images/logo_800.svg";
 import { useState } from "react";
 import { Link } from "react-router";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function Welcome() {
   const { account, connected, logout } = useAccount();
@@ -33,7 +34,7 @@ export function Welcome() {
         {connected && account ? (
           <>
             <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
-              Compte: {account.name}
+              <FontAwesomeIcon icon={["fas", "circle-user"]} /> {account.name}
             </span>
             <button
               type="button"
@@ -55,6 +56,7 @@ export function Welcome() {
               to="/settings#create-account"
               className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
             >
+              <FontAwesomeIcon icon={["fas", "circle-user"]} />
               Creer un compte
             </Link>
           </>
