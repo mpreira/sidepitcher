@@ -332,13 +332,13 @@ export default function EventForm({
             )}
             <div className="flex flex-col sm:flex-row gap-2">
             <button
-                className="px-3 py-1 bg-green-500 text-white rounded"
+                className="px-3 py-4 bg-green-500 text-white rounded sm:w-1/2 md:w-1/3 inline-flex items-center justify-center gap-2"
                 onClick={handleSubmit}
             >
                 Valider
             </button>
             <button
-                className="px-3 py-1 bg-gray-300 rounded"
+                className="px-3 py-4 bg-gray-300 rounded sm:w-1/2 md:w-1/3 inline-flex items-center justify-center gap-2"
                 onClick={onCancel}
             >
                 Annuler
