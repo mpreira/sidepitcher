@@ -300,35 +300,6 @@ export default function LiveViewPage() {
 
       <Scoreboard teams={teams} scores={snapshot.scores} mainTimerText={mainTimerText} />
 
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {teams.slice(0, 2).map((team, teamIdx) => (
-          <div key={team.id} className="border border-neutral-700 rounded p-3 bg-neutral-900 space-y-3">
-            <h3 className="text-sm sm:text-base font-semibold text-center text-white">
-              {team.nickname || team.name.replace(/\s+J\d+$/, "")}
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              {teamStats.map((stat) => (
-                <div key={`${team.id}-${stat.label}`} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
-                  {(() => {
-                    const statValue = stat.values[teamIdx] || 0;
-                    return (
-                      <>
-                  <p className="text-2xl leading-none text-white font-bold">
-                    {statValue}
-                  </p>
-                  <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
-                    {formatStatLabel(stat.label, statValue)}
-                  </p>
-                      </>
-                    );
-                  })()}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </section>
-
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">Événements</h2>
         {snapshot.events.length === 0 ? (
@@ -368,6 +339,35 @@ export default function LiveViewPage() {
             </ul>
           </div>
         )}
+      </section>
+      
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {teams.slice(0, 2).map((team, teamIdx) => (
+          <div key={team.id} className="border border-neutral-700 rounded p-3 bg-neutral-900 space-y-3">
+            <h3 className="text-sm sm:text-base font-semibold text-center text-white">
+              {team.nickname || team.name.replace(/\s+J\d+$/, "")}
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {teamStats.map((stat) => (
+                <div key={`${team.id}-${stat.label}`} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
+                  {(() => {
+                    const statValue = stat.values[teamIdx] || 0;
+                    return (
+                      <>
+                  <p className="text-2xl leading-none text-white font-bold">
+                    {statValue}
+                  </p>
+                  <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
+                    {formatStatLabel(stat.label, statValue)}
+                  </p>
+                      </>
+                    );
+                  })()}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
     </main>
   );

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
+import { faCaretLeft, faCaretRight } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { Route } from "./+types/tracker";
 import type { Event } from "~/types/tracker";
 import type { LiveSnapshot } from "~/types/live";
@@ -391,7 +393,7 @@ export default function Tracker() {
                 }),
             });
             
-            setSaveMessage("Composition validée ✓");
+            setSaveMessage("Affiche enregistrée ✓");
             setTimeout(() => setSaveMessage(""), 3000);
         } catch (e) {
             setSaveMessage("Erreur lors de la sauvegarde.");
@@ -568,7 +570,7 @@ export default function Tracker() {
 
         if (hasUnsavedSynthesis) {
             const confirmed = window.confirm(
-                "La synthese n'est pas sauvegardee. Voulez-vous reinitialiser quand meme ?"
+                "La synthèse n'est pas sauvegardée. Voulez-vous réinitialiser quand même ?"
             );
             if (!confirmed) return;
         }
@@ -1042,7 +1044,7 @@ export default function Tracker() {
                                                                 onClick={() => stat.onAdjust(teamIdx, -1)}
                                                                 aria-label={`Diminuer ${stat.label}`}
                                                             >
-                                                                ◀
+                                                                <FontAwesomeIcon icon={faCaretLeft} />
                                                             </button>
                                                             <span className="text-2xl leading-none text-white font-bold min-w-8">{statValue}</span>
                                                             <button
@@ -1050,7 +1052,7 @@ export default function Tracker() {
                                                                 onClick={() => stat.onAdjust(teamIdx, 1)}
                                                                 aria-label={`Augmenter ${stat.label}`}
                                                             >
-                                                                ▶
+                                                                <FontAwesomeIcon icon={faCaretRight} />
                                                             </button>
                                                         </div>
                                                         <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
