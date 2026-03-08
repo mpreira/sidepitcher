@@ -31,6 +31,10 @@ function getEventLabel(event: LiveSnapshot["events"][number]): string {
   return `${icon} ${event.type}`;
 }
 
+function isCardEvent(type: string): boolean {
+  return type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
+}
+
 export async function loader({ params }: { params: { publicSlug?: string } }) {
   const publicSlug = params.publicSlug;
   if (!publicSlug) {
@@ -210,7 +214,7 @@ export default function LiveViewPage() {
                       {formatTime(event.time)} - {getEventLabel(event)}
                       {event.type !== "Arbitrage Vidéo" && event.player && (
                         <>
-                          {" de "}
+                          {isCardEvent(event.type) ? " pour " : " de "}
                           <strong>{event.player.name}</strong>
                           {event.playerNumber ? ` (#${event.playerNumber})` : ""}
                         </>
@@ -219,9 +223,9 @@ export default function LiveViewPage() {
                       {event.playerOut && event.playerIn && (
                         <>
                           {" — "}
-                          <strong>{event.playerOut.name}</strong>
+                          <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
                           {" → "}
-                          <strong>{event.playerIn.name}</strong>
+                          <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
                         </>
                       )}
                       {event.concussion && " 🚨 commotion"}

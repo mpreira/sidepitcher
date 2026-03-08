@@ -41,7 +41,9 @@ export interface Event {
     concussion?: boolean;
     // for substitutions
     playerOut?: Player;
+    playerOutNumber?: number;
     playerIn?: Player;
+    playerInNumber?: number;
     // for half-time summaries
     summary?: string;
 }

@@ -34,7 +34,9 @@ export function createSubstitutionEvent(
     currentTime: number,
     team: Team,
     playerOut: Player | undefined,
+    playerOutNumber: number | undefined,
     playerIn: Player | undefined,
+    playerInNumber: number | undefined,
     concussion: boolean
 ): Event {
     return {
@@ -42,7 +44,9 @@ export function createSubstitutionEvent(
         time: currentTime,
         team,
         playerOut,
+        playerOutNumber,
         playerIn,
+        playerInNumber,
         concussion,
     };
 }
@@ -81,7 +85,7 @@ export function exportSummaryToClipboard(
             if (e.player)
                 line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
-                line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
+                line += ` — ${e.playerOutNumber ? `#${e.playerOutNumber} ` : ""}${e.playerOut.name} → ${e.playerInNumber ? `#${e.playerInNumber} ` : ""}${e.playerIn.name}`;
             if (e.videoReason)
                 line += ` — TMO - ${e.videoReason}`;
             if (e.concussion) line += " 🚨 commotion";
@@ -126,7 +130,7 @@ export function exportSummaryToPdf(
             if (e.player)
                 line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
-                line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
+                line += ` — ${e.playerOutNumber ? `#${e.playerOutNumber} ` : ""}${e.playerOut.name} → ${e.playerInNumber ? `#${e.playerInNumber} ` : ""}${e.playerIn.name}`;
             if (e.videoReason)
                 line += ` — TMO - ${e.videoReason}`;
             if (e.concussion) line += " 🚨 commotion";
@@ -159,7 +163,9 @@ export function buildDetailedEventSummary(events: Event[]): Array<{
     player?: string;
     playerNumber?: number;
     playerOut?: string;
+    playerOutNumber?: number;
     playerIn?: string;
+    playerInNumber?: number;
     concussion?: boolean;
     summary?: string;
 }> {
@@ -170,7 +176,9 @@ export function buildDetailedEventSummary(events: Event[]): Array<{
         player: e.player?.name,
         playerNumber: e.playerNumber,
         playerOut: e.playerOut?.name,
+        playerOutNumber: e.playerOutNumber,
         playerIn: e.playerIn?.name,
+        playerInNumber: e.playerInNumber,
         concussion: e.concussion,
         summary: e.summary,
     }));

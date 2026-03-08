@@ -132,7 +132,17 @@ export default function EventForm({
         } else if (type === "Changement") {
             const playerOut = players.find((p) => p.id === outPlayerId);
             const playerIn = players.find((p) => p.id === inPlayerId);
-            const event = createSubstitutionEvent(timing.eventTime, team, playerOut, playerIn, concussion);
+            const playerOutNumber = team && playerOut ? findPlayerNumberInTeam(team, playerOut.id) : undefined;
+            const playerInNumber = team && playerIn ? findPlayerNumberInTeam(team, playerIn.id) : undefined;
+            const event = createSubstitutionEvent(
+                timing.eventTime,
+                team,
+                playerOut,
+                playerOutNumber,
+                playerIn,
+                playerInNumber,
+                concussion
+            );
             onSubmit({
                 ...event,
                 timelineHalf: timing.timelineHalf,

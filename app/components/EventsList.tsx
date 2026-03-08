@@ -50,6 +50,9 @@ export default function EventsList({ events, remove }: Props) {
     "Récapitulatif": "📝",
   };
 
+  const isCardEvent = (type: Event["type"]) =>
+    type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
+
   function getEventLabel(event: Event): string {
     const icon = EVENT_ICONS[event.type] || "📍";
 
@@ -74,7 +77,7 @@ export default function EventsList({ events, remove }: Props) {
                 {formatEventTimeline(e)} - {getEventLabel(e)}
                 {e.type !== "Arbitrage Vidéo" && e.player && (
                   <>
-                    {" de "}
+                    {isCardEvent(e.type) ? " pour " : " de "}
                     <strong>{e.player.name}</strong>
                     
                   </>
@@ -83,9 +86,9 @@ export default function EventsList({ events, remove }: Props) {
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}
-                    <strong>{e.playerNumber ? ` ${e.playerNumber} ` : "" } {e.playerOut.name}</strong>
+                    <strong>{e.playerOutNumber ? `#${e.playerOutNumber} ` : ""}{e.playerOut.name}</strong>
                     {" → "}
-                    <strong>{e.playerNumber ? ` ${e.playerNumber} ` : "" } {e.playerIn.name}</strong>
+                    <strong>{e.playerInNumber ? `#${e.playerInNumber} ` : ""}{e.playerIn.name}</strong>
                   </>
                 )}
                 {e.concussion && " 🚨 commotion"}
