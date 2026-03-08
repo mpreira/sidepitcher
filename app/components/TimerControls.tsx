@@ -56,7 +56,7 @@ export default function TimerControls({
         <button
           id="halfSelect"
           className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 1 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
+            currentHalf === 1 ? "bg-blue-600 text-white" : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
           }`}
           onClick={onSetFirstHalf}
         >
@@ -65,7 +65,7 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 2 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
+            currentHalf === 2 ? "bg-blue-600 text-white" : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
           }`}
           onClick={onSetSecondHalf}
           disabled={currentHalf === 2 || matchEnded}
@@ -75,7 +75,7 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
-            matchEnded ? "bg-gray-300 text-gray-700": "bg-red-600 text-white" 
+            matchEnded ? "bg-gray-300 text-gray-700": "bg-red-600 text-white hover:bg-red-700"
           }`}
           onClick={onEndMatch}
           disabled={matchEnded || currentHalf === 1}
@@ -84,7 +84,7 @@ export default function TimerControls({
           <span className="hidden sm:inline">Fin de match</span>
         </button>
         <button
-          className="px-4 py-2 bg-blue-500/20 text-blue-500 rounded"
+          className="border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 rounded px-4 py-2 shrink-0"
           onClick={onReset}
         >
           <FontAwesomeIcon icon={faArrowRotateLeft} className="sm:mr-2" />
