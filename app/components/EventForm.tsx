@@ -117,7 +117,7 @@ export default function EventForm({
         if (!timing) return;
         setTimeError("");
 
-        if (type === "Arbitrage Vidéo") {
+        if (type === "📺 Arbitrage Vidéo") {
             if (!team) return;
             onSubmit({
                 type,
