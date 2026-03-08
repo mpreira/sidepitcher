@@ -24,7 +24,8 @@ export default function EventsList({ events, remove }: Props) {
       return formatTimelineMoment(
         event.timelineMinute,
         event.timelineAdditionalMinute || 0,
-        event.timelineSecond || 0
+        event.timelineSecond || 0,
+        event.timelineHalf
       );
     }
 
