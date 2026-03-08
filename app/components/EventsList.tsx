@@ -75,7 +75,7 @@ export default function EventsList({ events, remove }: Props) {
                 {e.type !== "Arbitrage Vidéo" && e.player && (
                   <>
                     {" de "}
-                    <strong>{e.playerNumber ? ` ${e.playerNumber} ` : "" }{e.player.name}</strong>
+                    <strong>{e.player.name}</strong>
                     
                   </>
                 )}
