@@ -67,6 +67,24 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
   const [leftTeam, rightTeam] = event.summaryTable.teams;
   const rowCount = Math.max(leftTeam.stats.length, rightTeam.stats.length);
 
+  const formatSummaryStatLabel = (label: string, value: number) => {
+    const forms: Record<string, { singular: string; plural: string }> = {
+      "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
+      "En-avants": { singular: "En-avant", plural: "En-avants" },
+      "Touches volées": { singular: "Touche volée", plural: "Touches volées" },
+      "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
+      "Mêlées gagnées": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
+      "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
+      "Turnovers": { singular: "Turnover", plural: "Turnovers" },
+      "Offloads": { singular: "Offload", plural: "Offloads" },
+      "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
+    };
+
+    const form = forms[label];
+    if (!form) return label;
+    return value > 1 ? form.plural : form.singular;
+  };
+
   return (
     <div className="w-full space-y-2">
       <div>
@@ -89,7 +107,7 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
                   <td className="px-2 py-1">
                     {leftStat ? (
                       <>
-                        <span>{leftStat.label}: </span>
+                        <span>{formatSummaryStatLabel(leftStat.label, leftStat.value)}: </span>
                         <span className="font-bold text-green-400">{leftStat.value}</span>
                       </>
                     ) : "-"}
@@ -97,7 +115,7 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
                   <td className="px-2 py-1">
                     {rightStat ? (
                       <>
-                        <span>{rightStat.label}: </span>
+                        <span>{formatSummaryStatLabel(rightStat.label, rightStat.value)}: </span>
                         <span className="font-bold text-blue-400">{rightStat.value}</span>
                       </>
                     ) : "-"}
