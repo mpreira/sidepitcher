@@ -85,8 +85,22 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
               const rightStat = rightTeam.stats[idx];
               return (
                 <tr key={idx} className="border-b border-neutral-800 last:border-b-0">
-                  <td className="px-2 py-1">{leftStat ? `${leftStat.label}: ${leftStat.value}` : "-"}</td>
-                  <td className="px-2 py-1">{rightStat ? `${rightStat.label}: ${rightStat.value}` : "-"}</td>
+                  <td className="px-2 py-1">
+                    {leftStat ? (
+                      <>
+                        <span>{leftStat.label}: </span>
+                        <span className="font-bold text-green-400">{leftStat.value}</span>
+                      </>
+                    ) : "-"}
+                  </td>
+                  <td className="px-2 py-1">
+                    {rightStat ? (
+                      <>
+                        <span>{rightStat.label}: </span>
+                        <span className="font-bold text-blue-400">{rightStat.value}</span>
+                      </>
+                    ) : "-"}
+                  </td>
                 </tr>
               );
             })}
