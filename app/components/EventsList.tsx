@@ -69,17 +69,17 @@ export default function EventsList({ events, remove }: Props) {
                 {e.type !== "Arbitrage Vidéo" && e.player && (
                   <>
                     {" de "}
-                    <strong>{e.player.name}</strong>
-                    {e.playerNumber ? ` (#${e.playerNumber})` : ""}
+                    <strong>{e.playerNumber ? ` (#${e.playerNumber})` : "" }{e.player.name}</strong>
+                    
                   </>
                 )}
                 {e.team && ` (${displayTeamName(e.team)})`}
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}
-                    <strong>{e.playerOut.name}</strong>
+                    <strong>{e.playerNumber ? ` (#${e.playerNumber})` : "" } {e.playerOut.name}</strong>
                     {" → "}
-                    <strong>{e.playerIn.name}</strong>
+                    <strong>{e.playerNumber ? ` (#${e.playerNumber})` : "" } {e.playerIn.name}</strong>
                   </>
                 )}
                 {e.concussion && " 🚨 commotion"}
