@@ -170,7 +170,7 @@ export default function EventForm({
         <div className="p-4 rounded-md bg-neutral-800 text-white w-full max-w-md mx-auto">
         <h3 className="font-bold text-xl mb-4">{type}</h3>
         <div className="space-y-2">
-            <div className="rounded p-2 space-y-2">
+            <div className="rounded p-2 space-y-2 mb-4">
                 <label className="leading-none" htmlFor="manualMomentCheckbox">
                     <input
                         id="manualMomentCheckbox"
@@ -183,7 +183,7 @@ export default function EventForm({
                 </label>
                 {useManualMoment && (
                     <>
-                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-4">
                             <div className="flex flex-col gap-1">
                                 <label className="leading-none" htmlFor="manualHalfSelect">Mi-temps</label>
                             <select
