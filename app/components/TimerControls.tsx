@@ -38,7 +38,7 @@ export default function TimerControls({
     <section className="space-y-2 w-full max-w-full">
       <div className="flex flex-wrap items-center gap-2 justify-center">
         <button
-          className={`px-4 py-2 text-white rounded shrink-0 ${running ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}`}
+          className={`px-4 py-2 text-white rounded shrink-0 ${running ? "border-orange-500 bg-orange-500/20 text-orange-300 hover:bg-orange-500/30" : "border-green-500 bg-green-500/20 text-green-300 hover:bg-green-500/30"}`}
           onClick={onStartStop}
         >
           {running ? (
@@ -56,7 +56,7 @@ export default function TimerControls({
         <button
           id="halfSelect"
           className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 1 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
+            currentHalf === 1 ? "border-sky-500 bg-sky-500/20 text-sky-300" : "border-neutral-500 bg-neutral-500/20 text-neutral-300"
           }`}
           onClick={onSetFirstHalf}
         >
@@ -65,7 +65,7 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 2 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
+            currentHalf === 2 ? "border-sky-500 bg-sky-500/20 text-sky-300" : "border-neutral-500 bg-neutral-500/20 text-neutral-300"
           }`}
           onClick={onSetSecondHalf}
           disabled={currentHalf === 2 || matchEnded}
@@ -75,7 +75,7 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
-            matchEnded ? "bg-gray-300 text-gray-700": "bg-red-600 text-white" 
+            matchEnded ? "border-neutral-500 bg-neutral-500/20 text-neutral-300": "border-red-600 bg-red-600/20 text-red-300" 
           }`}
           onClick={onEndMatch}
           disabled={matchEnded || currentHalf === 1}
@@ -83,11 +83,8 @@ export default function TimerControls({
           <FontAwesomeIcon icon={faStop} className="sm:mr-2" />
           <span className="hidden sm:inline">Fin de match</span>
         </button>
-      </div>
-
-      <div className="flex justify-center gap-4">
         <button
-          className="px-4 py-2 bg-blue-500/20 text-blue-500 rounded"
+          className="px-4 py-2 border-neutral-500 bg-neutral-500/20 text-neutral-300 rounded"
           onClick={onReset}
         >
           <FontAwesomeIcon icon={faArrowRotateLeft} className="sm:mr-2" />
