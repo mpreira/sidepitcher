@@ -273,16 +273,10 @@ export default function LiveViewPage() {
             <div className="grid grid-cols-3 gap-2">
               {teamStats.map((stat) => (
                 <div key={`${team.id}-${stat.label}`} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
-                  <p
-                    className="text-2xl leading-none text-white"
-                    style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900 }}
-                  >
+                  <p className="text-2xl leading-none text-white font-bold">
                     {stat.values[teamIdx] || 0}
                   </p>
-                  <p
-                    className="mt-1 text-[11px] sm:text-xs text-neutral-300"
-                    style={{ fontFamily: '"Poppins", sans-serif', fontWeight: 300 }}
-                  >
+                  <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
                     {stat.label}
                   </p>
                 </div>
