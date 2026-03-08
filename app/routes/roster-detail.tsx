@@ -16,7 +16,6 @@ import {
     parsePlayerName,
 } from "~/utils/RosterUtils";
 import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown } from "@fortawesome/free-solid-svg-icons";
-import { faSquareWebAwesome } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
