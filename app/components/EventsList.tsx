@@ -79,7 +79,7 @@ export default function EventsList({ events, remove }: Props) {
                     
                   </>
                 )}
-                {e.team && ` (${displayTeamName(e.team)})`}
+                {e.team && ` ${displayTeamName(e.team)}`}
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}
