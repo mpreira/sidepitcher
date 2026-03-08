@@ -1,10 +1,9 @@
 import { useMemo } from "react";
 import { useLoaderData } from "react-router";
-import type { Route } from "./+types/live-roster";
 import { useTeams } from "~/context/TeamsContext";
 import { getLiveMatchByPublicSlug } from "~/utils/database.server";
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params }: { params: { publicSlug?: string } }) {
   const publicSlug = params.publicSlug;
   if (!publicSlug) {
     throw new Response("Not Found", { status: 404 });
@@ -27,7 +26,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [{ title: "Effectifs Live" }];
 }
 
