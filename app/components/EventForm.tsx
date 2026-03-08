@@ -1,3 +1,5 @@
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import type { Team, Player, Event } from "~/types/tracker";
 import { createPlayerEvent, createSubstitutionEvent, findPlayerNumberInTeam } from "~/utils/EventUtils";
@@ -132,7 +134,17 @@ export default function EventForm({
         } else if (type === "Changement") {
             const playerOut = players.find((p) => p.id === outPlayerId);
             const playerIn = players.find((p) => p.id === inPlayerId);
-            const event = createSubstitutionEvent(timing.eventTime, team, playerOut, playerIn, concussion);
+            const playerOutNumber = team && playerOut ? findPlayerNumberInTeam(team, playerOut.id) : undefined;
+            const playerInNumber = team && playerIn ? findPlayerNumberInTeam(team, playerIn.id) : undefined;
+            const event = createSubstitutionEvent(
+                timing.eventTime,
+                team,
+                playerOut,
+                playerOutNumber,
+                playerIn,
+                playerInNumber,
+                concussion
+            );
             onSubmit({
                 ...event,
                 timelineHalf: timing.timelineHalf,
@@ -167,7 +179,7 @@ export default function EventForm({
                         onChange={(e) => setUseManualMoment(e.target.checked)}
                         className="mr-2"
                     />
-                    Définir l'heure manuellement
+                    Temps
                 </label>
                 {useManualMoment && (
                     <>
@@ -179,8 +191,8 @@ export default function EventForm({
                                 value={manualHalf}
                                 onChange={(e) => setManualHalf(Number(e.target.value) as 1 | 2)}
                             >
-                                <option value={1}>Première</option>
-                                <option value={2}>Deuxième</option>
+                                <option value={1}>MT1</option>
+                                <option value={2}>MT2</option>
                             </select>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

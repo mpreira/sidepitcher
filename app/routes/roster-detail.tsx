@@ -16,7 +16,6 @@ import {
     parsePlayerName,
 } from "~/utils/RosterUtils";
 import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown } from "@fortawesome/free-solid-svg-icons";
-import { faSquareWebAwesome } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -121,7 +120,7 @@ export default function RosterDetailPage() {
     function addTeam() {
         if (!roster) return;
         const name = `${roster.name}${matchDay ? ` J${matchDay}` : ""}`;
-        const newTeam = createTeam(name, roster.id);
+        const newTeam = createTeam(name, roster.id, roster.nickname);
         setTeams([...(teams || []), newTeam]);
         setCompositionMessage("");
     }

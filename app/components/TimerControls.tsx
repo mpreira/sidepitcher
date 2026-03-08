@@ -1,3 +1,5 @@
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 
 interface Props {
@@ -82,7 +84,7 @@ export default function TimerControls({
 
       <div className="border border-neutral-700 rounded p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="manualTimeInput" className="font-semibold">Temps manuel (mm:ss)</label>
+          <label htmlFor="manualTimeInput" className="font-semibold">Temps</label>
           <input
             id="manualTimeInput"
             type="text"
@@ -97,7 +99,8 @@ export default function TimerControls({
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             onClick={onApplyManualTime}
           >
-            Appliquer
+            <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />
+            <span className="hidden sm:inline">Appliquer</span>
           </button>
         </div>
       </div>

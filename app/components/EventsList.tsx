@@ -14,15 +14,54 @@ export default function EventsList({ events, remove }: Props) {
     return <p>Aucune action enregistrée.</p>;
   }
 
-  const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
+  const displayTeamName = (team: Event["team"]) => {
+    if (!team) return "";
+    return team.nickname || team.name.replace(/\s+J\d+$/, "");
+  };
 
   const formatEventTimeline = (event: Event) => {
     if (typeof event.timelineMinute === "number") {
-      return formatTimelineMoment(event.timelineMinute, event.timelineAdditionalMinute || 0);
+      return formatTimelineMoment(
+        event.timelineMinute,
+        event.timelineAdditionalMinute || 0,
+        event.timelineSecond || 0
+      );
     }
 
-    return `${Math.floor(event.time / 60)}'`;
+    const minute = Math.floor(event.time / 60);
+    const second = event.time % 60;
+    return formatTimelineMoment(minute, 0, second);
   };
+
+  const EVENT_ICONS: Record<string, string> = {
+    "Essai": "🏉",
+    "Transformation": "🎯",
+    "Pénalité réussie": "✅",
+    "Pénalité manquée": "❌",
+    "Drop": "🦶",
+    "Essai de pénalité": "⚖️",
+    "Carton jaune": "🟨",
+    "Carton rouge": "🟥",
+    "Carton orange": "🟧",
+    "Changement": "🔁",
+    "Saignement": "🩸",
+    "Blessure": "🩹",
+    "Arbitrage Vidéo": "📺",
+    "Récapitulatif": "📝",
+  };
+
+  const isCardEvent = (type: Event["type"]) =>
+    type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
+
+  function getEventLabel(event: Event): string {
+    const icon = EVENT_ICONS[event.type] || "📍";
+
+    if (event.type === "Arbitrage Vidéo") {
+      return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
+    }
+
+    return `${icon} ${event.type}`;
+  }
 
   return (
     <ul className="space-y-1">
@@ -35,30 +74,21 @@ export default function EventsList({ events, remove }: Props) {
               </>
             ) : (
               <>
-                {e.type === "Arbitrage Vidéo" ? (
+                {formatEventTimeline(e)} - {getEventLabel(e)}
+                {e.type !== "Arbitrage Vidéo" && e.player && (
                   <>
-                    {formatEventTimeline(e)} - {e.type}
-                    {e.team && ` (${displayTeamName(e.team.name)})`}
-                    {e.videoReason && ` — TMO - ${e.videoReason}`}
-                  </>
-                ) : (
-                  <>
-                    {formatEventTimeline(e)} - {e.type} de{" "}
-                    {e.player && (
-                      <>
-                        <strong>{e.player.name}</strong>
-                        {e.playerNumber ? ` (#${e.playerNumber})` : ""}
-                      </>
-                    )}
-                    {e.team && ` (${displayTeamName(e.team.name)})`}
+                    {isCardEvent(e.type) ? " pour " : " de "}
+                    <strong>{e.player.name}</strong>
+                    
                   </>
                 )}
+                {e.team && ` ${displayTeamName(e.team)}`}
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}
-                    <strong>{e.playerOut.name}</strong>
+                    <strong>{e.playerOutNumber ? `#${e.playerOutNumber} ` : ""}{e.playerOut.name}</strong>
                     {" → "}
-                    <strong>{e.playerIn.name}</strong>
+                    <strong>{e.playerInNumber ? `#${e.playerInNumber} ` : ""}{e.playerIn.name}</strong>
                   </>
                 )}
                 {e.concussion && " 🚨 commotion"}

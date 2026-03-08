@@ -6,6 +6,35 @@ import type { Team } from "~/types/tracker";
 import { formatTime } from "~/utils/TimeUtils";
 import { getLiveMatchByPublicSlug } from "~/utils/database.server";
 
+const EVENT_ICONS: Record<string, string> = {
+  "Essai": "🏉",
+  "Transformation": "🎯",
+  "Pénalité réussie": "✅",
+  "Pénalité manquée": "❌",
+  "Drop": "🦶",
+  "Essai de pénalité": "⚖️",
+  "Carton jaune": "🟨",
+  "Carton rouge": "🟥",
+  "Carton orange": "🟧",
+  "Changement": "🔁",
+  "Saignement": "🩸",
+  "Blessure": "🩹",
+  "Arbitrage Vidéo": "📺",
+  "Récapitulatif": "📝",
+};
+
+function getEventLabel(event: LiveSnapshot["events"][number]): string {
+  const icon = EVENT_ICONS[event.type] || "📍";
+  if (event.type === "Arbitrage Vidéo") {
+    return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
+  }
+  return `${icon} ${event.type}`;
+}
+
+function isCardEvent(type: string): boolean {
+  return type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
+}
+
 export async function loader({ params }: { params: { publicSlug?: string } }) {
   const publicSlug = params.publicSlug;
   if (!publicSlug) {
@@ -139,6 +168,7 @@ export default function LiveViewPage() {
   const teams: Team[] = snapshot.teams.map((team) => ({
     id: team.id,
     name: team.name,
+    nickname: team.nickname,
     rosterId: "live",
     starters: [],
     substitutes: [],
@@ -181,30 +211,21 @@ export default function LiveViewPage() {
                     </>
                   ) : (
                     <>
-                      {event.type === "Arbitrage Vidéo" ? (
+                      {formatTime(event.time)} - {getEventLabel(event)}
+                      {event.type !== "Arbitrage Vidéo" && event.player && (
                         <>
-                          {formatTime(event.time)} - {event.type}
-                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
-                          {event.videoReason && ` — TMO - ${event.videoReason}`}
-                        </>
-                      ) : (
-                        <>
-                          {formatTime(event.time)} - {event.type} de{" "}
-                          {event.player && (
-                            <>
-                              <strong>{event.player.name}</strong>
-                              {event.playerNumber ? ` (#${event.playerNumber})` : ""}
-                            </>
-                          )}
-                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
+                          {isCardEvent(event.type) ? " pour " : " de "}
+                          <strong>{event.player.name}</strong>
+                          {event.playerNumber ? ` (#${event.playerNumber})` : ""}
                         </>
                       )}
+                      {event.team && ` (${event.team.nickname || event.team.name.replace(/\s+J\d+$/, "")})`}
                       {event.playerOut && event.playerIn && (
                         <>
                           {" — "}
-                          <strong>{event.playerOut.name}</strong>
+                          <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
                           {" → "}
-                          <strong>{event.playerIn.name}</strong>
+                          <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
                         </>
                       )}
                       {event.concussion && " 🚨 commotion"}

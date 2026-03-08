@@ -19,7 +19,7 @@ import {
     getTeamPlayers,
 } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleCheck, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck, faPlus, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 
 interface Props {
     rosters: Roster[];
@@ -42,6 +42,7 @@ export default function RosterManager({
     const [jsonInput, setJsonInput] = useState("");
     const [teamName, setTeamName] = useState("");
     const [newRosterName, setNewRosterName] = useState("");
+    const [newRosterNickname, setNewRosterNickname] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
@@ -55,6 +56,10 @@ export default function RosterManager({
     const [selectedRosterForPlayer, setSelectedRosterForPlayer] = useState<string | null>(null);
     const [viewTeamId, setViewTeamId] = useState<string | null>(null);
     const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+    const [editingRosterId, setEditingRosterId] = useState<string | null>(null);
+    const [editingRosterName, setEditingRosterName] = useState("");
+    const [editingRosterNickname, setEditingRosterNickname] = useState("");
+    const [rosterFormError, setRosterFormError] = useState("");
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
     const activeTeams = (teams || []).filter((t) => t.rosterId === activeRosterId);
@@ -62,19 +67,80 @@ export default function RosterManager({
         ? getTeamPlayers(activeTeams.find(t => t.id === viewTeamId) || { id: "", name: "", rosterId: "", starters: [], substitutes: [] })
         : activeRoster?.players || []; 
 
+    function normalizeNickname(value: string): string {
+        return value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+    }
+
+    function validateNickname(value: string): string {
+        if (!value) return "";
+        return /^[A-Z]{3}$/.test(value)
+            ? ""
+            : "Le surnom doit contenir exactement 3 lettres majuscules (ex: OYO).";
+    }
+
     function createRoster() {
-        if (!newRosterName) return;
-        const newRoster = createNewRoster(newRosterName, newRosterCategory);
+        const trimmedName = newRosterName.trim();
+        const nickname = normalizeNickname(newRosterNickname);
+        const nicknameError = validateNickname(nickname);
+        if (!trimmedName) return;
+        if (nicknameError) {
+            setRosterFormError(nicknameError);
+            return;
+        }
+
+        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined);
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
         setRosterFeedbackMessage("Effectif créé avec succès.");
+        setRosterFormError("");
         closeCreateRosterForm();
     }
 
     function closeCreateRosterForm() {
         setShowCreateRosterForm(false);
         setNewRosterName("");
+        setNewRosterNickname("");
         setNewRosterCategory('Top 14');
+        setRosterFormError("");
+    }
+
+    function openEditRosterForm(roster: Roster) {
+        setEditingRosterId(roster.id);
+        setEditingRosterName(roster.name);
+        setEditingRosterNickname(roster.nickname || "");
+        setRosterFormError("");
+    }
+
+    function closeEditRosterForm() {
+        setEditingRosterId(null);
+        setEditingRosterName("");
+        setEditingRosterNickname("");
+        setRosterFormError("");
+    }
+
+    function saveEditedRoster() {
+        if (!editingRosterId) return;
+        const trimmedName = editingRosterName.trim();
+        const nickname = normalizeNickname(editingRosterNickname);
+        const nicknameError = validateNickname(nickname);
+        if (!trimmedName) return;
+        if (nicknameError) {
+            setRosterFormError(nicknameError);
+            return;
+        }
+
+        setRosters((prev) => prev.map((roster) =>
+            roster.id === editingRosterId
+                ? { ...roster, name: trimmedName, nickname: nickname || undefined }
+                : roster
+        ));
+        setTeams((prev) => prev.map((team) =>
+            team.rosterId === editingRosterId
+                ? { ...team, nickname: nickname || undefined }
+                : team
+        ));
+        setRosterFeedbackMessage("Effectif modifié.");
+        closeEditRosterForm();
     }
 
     function deleteRoster(id: string) {
@@ -156,7 +222,7 @@ export default function RosterManager({
     function addTeam() {
         if (!activeRoster) return;
         const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
-        const newTeam = createTeam(name, activeRoster.id);
+        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname);
         setTeams([...(teams || []), newTeam]);
     }
 
@@ -164,7 +230,8 @@ export default function RosterManager({
         if (!activeRoster) return;
         try {
             const newTeam = importTeamFromJSON(jsonInput, activeRoster.id, activeRoster.name, matchDay ? parseInt(matchDay) : undefined);
-            setTeams([...(teams || []), newTeam]);
+            const withNickname = { ...newTeam, nickname: activeRoster.nickname };
+            setTeams([...(teams || []), withNickname]);
             setJsonInput("");
         } catch (e) {
             alert(e instanceof Error ? e.message : "Erreur de parsing JSON");
@@ -252,6 +319,16 @@ export default function RosterManager({
                             value={newRosterName}
                             onChange={(e) => setNewRosterName(e.target.value)}
                         />
+                        <input
+                            id="newRosterNickname"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            placeholder="Surnom (ex: OYO)"
+                            value={newRosterNickname}
+                            onChange={(e) => {
+                                setNewRosterNickname(normalizeNickname(e.target.value));
+                                setRosterFormError("");
+                            }}
+                        />
                         <select
                             id="newRosterCategory"
                             className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
@@ -278,6 +355,52 @@ export default function RosterManager({
                                 Annuler
                             </button>
                         </div>
+                        {rosterFormError && <p className="text-sm text-red-400">{rosterFormError}</p>}
+                    </div>
+                </div>
+            )}
+
+            {editingRosterId && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                    onClick={closeEditRosterForm}
+                >
+                    <div
+                        className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <input
+                            id="editingRosterName"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            placeholder="Nom de l'effectif"
+                            value={editingRosterName}
+                            onChange={(e) => setEditingRosterName(e.target.value)}
+                        />
+                        <input
+                            id="editingRosterNickname"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            placeholder="Surnom (ex: OYO)"
+                            value={editingRosterNickname}
+                            onChange={(e) => {
+                                setEditingRosterNickname(normalizeNickname(e.target.value));
+                                setRosterFormError("");
+                            }}
+                        />
+                        <div className="flex items-center justify-center gap-2">
+                            <button
+                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                onClick={saveEditedRoster}
+                            >
+                                Valider
+                            </button>
+                            <button
+                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                onClick={closeEditRosterForm}
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                        {rosterFormError && <p className="text-sm text-red-400">{rosterFormError}</p>}
                     </div>
                 </div>
             )}
@@ -291,13 +414,21 @@ export default function RosterManager({
                     {filteredRosters.map((r) => (
                         <div key={r.id} className="flex items-center justify-between gap-2 rounded bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 py-2 px-4">
                             <button
-                                className="text-white font-semibold text-base md:text-lg w-full"
+                                className="text-white font-semibold text-base md:text-lg w-full text-left"
                                 onClick={() => {
                                     setActiveRosterId(r.id);
                                     navigate(getRosterPath(r));
                                 }}
                             >
-                                {r.name}
+                                <span>{r.name}</span>
+                                {r.nickname && <span className="block text-xs text-sky-300">{r.nickname}</span>}
+                            </button>
+                            <button
+                                className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                onClick={() => openEditRosterForm(r)}
+                                aria-label={`Modifier ${r.name}`}
+                            >
+                                <FontAwesomeIcon icon={faPenToSquare} />
                             </button>
                         </div>
                     ))}
