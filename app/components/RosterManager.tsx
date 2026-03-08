@@ -43,6 +43,7 @@ export default function RosterManager({
     const [teamName, setTeamName] = useState("");
     const [newRosterName, setNewRosterName] = useState("");
     const [newRosterNickname, setNewRosterNickname] = useState("");
+    const [newRosterColor, setNewRosterColor] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
@@ -59,6 +60,7 @@ export default function RosterManager({
     const [editingRosterId, setEditingRosterId] = useState<string | null>(null);
     const [editingRosterName, setEditingRosterName] = useState("");
     const [editingRosterNickname, setEditingRosterNickname] = useState("");
+    const [editingRosterColor, setEditingRosterColor] = useState("");
     const [rosterFormError, setRosterFormError] = useState("");
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
@@ -78,17 +80,34 @@ export default function RosterManager({
             : "Le surnom doit contenir exactement 3 lettres majuscules (ex: OYO).";
     }
 
+    function normalizeColor(value: string): string {
+        return value.trim().toUpperCase();
+    }
+
+    function validateColor(value: string): string {
+        if (!value) return "";
+        return /^#[0-9A-F]{6}$/.test(value)
+            ? ""
+            : "La couleur doit être au format hexadécimal #RRGGBB.";
+    }
+
     function createRoster() {
         const trimmedName = newRosterName.trim();
         const nickname = normalizeNickname(newRosterNickname);
+        const color = normalizeColor(newRosterColor);
         const nicknameError = validateNickname(nickname);
+        const colorError = validateColor(color);
         if (!trimmedName) return;
         if (nicknameError) {
             setRosterFormError(nicknameError);
             return;
         }
+        if (colorError) {
+            setRosterFormError(colorError);
+            return;
+        }
 
-        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined);
+        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined, color || undefined);
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
         setRosterFeedbackMessage("Effectif créé avec succès.");
@@ -100,6 +119,7 @@ export default function RosterManager({
         setShowCreateRosterForm(false);
         setNewRosterName("");
         setNewRosterNickname("");
+        setNewRosterColor("");
         setNewRosterCategory('Top 14');
         setRosterFormError("");
     }
@@ -108,6 +128,7 @@ export default function RosterManager({
         setEditingRosterId(roster.id);
         setEditingRosterName(roster.name);
         setEditingRosterNickname(roster.nickname || "");
+        setEditingRosterColor(roster.color || "");
         setRosterFormError("");
     }
 
@@ -115,6 +136,7 @@ export default function RosterManager({
         setEditingRosterId(null);
         setEditingRosterName("");
         setEditingRosterNickname("");
+        setEditingRosterColor("");
         setRosterFormError("");
     }
 
@@ -122,21 +144,27 @@ export default function RosterManager({
         if (!editingRosterId) return;
         const trimmedName = editingRosterName.trim();
         const nickname = normalizeNickname(editingRosterNickname);
+        const color = normalizeColor(editingRosterColor);
         const nicknameError = validateNickname(nickname);
+        const colorError = validateColor(color);
         if (!trimmedName) return;
         if (nicknameError) {
             setRosterFormError(nicknameError);
             return;
         }
+        if (colorError) {
+            setRosterFormError(colorError);
+            return;
+        }
 
         setRosters((prev) => prev.map((roster) =>
             roster.id === editingRosterId
-                ? { ...roster, name: trimmedName, nickname: nickname || undefined }
+                ? { ...roster, name: trimmedName, nickname: nickname || undefined, color: color || undefined }
                 : roster
         ));
         setTeams((prev) => prev.map((team) =>
             team.rosterId === editingRosterId
-                ? { ...team, nickname: nickname || undefined }
+                ? { ...team, nickname: nickname || undefined, color: color || undefined }
                 : team
         ));
         setRosterFeedbackMessage("Effectif modifié.");
@@ -222,15 +250,22 @@ export default function RosterManager({
     function addTeam() {
         if (!activeRoster) return;
         const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
-        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname);
+        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname, activeRoster.color);
         setTeams([...(teams || []), newTeam]);
     }
 
     function importTeam() {
         if (!activeRoster) return;
         try {
-            const newTeam = importTeamFromJSON(jsonInput, activeRoster.id, activeRoster.name, matchDay ? parseInt(matchDay) : undefined);
-            const withNickname = { ...newTeam, nickname: activeRoster.nickname };
+            const newTeam = importTeamFromJSON(
+                jsonInput,
+                activeRoster.id,
+                activeRoster.name,
+                matchDay ? parseInt(matchDay) : undefined,
+                activeRoster.nickname,
+                activeRoster.color
+            );
+            const withNickname = { ...newTeam, nickname: activeRoster.nickname, color: activeRoster.color };
             setTeams([...(teams || []), withNickname]);
             setJsonInput("");
         } catch (e) {
@@ -329,6 +364,16 @@ export default function RosterManager({
                                 setRosterFormError("");
                             }}
                         />
+                        <input
+                            id="newRosterColor"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            placeholder="Couleur (optionnel, ex: #1E3A8A)"
+                            value={newRosterColor}
+                            onChange={(e) => {
+                                setNewRosterColor(e.target.value);
+                                setRosterFormError("");
+                            }}
+                        />
                         <select
                             id="newRosterCategory"
                             className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
@@ -383,6 +428,16 @@ export default function RosterManager({
                             value={editingRosterNickname}
                             onChange={(e) => {
                                 setEditingRosterNickname(normalizeNickname(e.target.value));
+                                setRosterFormError("");
+                            }}
+                        />
+                        <input
+                            id="editingRosterColor"
+                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
+                            placeholder="Couleur (optionnel, ex: #1E3A8A)"
+                            value={editingRosterColor}
+                            onChange={(e) => {
+                                setEditingRosterColor(e.target.value);
                                 setRosterFormError("");
                             }}
                         />
