@@ -3,7 +3,7 @@ import { useLoaderData } from "react-router";
 import Scoreboard from "~/components/Scoreboard";
 import type { LiveSnapshot, LiveStreamMessage } from "~/types/live";
 import type { Team } from "~/types/tracker";
-import { formatTime } from "~/utils/TimeUtils";
+import { formatTime, formatTimelineMoment } from "~/utils/TimeUtils";
 import { getLiveMatchByPublicSlug } from "~/utils/database.server";
 
 const EVENT_ICONS: Record<string, string> = {
@@ -33,6 +33,25 @@ function getEventLabel(event: LiveSnapshot["events"][number]): string {
 
 function isCardEvent(type: string): boolean {
   return type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
+}
+
+function displayTeamName(team: LiveSnapshot["events"][number]["team"]) {
+  if (!team) return "";
+  return team.nickname || team.name.replace(/\s+J\d+$/, "");
+}
+
+function formatEventTimeline(event: LiveSnapshot["events"][number]): string {
+  if (typeof event.timelineMinute === "number") {
+    return formatTimelineMoment(
+      event.timelineMinute,
+      event.timelineAdditionalMinute || 0,
+      event.timelineSecond || 0
+    );
+  }
+
+  const minute = Math.floor(event.time / 60);
+  const second = event.time % 60;
+  return formatTimelineMoment(minute, 0, second);
 }
 
 export async function loader({ params }: { params: { publicSlug?: string } }) {
@@ -173,6 +192,7 @@ export default function LiveViewPage() {
     starters: [],
     substitutes: [],
   }));
+  const liveEvents = [...snapshot.events].reverse();
 
   return (
     <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
@@ -202,24 +222,23 @@ export default function LiveViewPage() {
           <p>Aucune action enregistrée.</p>
         ) : (
           <ul className="space-y-1">
-            {snapshot.events.map((event, index) => (
+            {liveEvents.map((event, index) => (
               <li key={`${event.time}-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
                 <span className="min-w-0 break-words">
                   {event.summary ? (
                     <>
-                      {formatTime(event.time)} - <strong>{event.summary}</strong>
+                      {formatEventTimeline(event)} - <strong>{event.summary}</strong>
                     </>
                   ) : (
                     <>
-                      {formatTime(event.time)} - {getEventLabel(event)}
+                      {formatEventTimeline(event)} - {getEventLabel(event)}
                       {event.type !== "Arbitrage Vidéo" && event.player && (
                         <>
                           {isCardEvent(event.type) ? " pour " : " de "}
                           <strong>{event.player.name}</strong>
-                          {event.playerNumber ? ` (#${event.playerNumber})` : ""}
                         </>
                       )}
-                      {event.team && ` (${event.team.nickname || event.team.name.replace(/\s+J\d+$/, "")})`}
+                      {event.team && ` ${displayTeamName(event.team)}`}
                       {event.playerOut && event.playerIn && (
                         <>
                           {" — "}
