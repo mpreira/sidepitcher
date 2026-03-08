@@ -42,16 +42,17 @@ body {
 
 @layer components {
   .sp-input-shell {
-    @apply relative rounded-md border border-neutral-700 bg-neutral-900 px-3 pt-5 pb-2 transition-colors duration-150;
-    @apply focus-within:border-l-4 focus-within:border-l-sky-500;
+    @apply relative rounded-md border border-neutral-700 border-l-4 border-l-transparent bg-neutral-900 px-3 pt-5 pb-2;
+    @apply transition-colors duration-150;
+    @apply focus-within:border-l-sky-500 focus-within:bg-neutral-900/95;
   }
 
   .sp-input-label {
-    @apply pointer-events-none absolute left-3 top-1 text-[11px] text-neutral-400;
+    @apply pointer-events-none absolute left-3 top-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400;
   }
 
   .sp-input-control {
-    @apply h-auto w-full min-w-0 border-0 bg-transparent p-0 text-sm text-neutral-200 shadow-none;
+    @apply h-auto w-full min-w-0 border-0 bg-transparent p-0 text-sm leading-5 text-neutral-200 shadow-none;
     @apply focus:outline-none focus:ring-0 focus:border-0;
   }
 }

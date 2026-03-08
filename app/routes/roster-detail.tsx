@@ -630,38 +630,37 @@ export default function RosterDetailPage() {
                             className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                             onClick={(event) => event.stopPropagation()}
                         >
-                            <label className="leading-none" data-slot="label" htmlFor="newPlayerFirst">Prénom</label>
-                            <input
-                                id="newPlayerFirst"
-                                className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                    newPlayerFirstError ? "border-red-500" : "border-gray-600"
-                                }`}
-                                placeholder="ex. Jean"
-                                value={newPlayerFirst}
-                                onChange={(e) => {
-                                    const formatted = formatName(e.target.value);
-                                    setNewPlayerFirst(formatted);
-                                    setNewPlayerFirstError(validateName(formatted));
-                                }}
-                            />
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerFirst">Prénom</label>
+                                <input
+                                    id="newPlayerFirst"
+                                    className="sp-input-control"
+                                    placeholder="ex. Jean"
+                                    value={newPlayerFirst}
+                                    onChange={(e) => {
+                                        const formatted = formatName(e.target.value);
+                                        setNewPlayerFirst(formatted);
+                                        setNewPlayerFirstError(validateName(formatted));
+                                    }}
+                                />
+                            </div>
                             {newPlayerFirstError && (
                                 <p className="text-sm text-red-400">{newPlayerFirstError}</p>
                             )}
-                            <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
-                            <label className="leading-none" data-slot="label" htmlFor="newPlayerLast">Nom</label>
-                            <input
-                                id="newPlayerLast"
-                                className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                    newPlayerLastError ? "border-red-500" : "border-gray-600"
-                                }`}
-                                placeholder="ex. Dupont"
-                                value={newPlayerLast}
-                                onChange={(e) => {
-                                    const formatted = formatName(e.target.value);
-                                    setNewPlayerLast(formatted);
-                                    setNewPlayerLastError(validateName(formatted));
-                                }}
-                            />
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerLast">Nom</label>
+                                <input
+                                    id="newPlayerLast"
+                                    className="sp-input-control"
+                                    placeholder="ex. Dupont"
+                                    value={newPlayerLast}
+                                    onChange={(e) => {
+                                        const formatted = formatName(e.target.value);
+                                        setNewPlayerLast(formatted);
+                                        setNewPlayerLastError(validateName(formatted));
+                                    }}
+                                />
+                            </div>
                             {newPlayerLastError && (
                                 <p className="text-sm text-red-400">{newPlayerLastError}</p>
                             )}
@@ -701,38 +700,37 @@ export default function RosterDetailPage() {
                                     <FontAwesomeIcon icon={faCircleXmark} />
                                 </button>
                             </div>
-                            <label className="leading-none" data-slot="label" htmlFor="editingPlayerFirst">Prénom</label>
-                            <input
-                                id="editingPlayerFirst"
-                                className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                    editingPlayerFirstError ? "border-red-500" : "border-gray-600"
-                                }`}
-                                placeholder="Prénom"
-                                value={editingPlayerFirst}
-                                onChange={(e) => {
-                                    const formatted = formatName(e.target.value);
-                                    setEditingPlayerFirst(formatted);
-                                    setEditingPlayerFirstError(validateName(formatted));
-                                }}
-                            />
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerFirst">Prénom</label>
+                                <input
+                                    id="editingPlayerFirst"
+                                    className="sp-input-control"
+                                    placeholder="Prénom"
+                                    value={editingPlayerFirst}
+                                    onChange={(e) => {
+                                        const formatted = formatName(e.target.value);
+                                        setEditingPlayerFirst(formatted);
+                                        setEditingPlayerFirstError(validateName(formatted));
+                                    }}
+                                />
+                            </div>
                             {editingPlayerFirstError && (
                                 <p className="text-sm text-red-400">{editingPlayerFirstError}</p>
                             )}
-                            <div className="h-px bg-neutral-700 w-5/6 mx-auto" aria-hidden="true" />
-                            <label className="leading-none" data-slot="label" htmlFor="editingPlayerLast">Nom</label>
-                            <input
-                                id="editingPlayerLast"
-                                className={`h-auto w-full min-w-0 self-center border-0 bg-transparent text-neutral-400 pl-3 text-left text-base font-light leading-none shadow-none outline-none focus:outline-none focus:ring-0 focus:border-0 ${
-                                    editingPlayerLastError ? "border-red-500" : "border-gray-600"
-                                }`}
-                                placeholder="Nom"
-                                value={editingPlayerLast}
-                                onChange={(e) => {
-                                    const formatted = formatName(e.target.value);
-                                    setEditingPlayerLast(formatted);
-                                    setEditingPlayerLastError(validateName(formatted));
-                                }}
-                            />
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerLast">Nom</label>
+                                <input
+                                    id="editingPlayerLast"
+                                    className="sp-input-control"
+                                    placeholder="Nom"
+                                    value={editingPlayerLast}
+                                    onChange={(e) => {
+                                        const formatted = formatName(e.target.value);
+                                        setEditingPlayerLast(formatted);
+                                        setEditingPlayerLastError(validateName(formatted));
+                                    }}
+                                />
+                            </div>
                             {editingPlayerLastError && (
                                 <p className="text-sm text-red-400">{editingPlayerLastError}</p>
                             )}

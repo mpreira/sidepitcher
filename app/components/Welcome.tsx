@@ -79,11 +79,11 @@ export function Welcome() {
           </div>
           {/* reglages de journee/championnat */}
           <form className="mx-auto w-5/6 max-w-sm space-y-3 text-left mb-8 md:w-full" onSubmit={handleSubmit}>
-            <div className="flex flex-wrap items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-              <label className="self-center leading-none" htmlFor="sportSelect">Sport</label>
+            <div className="sp-input-shell">
+              <label className="sp-input-label" htmlFor="sportSelect">Sport</label>
               <select
                 id="sportSelect"
-                className="ml-auto h-auto w-full min-w-0 self-center border-0 bg-transparent p-0 text-left leading-none shadow-none focus:ring-0 focus:border-0 sm:w-auto sm:min-w-[8rem]"
+                className="sp-input-control"
                 value={sport}
                 onChange={(e) =>
                   setSport(e.target.value as "Rugby" | "Football")
@@ -96,22 +96,22 @@ export function Welcome() {
                 ))}
               </select>
             </div>
-            <div className="flex flex-wrap items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-              <label className="self-center leading-none" data-slot="label" htmlFor="matchDayInput">Journée</label>
+            <div className="sp-input-shell">
+              <label className="sp-input-label" data-slot="label" htmlFor="matchDayInput">Journée</label>
               <input
                 id="matchDayInput"
                 type="text"
-                className="ml-auto h-auto w-full min-w-0 self-center border-0 bg-transparent p-0 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0 sm:w-auto sm:min-w-[13rem]"
+                className="sp-input-control"
                 value={matchDay}
                 onChange={(e) => setMatchDay(e.target.value)}
                 placeholder="ex. J1"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-              <label className="self-center leading-none" htmlFor="championshipSelect">Championnat</label>
+            <div className="sp-input-shell">
+              <label className="sp-input-label" htmlFor="championshipSelect">Championnat</label>
               <select
                 id="championshipSelect"
-                className="ml-auto h-auto w-full min-w-0 self-center border-0 bg-transparent p-0 text-left leading-none shadow-none focus:ring-0 focus:border-0 sm:w-auto sm:min-w-[8rem]"
+                className="sp-input-control"
                 value={championship}
                 onChange={(e) =>
                   setChampionship(e.target.value as "Top 14" | "Pro D2")
