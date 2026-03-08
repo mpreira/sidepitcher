@@ -9,7 +9,7 @@ export default [
     route("roster/:rosterSlugId", "routes/roster-redirect.tsx"),
     route("syntheses", "routes/syntheses.tsx"),
     route("syntheses/:summaryId", "routes/synthese-detail.tsx"),
-    route("settings", "routes/settings.tsx"),
+    route("account", "routes/settings.tsx"),
     route("admin/accounts", "routes/admin-accounts.tsx"),
     route("live/:publicSlug", "routes/live-view.tsx"),
     route("live/:publicSlug/roster", "routes/live-roster.tsx"),

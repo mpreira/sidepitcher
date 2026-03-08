@@ -193,7 +193,7 @@ export default function AdminAccountsPage() {
       {message && <p className="text-sm text-green-400">{message}</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <Link to="/settings" className="text-sm underline text-neutral-300">
+      <Link to="/account" className="text-sm underline text-neutral-300">
         Retour reglages
       </Link>
     </main>

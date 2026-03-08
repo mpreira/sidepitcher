@@ -86,7 +86,9 @@ function AppContent() {
     { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
     { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
     { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
-    { href: "/settings", label: "Réglages", icon: faGear, active: true },
+    ...(connected && account
+      ? [{ href: "/account", label: account.name, icon: faGear, active: true }]
+      : []),
     ...(connected && account?.isAdmin
       ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
       : []),

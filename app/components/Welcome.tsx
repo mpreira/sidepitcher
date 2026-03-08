@@ -48,13 +48,13 @@ export function Welcome() {
         ) : (
           <>
             <Link
-              to="/settings#switch-account"
+              to="/account#switch-account"
               className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
             >
               Se connecter
             </Link>
             <Link
-              to="/settings#create-account"
+              to="/account#create-account"
               className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
             >
               <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
