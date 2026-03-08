@@ -184,7 +184,7 @@ export default function LiveViewPage() {
                       {event.type === "Arbitrage Vidéo" ? (
                         <>
                           {formatTime(event.time)} - {event.type}
-                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
+                          {event.team && ` (${event.team.nickname || event.team.name.replace(/\s+J\d+$/, "")})`}
                           {event.videoReason && ` — TMO - ${event.videoReason}`}
                         </>
                       ) : (
@@ -196,7 +196,7 @@ export default function LiveViewPage() {
                               {event.playerNumber ? ` (#${event.playerNumber})` : ""}
                             </>
                           )}
-                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
+                          {event.team && ` (${event.team.nickname || event.team.name.replace(/\s+J\d+$/, "")})`}
                         </>
                       )}
                       {event.playerOut && event.playerIn && (

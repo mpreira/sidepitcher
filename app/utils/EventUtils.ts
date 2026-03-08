@@ -2,8 +2,8 @@ import type { Team, Player, Event } from "~/types/tracker";
 import { jsPDF } from "jspdf";
 import { formatTime } from "./TimeUtils";
 
-function displayTeamName(name: string): string {
-    return name.replace(/\s+J\d+$/, "");
+function displayTeamName(team: Team): string {
+    return team.nickname || team.name.replace(/\s+J\d+$/, "");
 }
 
 /**
@@ -77,7 +77,7 @@ export function exportSummaryToClipboard(
             lines.push(`${formatTime(e.time)} - ${e.summary}`);
         } else {
             let line = `${formatTime(e.time)} - ${e.type}`;
-            if (e.team) line += ` (${displayTeamName(e.team.name)})`;
+            if (e.team) line += ` (${displayTeamName(e.team)})`;
             if (e.player)
                 line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
@@ -122,7 +122,7 @@ export function exportSummaryToPdf(
             doc.text(`${formatTime(e.time)} - ${e.summary}`, 10, y);
         } else {
             let line = `${formatTime(e.time)} - ${e.type}`;
-            if (e.team) line += ` (${displayTeamName(e.team.name)})`;
+            if (e.team) line += ` (${displayTeamName(e.team)})`;
             if (e.player)
                 line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
@@ -165,7 +165,7 @@ export function buildDetailedEventSummary(events: Event[]): Array<{
 }> {
     return events.map((e) => ({
         type: e.type,
-        team: e.team ? displayTeamName(e.team.name) : undefined,
+        team: e.team ? displayTeamName(e.team) : undefined,
         videoReason: e.videoReason,
         player: e.player?.name,
         playerNumber: e.playerNumber,

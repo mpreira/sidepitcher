@@ -6,10 +6,11 @@ function sortEntriesByNumber(entries: CompositionEntry[]): CompositionEntry[] {
 }
 
 // Roster Operations
-export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2'): Roster {
+export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2', nickname?: string): Roster {
     return {
         id: uuidv4(),
         name,
+        nickname,
         players: [],
         category,
     };
@@ -61,10 +62,11 @@ export function parsePlayerName(name: string): { first: string; last: string } {
 }
 
 // Team Operations
-export function createTeam(name: string, rosterId: string): Team {
+export function createTeam(name: string, rosterId: string, nickname?: string): Team {
     return {
         id: `${name}`.replace(/\s+/g, "_"),
         name,
+        nickname,
         rosterId,
         captainPlayerId: null,
         starters: [],
@@ -123,7 +125,7 @@ export function addMultiplePlayersToTeam(team: Team, players: Player[], playerNu
 }
 
 // Import/Export
-export function importTeamFromJSON(jsonString: string, rosterId: string, rosterName: string, matchDay?: number): Team {
+export function importTeamFromJSON(jsonString: string, rosterId: string, rosterName: string, matchDay?: number, nickname?: string): Team {
     const data = JSON.parse(jsonString);
     
     if (!Array.isArray(data.starters)) {
@@ -136,6 +138,7 @@ export function importTeamFromJSON(jsonString: string, rosterId: string, rosterN
     return {
         id,
         name,
+        nickname,
         rosterId,
         starters: data.starters.map((p: any, idx: number) => ({
             player: { id: p.id || uuidv4(), name: p.name },

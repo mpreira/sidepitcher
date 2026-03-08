@@ -121,7 +121,7 @@ export default function RosterDetailPage() {
     function addTeam() {
         if (!roster) return;
         const name = `${roster.name}${matchDay ? ` J${matchDay}` : ""}`;
-        const newTeam = createTeam(name, roster.id);
+        const newTeam = createTeam(name, roster.id, roster.nickname);
         setTeams([...(teams || []), newTeam]);
         setCompositionMessage("");
     }

@@ -14,7 +14,10 @@ export default function EventsList({ events, remove }: Props) {
     return <p>Aucune action enregistrée.</p>;
   }
 
-  const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
+  const displayTeamName = (team: Event["team"]) => {
+    if (!team) return "";
+    return team.nickname || team.name.replace(/\s+J\d+$/, "");
+  };
 
   const formatEventTimeline = (event: Event) => {
     if (typeof event.timelineMinute === "number") {
@@ -38,7 +41,7 @@ export default function EventsList({ events, remove }: Props) {
                 {e.type === "Arbitrage Vidéo" ? (
                   <>
                     {formatEventTimeline(e)} - {e.type}
-                    {e.team && ` (${displayTeamName(e.team.name)})`}
+                    {e.team && ` (${displayTeamName(e.team)})`}
                     {e.videoReason && ` — TMO - ${e.videoReason}`}
                   </>
                 ) : (
@@ -50,7 +53,7 @@ export default function EventsList({ events, remove }: Props) {
                         {e.playerNumber ? ` (#${e.playerNumber})` : ""}
                       </>
                     )}
-                    {e.team && ` (${displayTeamName(e.team.name)})`}
+                    {e.team && ` (${displayTeamName(e.team)})`}
                   </>
                 )}
                 {e.playerOut && e.playerIn && (
