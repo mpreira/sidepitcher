@@ -213,7 +213,16 @@ export default function SyntheseDetailPage() {
                                         {formatTime(event.time)} - <span className="font-semibold">{event.type}</span>
                                         {event.team && <span> ({displayTeamName(event.team.name)})</span>}
                                         {event.player && <span> — {event.player.name}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
-                                        {event.playerOut && event.playerIn && <span> — {event.playerOut.name} → {event.playerIn.name}</span>}
+                                        {event.playerOut && event.playerIn && (
+                                            <span>
+                                                {" — "}
+                                                {event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}
+                                                {event.playerOut.name}
+                                                {" → "}
+                                                {event.playerInNumber ? `#${event.playerInNumber} ` : ""}
+                                                {event.playerIn.name}
+                                            </span>
+                                        )}
                                         {event.concussion && <span> 🚨 commotion</span>}
                                     </>
                                 )}

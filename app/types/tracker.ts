@@ -12,6 +12,7 @@ export interface CompositionEntry {
 export interface Roster {
     id: string;
     name: string;
+    nickname?: string;
     players: Player[]; // effectif global
     category?: 'Top 14' | 'Pro D2';
 }
@@ -19,10 +20,26 @@ export interface Roster {
 export interface Team {
     id: string;              // nouveau : « nomDuRoster_journee »
     name: string;
+    nickname?: string;
     rosterId: string;        // which roster this team draws from
     captainPlayerId?: string | null;
     starters: CompositionEntry[]; // numbers 1–15
     substitutes: CompositionEntry[]; // numbers 16–23
+}
+
+export interface EventSummaryTableStat {
+    label: string;
+    value: number;
+}
+
+export interface EventSummaryTableTeam {
+    teamName: string;
+    stats: EventSummaryTableStat[];
+}
+
+export interface EventSummaryTable {
+    halfLabel: string;
+    teams: [EventSummaryTableTeam, EventSummaryTableTeam];
 }
 
 export interface Event {
@@ -39,7 +56,10 @@ export interface Event {
     concussion?: boolean;
     // for substitutions
     playerOut?: Player;
+    playerOutNumber?: number;
     playerIn?: Player;
+    playerInNumber?: number;
     // for half-time summaries
     summary?: string;
+    summaryTable?: EventSummaryTable;
 }

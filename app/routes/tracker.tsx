@@ -72,12 +72,18 @@ export default function Tracker() {
     const activeRoster = useMemo(() => rosters.find((r) => r.id === activeRosterId) ?? null, [rosters, activeRosterId]);
     
     const activeTeams = useMemo(() => teams.filter((t) => t.rosterId === activeRosterId), [teams, activeRosterId]);
+    const rosterNicknameById = useMemo(
+        () => new Map(rosters.map((roster) => [roster.id, roster.nickname || ""])),
+        [rosters]
+    );
     
     const teamsForDay = useMemo(
         () => matchDay
-            ? teams.filter((t) => t.name.includes(`J${matchDay}`))
-            : teams,
-        [teams, matchDay]
+            ? teams
+                .filter((t) => t.name.includes(`J${matchDay}`))
+                .map((team) => ({ ...team, nickname: team.nickname || rosterNicknameById.get(team.rosterId) || undefined }))
+            : teams.map((team) => ({ ...team, nickname: team.nickname || rosterNicknameById.get(team.rosterId) || undefined })),
+        [teams, matchDay, rosterNicknameById]
     );
     
     const [team1Id, setTeam1Id] = useState<string>("");
@@ -130,6 +136,10 @@ export default function Tracker() {
     function getSelectedTeamIndex(teamId?: string): number {
         if (!teamId) return -1;
         return selectedTeamIds.findIndex((id) => id === teamId);
+    }
+
+    function getDisplayTeamLabel(team: { name: string; nickname?: string }): string {
+        return team.nickname || team.name.replace(/\s+J\d+$/, "");
     }
 
     // penalty counts (fouls) for each team - computed from events
@@ -290,10 +300,21 @@ export default function Tracker() {
     function addStatsSummary(halfLabel: string) {
         if (selectedTeams.length !== 2) return;
         const summaryMoment = getTimelineMomentFromClock(time, currentHalf);
-        const team1Name = selectedTeams[0].name.replace(/\s+J\d+$/, "");
-        const team2Name = selectedTeams[1].name.replace(/\s+J\d+$/, "");
+        const team1Name = getDisplayTeamLabel(selectedTeams[0]);
+        const team2Name = getDisplayTeamLabel(selectedTeams[1]);
         const displayedPenalties = getDisplayedPenalties();
         const displayedEnAvant = getDisplayedEnAvant();
+        const statRows = [
+            { label: "Pénalités", left: displayedPenalties[0] || 0, right: displayedPenalties[1] || 0 },
+            { label: "En-avants", left: displayedEnAvant[0] || 0, right: displayedEnAvant[1] || 0 },
+            { label: "Touches volées", left: teamToucheGagnee[0] || 0, right: teamToucheGagnee[1] || 0 },
+            { label: "Touches perdues", left: teamTouchePerdue[0] || 0, right: teamTouchePerdue[1] || 0 },
+            { label: "Mêlées gagnées", left: teamMeleeGagnee[0] || 0, right: teamMeleeGagnee[1] || 0 },
+            { label: "Mêlées perdues", left: teamMeleePerdue[0] || 0, right: teamMeleePerdue[1] || 0 },
+            { label: "Turnovers", left: teamTurnover[0] || 0, right: teamTurnover[1] || 0 },
+            { label: "Offloads", left: teamOffloads[0] || 0, right: teamOffloads[1] || 0 },
+            { label: "Jeu au pied", left: teamJeuAuPied[0] || 0, right: teamJeuAuPied[1] || 0 },
+        ];
         const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamToucheGagnee[0] || 0} touches volées, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleeGagnee[0] || 0} mêlées gagnées, ${teamMeleePerdue[0] || 0} mêlées perdues, ${teamTurnover[0] || 0} turnovers, ${teamOffloads[0] || 0} offloads, ${teamJeuAuPied[0] || 0} jeux au pied / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamToucheGagnee[1] || 0} touches volées, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleeGagnee[1] || 0} mêlées gagnées, ${teamMeleePerdue[1] || 0} mêlées perdues, ${teamTurnover[1] || 0} turnovers, ${teamOffloads[1] || 0} offloads, ${teamJeuAuPied[1] || 0} jeux au pied`;
         
         const summaryEvent: Event = {
@@ -303,7 +324,20 @@ export default function Tracker() {
             timelineMinute: summaryMoment.minute,
             timelineAdditionalMinute: summaryMoment.additionalMinute,
             timelineSecond: summaryMoment.second,
-            summary: summary
+            summary: summary,
+            summaryTable: {
+                halfLabel,
+                teams: [
+                    {
+                        teamName: team1Name,
+                        stats: statRows.map((row) => ({ label: row.label, value: row.left })),
+                    },
+                    {
+                        teamName: team2Name,
+                        stats: statRows.map((row) => ({ label: row.label, value: row.right })),
+                    },
+                ],
+            },
         };
 
         addEvent(summaryEvent);
@@ -555,7 +589,7 @@ export default function Tracker() {
             currentHalf,
             matchEnded,
             events,
-            teams: selectedTeams.map((team) => ({ id: team.id, name: team.name })),
+            teams: selectedTeams.map((team) => ({ id: team.id, name: team.name, nickname: team.nickname })),
             team1Id,
             team2Id,
             scores: computeScores(),

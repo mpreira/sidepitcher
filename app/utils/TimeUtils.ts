@@ -62,12 +62,23 @@ export function getTimelineMomentFromClock(timeInSeconds: number, currentHalf: 1
 /**
  * Format timeline as 40', 42' or 40' + 2.
  */
-export function formatTimelineMoment(minute: number, additionalMinute?: number): string {
+export function formatTimelineMoment(minute: number, additionalMinute?: number, second?: number, half?: 1 | 2): string {
     if (additionalMinute && additionalMinute > 0) {
         return `${minute}' + ${additionalMinute}`;
     }
 
-    return `${minute}'`;
+    if (second && second > 0) {
+        // End-of-half edge case: display added time as 40'+1 / 80'+1, not 41' / 81'.
+        if (half === 1 && minute === 40) {
+            return `40' + 1`;
+        }
+        if (half === 2 && minute === 80) {
+            return `80' + 1`;
+        }
+    }
+
+    const displayMinute = second && second > 0 ? minute + 1 : minute;
+    return `${displayMinute}'`;
 }
 
 /**

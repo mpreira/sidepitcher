@@ -3,6 +3,7 @@ import type { Event } from "~/types/tracker";
 export interface LiveTeamView {
   id: string;
   name: string;
+  nickname?: string;
 }
 
 export interface LiveSnapshot {

@@ -1,9 +1,23 @@
-import React from "react";
-
 interface Props {
     types: string[];
     onSelect: (type: string) => void;
 }
+
+const COMMAND_ICON_MAP: Record<string, string> = {
+    "Essai": "🏉",
+    "Transformation": "🎯",
+    "Pénalité réussie": "✅",
+    "Drop": "🦶",
+    "Essai de pénalité": "✅",
+    "Pénalité manquée": "❌",
+    "Carton jaune": "🟨",
+    "Carton rouge": "🟥",
+    "Carton orange": "🟧",
+    "Changement": "🔁",
+    "Saignement": "🩸",
+    "Blessure": "🩹",
+    "Arbitrage Vidéo": "📺",
+};
 
 export default function CommandPanel({ types, onSelect }: Props) {
     return (
@@ -13,9 +27,10 @@ export default function CommandPanel({ types, onSelect }: Props) {
             {types.map((label) => (
             <button
                 key={label}
-                className="w-full px-4 py-2 bg-neutral-500/20 text-white border-neutral-700 rounded text-base"
+                className="w-full px-4 py-2 bg-neutral-500/20 text-white border-neutral-700 rounded text-base inline-flex items-center justify-center gap-2"
                 onClick={() => onSelect(label)}
             >
+                <span>{COMMAND_ICON_MAP[label] ?? "⚪"}</span>
                 {label}
             </button>
             ))}
