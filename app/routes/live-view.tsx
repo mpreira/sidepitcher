@@ -261,14 +261,14 @@ export default function LiveViewPage() {
   }));
   const liveEvents = [...snapshot.events].reverse();
   const teamStats = [
-    { label: "Pénalités", values: snapshot.penalties },
+    { label: "Pénalité", values: snapshot.penalties },
     { label: "En-avant", values: snapshot.enAvant },
-    { label: "Touches volées", values: snapshot.toucheGagnee },
-    { label: "Touches perdues", values: snapshot.touchePerdue },
-    { label: "Mêlées gagnées", values: snapshot.meleeGagnee },
-    { label: "Mêlées perdues", values: snapshot.meleePerdue },
+    { label: "Touche volée", values: snapshot.toucheGagnee },
+    { label: "Touche perdue", values: snapshot.touchePerdue },
+    { label: "Mêlée gagnée", values: snapshot.meleeGagnee },
+    { label: "Mêlée perdue", values: snapshot.meleePerdue },
     { label: "Turnover", values: snapshot.turnover || [0, 0] },
-    { label: "Offloads", values: snapshot.offloads || [0, 0] },
+    { label: "Offload", values: snapshot.offloads || [0, 0] },
     { label: "Jeu au pied", values: snapshot.jeuAuPied || [0, 0] },
   ];
 
