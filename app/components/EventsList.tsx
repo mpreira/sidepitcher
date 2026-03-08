@@ -27,6 +27,33 @@ export default function EventsList({ events, remove }: Props) {
     return `${Math.floor(event.time / 60)}'`;
   };
 
+  const EVENT_ICONS: Record<string, string> = {
+    "Essai": "🏉",
+    "Transformation": "🎯",
+    "Pénalité réussie": "✅",
+    "Pénalité manquée": "❌",
+    "Drop": "🦶",
+    "Essai de pénalité": "⚖️",
+    "Carton jaune": "🟨",
+    "Carton rouge": "🟥",
+    "Carton orange": "🟧",
+    "Changement": "🔁",
+    "Saignement": "🩸",
+    "Blessure": "🩹",
+    "Arbitrage Vidéo": "📺",
+    "Récapitulatif": "📝",
+  };
+
+  function getEventLabel(event: Event): string {
+    const icon = EVENT_ICONS[event.type] || "📍";
+
+    if (event.type === "Arbitrage Vidéo") {
+      return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
+    }
+
+    return `${icon} ${event.type}`;
+  }
+
   return (
     <ul className="space-y-1">
       {events.map((e, idx) => (
@@ -38,24 +65,15 @@ export default function EventsList({ events, remove }: Props) {
               </>
             ) : (
               <>
-                {e.type === "Arbitrage Vidéo" ? (
+                {formatEventTimeline(e)} - {getEventLabel(e)}
+                {e.type !== "Arbitrage Vidéo" && e.player && (
                   <>
-                    {formatEventTimeline(e)} - {e.type}
-                    {e.team && ` (${displayTeamName(e.team)})`}
-                    {e.videoReason && ` — TMO - ${e.videoReason}`}
-                  </>
-                ) : (
-                  <>
-                    {formatEventTimeline(e)} - {e.type} de{" "}
-                    {e.player && (
-                      <>
-                        <strong>{e.player.name}</strong>
-                        {e.playerNumber ? ` (#${e.playerNumber})` : ""}
-                      </>
-                    )}
-                    {e.team && ` (${displayTeamName(e.team)})`}
+                    {" de "}
+                    <strong>{e.player.name}</strong>
+                    {e.playerNumber ? ` (#${e.playerNumber})` : ""}
                   </>
                 )}
+                {e.team && ` (${displayTeamName(e.team)})`}
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}

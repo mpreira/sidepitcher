@@ -117,7 +117,7 @@ export default function EventForm({
         if (!timing) return;
         setTimeError("");
 
-        if (type === "📺 Arbitrage Vidéo") {
+        if (type === "Arbitrage Vidéo") {
             if (!team) return;
             onSubmit({
                 type,
@@ -179,8 +179,8 @@ export default function EventForm({
                                 value={manualHalf}
                                 onChange={(e) => setManualHalf(Number(e.target.value) as 1 | 2)}
                             >
-                                <option value={1}>Première</option>
-                                <option value={2}>Deuxième</option>
+                                <option value={1}>MT1</option>
+                                <option value={2}>MT2</option>
                             </select>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
