@@ -144,15 +144,6 @@ function StatusBadge({ availability }: { availability: LiveAvailability }) {
   return <span className="inline-block rounded bg-green-700 px-2 py-1 text-xs font-semibold text-white">Live actif</span>;
 }
 
-function StatBlock({ label, values }: { label: string; values: number[] }) {
-  return (
-    <div className="border border-neutral-700 rounded p-3 bg-neutral-900">
-      <p className="text-sm text-neutral-300">{label}</p>
-      <p className="text-lg font-semibold">{values[0] || 0} - {values[1] || 0}</p>
-    </div>
-  );
-}
-
 export default function LiveViewPage() {
   const { publicSlug } = useLoaderData<typeof loader>();
   const [snapshot, setSnapshot] = useState<LiveSnapshot | null>(null);
@@ -251,6 +242,17 @@ export default function LiveViewPage() {
     substitutes: [],
   }));
   const liveEvents = [...snapshot.events].reverse();
+  const teamStats = [
+    { label: "Pénalités", values: snapshot.penalties },
+    { label: "En-avant", values: snapshot.enAvant },
+    { label: "Touches volées", values: snapshot.toucheGagnee },
+    { label: "Touches perdues", values: snapshot.touchePerdue },
+    { label: "Mêlées gagnées", values: snapshot.meleeGagnee },
+    { label: "Mêlées perdues", values: snapshot.meleePerdue },
+    { label: "Turnover", values: snapshot.turnover || [0, 0] },
+    { label: "Offloads", values: snapshot.offloads || [0, 0] },
+    { label: "Jeu au pied", values: snapshot.jeuAuPied || [0, 0] },
+  ];
 
   return (
     <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
@@ -262,16 +264,32 @@ export default function LiveViewPage() {
 
       <Scoreboard teams={teams} scores={snapshot.scores} mainTimerText={mainTimerText} />
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <StatBlock label="Pénalités" values={snapshot.penalties} />
-        <StatBlock label="En-avant" values={snapshot.enAvant} />
-        <StatBlock label="Touches volées" values={snapshot.toucheGagnee} />
-        <StatBlock label="Touches perdues" values={snapshot.touchePerdue} />
-        <StatBlock label="Mêlées gagnées" values={snapshot.meleeGagnee} />
-        <StatBlock label="Mêlées perdues" values={snapshot.meleePerdue} />
-        <StatBlock label="Turnover" values={snapshot.turnover || [0, 0]} />
-        <StatBlock label="Offloads" values={snapshot.offloads || [0, 0]} />
-        <StatBlock label="Jeu au pied" values={snapshot.jeuAuPied || [0, 0]} />
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {teams.slice(0, 2).map((team, teamIdx) => (
+          <div key={team.id} className="border border-neutral-700 rounded p-3 bg-neutral-900 space-y-3">
+            <h3 className="text-sm sm:text-base font-semibold text-center text-white">
+              {team.nickname || team.name.replace(/\s+J\d+$/, "")}
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {teamStats.map((stat) => (
+                <div key={`${team.id}-${stat.label}`} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
+                  <p
+                    className="text-2xl leading-none text-white"
+                    style={{ fontFamily: '"Montserrat", sans-serif', fontWeight: 900 }}
+                  >
+                    {stat.values[teamIdx] || 0}
+                  </p>
+                  <p
+                    className="mt-1 text-[11px] sm:text-xs text-neutral-300"
+                    style={{ fontFamily: '"Poppins", sans-serif', fontWeight: 300 }}
+                  >
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="space-y-2">
