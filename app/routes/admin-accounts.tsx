@@ -120,42 +120,54 @@ export default function AdminAccountsPage() {
       <ul className="space-y-3">
         {accounts.map((item) => (
           <li key={item.id} className="rounded border border-neutral-700 p-3 space-y-2 bg-neutral-900">
-            <input
-              type="text"
-              value={item.name}
-              onChange={(event) =>
-                setAccounts((prev) =>
-                  prev.map((entry) =>
-                    entry.id === item.id ? { ...entry, name: event.target.value } : entry
+            <div className="sp-input-shell">
+              <label className="sp-input-label" htmlFor={`adminName-${item.id}`}>Nom</label>
+              <input
+                id={`adminName-${item.id}`}
+                type="text"
+                value={item.name}
+                onChange={(event) =>
+                  setAccounts((prev) =>
+                    prev.map((entry) =>
+                      entry.id === item.id ? { ...entry, name: event.target.value } : entry
+                    )
                   )
-                )
-              }
-              className="w-full border border-neutral-700 bg-neutral-950 rounded px-2 py-1"
-            />
-            <input
-              type="email"
-              value={item.email}
-              onChange={(event) =>
-                setAccounts((prev) =>
-                  prev.map((entry) =>
-                    entry.id === item.id ? { ...entry, email: event.target.value } : entry
+                }
+                className="sp-input-control"
+              />
+            </div>
+            <div className="sp-input-shell">
+              <label className="sp-input-label" htmlFor={`adminEmail-${item.id}`}>Email</label>
+              <input
+                id={`adminEmail-${item.id}`}
+                type="email"
+                value={item.email}
+                onChange={(event) =>
+                  setAccounts((prev) =>
+                    prev.map((entry) =>
+                      entry.id === item.id ? { ...entry, email: event.target.value } : entry
+                    )
                   )
-                )
-              }
-              className="w-full border border-neutral-700 bg-neutral-950 rounded px-2 py-1"
-            />
-            <input
-              type="password"
-              value={passwordDraft[item.id] ?? ""}
-              onChange={(event) =>
-                setPasswordDraft((prev) => ({
-                  ...prev,
-                  [item.id]: event.target.value,
-                }))
-              }
-              placeholder="Nouveau mot de passe (optionnel)"
-              className="w-full border border-neutral-700 bg-neutral-950 rounded px-2 py-1"
-            />
+                }
+                className="sp-input-control"
+              />
+            </div>
+            <div className="sp-input-shell">
+              <label className="sp-input-label" htmlFor={`adminPassword-${item.id}`}>Nouveau mot de passe</label>
+              <input
+                id={`adminPassword-${item.id}`}
+                type="password"
+                value={passwordDraft[item.id] ?? ""}
+                onChange={(event) =>
+                  setPasswordDraft((prev) => ({
+                    ...prev,
+                    [item.id]: event.target.value,
+                  }))
+                }
+                placeholder="Optionnel"
+                className="sp-input-control"
+              />
+            </div>
             <label className="text-sm flex items-center gap-2">
               <input
                 type="checkbox"

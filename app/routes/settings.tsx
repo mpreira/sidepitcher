@@ -263,30 +263,42 @@ export default function SettingsPage() {
       {connected && (
         <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
           <h2 className="font-semibold">Profil (email et mot de passe)</h2>
-          <input
-            type="email"
-            value={profileEmail}
-            onChange={(event) => setProfileEmail(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Adresse email"
-            disabled={!connected}
-          />
-          <input
-            type="password"
-            value={profileCurrentPassword}
-            onChange={(event) => setProfileCurrentPassword(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Mot de passe actuel (obligatoire pour changer le mot de passe)"
-            disabled={!connected}
-          />
-          <input
-            type="password"
-            value={profilePassword}
-            onChange={(event) => setProfilePassword(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Nouveau mot de passe (laisser vide pour conserver)"
-            disabled={!connected}
-          />
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="profileEmailInput">Adresse email</label>
+            <input
+              id="profileEmailInput"
+              type="email"
+              value={profileEmail}
+              onChange={(event) => setProfileEmail(event.target.value)}
+              className="sp-input-control"
+              placeholder="Adresse email"
+              disabled={!connected}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="profileCurrentPasswordInput">Mot de passe actuel</label>
+            <input
+              id="profileCurrentPasswordInput"
+              type="password"
+              value={profileCurrentPassword}
+              onChange={(event) => setProfileCurrentPassword(event.target.value)}
+              className="sp-input-control"
+              placeholder="Obligatoire pour changer le mot de passe"
+              disabled={!connected}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="profilePasswordInput">Nouveau mot de passe</label>
+            <input
+              id="profilePasswordInput"
+              type="password"
+              value={profilePassword}
+              onChange={(event) => setProfilePassword(event.target.value)}
+              className="sp-input-control"
+              placeholder="Laisser vide pour conserver"
+              disabled={!connected}
+            />
+          </div>
           <button
             onClick={updateProfile}
             disabled={busy || !connected}
@@ -300,13 +312,17 @@ export default function SettingsPage() {
       {connected && (
         <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
           <h2 className="font-semibold">Renommer le compte actif</h2>
-          <input
-            type="text"
-            value={renameName}
-            onChange={(event) => setRenameName(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Nom du compte"
-          />
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="renameNameInput">Nom du compte</label>
+            <input
+              id="renameNameInput"
+              type="text"
+              value={renameName}
+              onChange={(event) => setRenameName(event.target.value)}
+              className="sp-input-control"
+              placeholder="Nom du compte"
+            />
+          </div>
           <button
             onClick={renameAccount}
             disabled={busy || loading || !connected || !account}
@@ -320,27 +336,39 @@ export default function SettingsPage() {
       {!connected && authMode === "create" && (
         <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
           <h2 className="font-semibold">Creer un compte</h2>
-          <input
-            type="text"
-            value={newName}
-            onChange={(event) => setNewName(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Nom d'utilisateur"
-          />
-          <input
-            type="email"
-            value={newEmail}
-            onChange={(event) => setNewEmail(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Adresse email"
-          />
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Mot de passe"
-          />
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="newNameInput">Nom d'utilisateur</label>
+            <input
+              id="newNameInput"
+              type="text"
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              className="sp-input-control"
+              placeholder="Nom d'utilisateur"
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="newEmailInput">Adresse email</label>
+            <input
+              id="newEmailInput"
+              type="email"
+              value={newEmail}
+              onChange={(event) => setNewEmail(event.target.value)}
+              className="sp-input-control"
+              placeholder="Adresse email"
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="newPasswordInput">Mot de passe</label>
+            <input
+              id="newPasswordInput"
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              className="sp-input-control"
+              placeholder="Mot de passe"
+            />
+          </div>
           <button
             onClick={createNewAccount}
             disabled={busy}
@@ -354,20 +382,28 @@ export default function SettingsPage() {
       {!connected && authMode === "login" && (
         <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
           <h2 className="font-semibold">Se connecter</h2>
-          <input
-            type="email"
-            value={loginEmail}
-            onChange={(event) => setLoginEmail(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Adresse email"
-          />
-          <input
-            type="password"
-            value={loginPassword}
-            onChange={(event) => setLoginPassword(event.target.value)}
-            className="w-full border border-neutral-700 bg-neutral-950 rounded px-3 py-2"
-            placeholder="Mot de passe"
-          />
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="loginEmailInput">Adresse email</label>
+            <input
+              id="loginEmailInput"
+              type="email"
+              value={loginEmail}
+              onChange={(event) => setLoginEmail(event.target.value)}
+              className="sp-input-control"
+              placeholder="Adresse email"
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="loginPasswordInput">Mot de passe</label>
+            <input
+              id="loginPasswordInput"
+              type="password"
+              value={loginPassword}
+              onChange={(event) => setLoginPassword(event.target.value)}
+              className="sp-input-control"
+              placeholder="Mot de passe"
+            />
+          </div>
           <button
             onClick={loginAccount}
             disabled={busy}

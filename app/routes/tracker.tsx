@@ -794,33 +794,39 @@ export default function Tracker() {
                     <p className="text-sm text-gray-600">Aucune composition pour cette journée.</p>
                 ) : (
                     <>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <select
-                                id="team1Select"
-                                className="md:w-1/2 border-0 bg-neutral-900 py-1 px-2 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                                value={team1Id}
-                                onChange={(e) => handleTeam1Change(e.target.value)}
-                            >
-                                <option value="">-- Équipe 1 --</option>
-                                {teamsForDay.map((team) => (
-                                    <option key={team.id} value={team.id}>
-                                        {team.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <select
-                                id="team2Select"
-                                className="md:w-1/2 border-0 bg-neutral-900 py-1 px-2 text-center text-sm md:text-base font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                                value={team2Id}
-                                onChange={(e) => handleTeam2Change(e.target.value)}
-                            >
-                                <option value="">-- Équipe 2 --</option>
-                                {teamsForDay.map((team) => (
-                                    <option key={team.id} value={team.id}>
-                                        {team.name}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="team1Select">Équipe 1</label>
+                                <select
+                                    id="team1Select"
+                                    className="sp-input-control"
+                                    value={team1Id}
+                                    onChange={(e) => handleTeam1Change(e.target.value)}
+                                >
+                                    <option value="">-- Équipe 1 --</option>
+                                    {teamsForDay.map((team) => (
+                                        <option key={team.id} value={team.id}>
+                                            {team.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="team2Select">Équipe 2</label>
+                                <select
+                                    id="team2Select"
+                                    className="sp-input-control"
+                                    value={team2Id}
+                                    onChange={(e) => handleTeam2Change(e.target.value)}
+                                >
+                                    <option value="">-- Équipe 2 --</option>
+                                    {teamsForDay.map((team) => (
+                                        <option key={team.id} value={team.id}>
+                                            {team.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                         {team1Id && team2Id && team1Id === team2Id && (
                             <p className="text-sm text-red-600">Équipe 1 et Équipe 2 doivent être différentes.</p>

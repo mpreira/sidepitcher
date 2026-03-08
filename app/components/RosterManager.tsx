@@ -347,45 +347,57 @@ export default function RosterManager({
                         className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30"
                         onClick={(event) => event.stopPropagation()}
                     >
-                        <input
-                            id="newRosterName"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Nom de l'effectif"
-                            value={newRosterName}
-                            onChange={(e) => setNewRosterName(e.target.value)}
-                        />
-                        <input
-                            id="newRosterNickname"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Surnom (ex: OYO)"
-                            value={newRosterNickname}
-                            onChange={(e) => {
-                                setNewRosterNickname(normalizeNickname(e.target.value));
-                                setRosterFormError("");
-                            }}
-                        />
-                        <input
-                            id="newRosterColor"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Couleur (optionnel, ex: #1E3A8A)"
-                            value={newRosterColor}
-                            onChange={(e) => {
-                                setNewRosterColor(e.target.value);
-                                setRosterFormError("");
-                            }}
-                        />
-                        <select
-                            id="newRosterCategory"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            value={newRosterCategory}
-                            onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
-                        >
-                            {championshipOptions.map((option) => (
-                                <option key={option} value={option}>
-                                    {option}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterName">Nom de l'effectif</label>
+                            <input
+                                id="newRosterName"
+                                className="sp-input-control"
+                                placeholder="Nom de l'effectif"
+                                value={newRosterName}
+                                onChange={(e) => setNewRosterName(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterNickname">Surnom</label>
+                            <input
+                                id="newRosterNickname"
+                                className="sp-input-control"
+                                placeholder="ex: OYO"
+                                value={newRosterNickname}
+                                onChange={(e) => {
+                                    setNewRosterNickname(normalizeNickname(e.target.value));
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterColor">Couleur</label>
+                            <input
+                                id="newRosterColor"
+                                className="sp-input-control"
+                                placeholder="optionnel, ex: #1E3A8A"
+                                value={newRosterColor}
+                                onChange={(e) => {
+                                    setNewRosterColor(e.target.value);
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
+                            <select
+                                id="newRosterCategory"
+                                className="sp-input-control"
+                                value={newRosterCategory}
+                                onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                            >
+                                {championshipOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
                                 className="px-3 py-2 bg-blue-500 text-white rounded"
@@ -414,33 +426,42 @@ export default function RosterManager({
                         className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                         onClick={(event) => event.stopPropagation()}
                     >
-                        <input
-                            id="editingRosterName"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Nom de l'effectif"
-                            value={editingRosterName}
-                            onChange={(e) => setEditingRosterName(e.target.value)}
-                        />
-                        <input
-                            id="editingRosterNickname"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Surnom (ex: OYO)"
-                            value={editingRosterNickname}
-                            onChange={(e) => {
-                                setEditingRosterNickname(normalizeNickname(e.target.value));
-                                setRosterFormError("");
-                            }}
-                        />
-                        <input
-                            id="editingRosterColor"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Couleur (optionnel, ex: #1E3A8A)"
-                            value={editingRosterColor}
-                            onChange={(e) => {
-                                setEditingRosterColor(e.target.value);
-                                setRosterFormError("");
-                            }}
-                        />
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterName">Nom de l'effectif</label>
+                            <input
+                                id="editingRosterName"
+                                className="sp-input-control"
+                                placeholder="Nom de l'effectif"
+                                value={editingRosterName}
+                                onChange={(e) => setEditingRosterName(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterNickname">Surnom</label>
+                            <input
+                                id="editingRosterNickname"
+                                className="sp-input-control"
+                                placeholder="ex: OYO"
+                                value={editingRosterNickname}
+                                onChange={(e) => {
+                                    setEditingRosterNickname(normalizeNickname(e.target.value));
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterColor">Couleur</label>
+                            <input
+                                id="editingRosterColor"
+                                className="sp-input-control"
+                                placeholder="optionnel, ex: #1E3A8A"
+                                value={editingRosterColor}
+                                onChange={(e) => {
+                                    setEditingRosterColor(e.target.value);
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
                                 className="px-3 py-2 bg-blue-500 text-white rounded"

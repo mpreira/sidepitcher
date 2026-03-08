@@ -184,47 +184,50 @@ export default function EventForm({
                 {useManualMoment && (
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-4">
-                            <div className="flex flex-col gap-1">
-                                <label className="leading-none" htmlFor="manualHalfSelect">Mi-temps</label>
-                            <select
-                                id="manualHalfSelect"
-                                className="flex-1 text-base font-light text-neutral-300"
-                                value={manualHalf}
-                                onChange={(e) => setManualHalf(Number(e.target.value) as 1 | 2)}
-                            >
-                                <option value={1}>MT1</option>
-                                <option value={2}>MT2</option>
-                            </select>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="manualHalfSelect">Mi-temps</label>
+                                <select
+                                    id="manualHalfSelect"
+                                    className="sp-input-control"
+                                    value={manualHalf}
+                                    onChange={(e) => setManualHalf(Number(e.target.value) as 1 | 2)}
+                                >
+                                    <option value={1}>MT1</option>
+                                    <option value={2}>MT2</option>
+                                </select>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="leading-none" htmlFor="manualMinuteInput">Minute</label>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="manualMinuteInput">Minute</label>
                                 <input
                                     id="manualMinuteInput"
                                     type="number"
                                     min={0}
+                                    className="sp-input-control"
                                     placeholder={manualHalf === 1 ? "ex. 37" : "ex. 65"}
                                     value={manualMinute}
                                     onChange={(e) => setManualMinute(e.target.value)}
                                 />
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="leading-none" htmlFor="manualSecondInput">Secondes</label>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="manualSecondInput">Secondes</label>
                                 <input
                                     id="manualSecondInput"
                                     type="number"
                                     min={0}
                                     max={59}
+                                    className="sp-input-control"
                                     placeholder="ex. 30"
                                     value={manualSecond}
                                     onChange={(e) => setManualSecond(e.target.value)}
                                 />
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="leading-none" htmlFor="manualAdditionalInput">Additionnel</label>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="manualAdditionalInput">Additionnel</label>
                                 <input
                                     id="manualAdditionalInput"
                                     type="number"
                                     min={0}
+                                    className="sp-input-control"
                                     placeholder={manualHalf === 1 ? "ex. 2 (40'+2)" : "ex. 1 (80'+1)"}
                                     value={manualAdditionalMinute}
                                     onChange={(e) => setManualAdditionalMinute(e.target.value)}
@@ -235,27 +238,27 @@ export default function EventForm({
                 )}
                 {timeError && <p className="text-sm text-red-400">{timeError}</p>}
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <label className="leading-none">Équipe</label>
-            <select
-                id="teamSelect"
-                className="flex-1 text-base font-light text-neutral-300"
-                value={teamIdx}
-                onChange={(e) => setTeamIdx(Number(e.target.value))}
-            >
-                {teams.map((t, idx) => (
-                <option key={idx} value={idx}>
-                    {t.name}
-                </option>
-                ))}
-            </select>
+            <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="teamSelect">Équipe</label>
+                <select
+                    id="teamSelect"
+                    className="sp-input-control"
+                    value={teamIdx}
+                    onChange={(e) => setTeamIdx(Number(e.target.value))}
+                >
+                    {teams.map((t, idx) => (
+                    <option key={idx} value={idx}>
+                        {t.name}
+                    </option>
+                    ))}
+                </select>
             </div>
             {type === "Arbitrage Vidéo" ? (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="leading-none" htmlFor="videoReasonSelect">Raison</label>
+            <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="videoReasonSelect">Raison</label>
                 <select
                     id="videoReasonSelect"
-                    className="flex-1 text-base font-light text-neutral-300"
+                    className="sp-input-control"
                     value={videoReason}
                     onChange={(e) => setVideoReason(e.target.value as "essai" | "jeu déloyal")}
                 >
@@ -265,11 +268,11 @@ export default function EventForm({
             </div>
             ) : type === "Changement" ? (
             <>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="leading-none" htmlFor="outPlayerSelect">Sortant</label>
+                <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="outPlayerSelect">Sortant</label>
                 <select
                     id="outPlayerSelect"
-                    className="flex-1 text-base font-light text-neutral-300"
+                    className="sp-input-control"
                     value={outPlayerId}
                     onChange={(e) => setOutPlayerId(e.target.value)}
                 >
@@ -281,11 +284,11 @@ export default function EventForm({
                     ))}
                 </select>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="leading-none" htmlFor="inPlayerSelect">Entrant</label>
+                <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="inPlayerSelect">Entrant</label>
                 <select
                     id="inPlayerSelect"
-                    className="flex-1 text-base font-light text-neutral-300"
+                    className="sp-input-control"
                     value={inPlayerId}
                     onChange={(e) => setInPlayerId(e.target.value)}
                 >
@@ -299,11 +302,11 @@ export default function EventForm({
                 </div>
             </>
             ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="leading-none" htmlFor="playerSelect">Joueur</label>
+            <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="playerSelect">Joueur</label>
                 <select
                     id="playerSelect"
-                    className="flex-1 text-base font-light text-neutral-300"
+                    className="sp-input-control"
                     value={playerId}
                     onChange={(e) => setPlayerId(e.target.value)}
                 >
