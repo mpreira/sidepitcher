@@ -1040,7 +1040,7 @@ export default function Tracker() {
                                                     <div key={stat.label} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
                                                         <div className="flex items-center justify-between gap-1">
                                                             <button
-                                                                className="h-7 w-7 text-white hover:bg-red-700"
+                                                                className="h-7 w-7 text-neutral-300 hover:bg-red-700"
                                                                 onClick={() => stat.onAdjust(teamIdx, -1)}
                                                                 aria-label={`Diminuer ${stat.label}`}
                                                             >
@@ -1048,7 +1048,7 @@ export default function Tracker() {
                                                             </button>
                                                             <span className="text-2xl leading-none text-white font-bold min-w-8">{statValue}</span>
                                                             <button
-                                                                className="h-7 w-7 text-white hover:bg-green-700"
+                                                                className="h-7 w-7 text-neutral-300 hover:bg-green-700"
                                                                 onClick={() => stat.onAdjust(teamIdx, 1)}
                                                                 aria-label={`Augmenter ${stat.label}`}
                                                             >
