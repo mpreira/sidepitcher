@@ -167,7 +167,7 @@ export default function EventForm({
     }
 
     return (
-        <div className="p-4 border border-neutral-700 rounded-md bg-neutral-800 text-white w-full max-w-md mx-auto">
+        <div className="p-4 rounded-md bg-neutral-800 text-white w-full max-w-md mx-auto">
         <h3 className="font-bold text-xl mb-4">{type}</h3>
         <div className="space-y-2">
             <div className="rounded p-2 space-y-2">
