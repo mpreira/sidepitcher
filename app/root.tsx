@@ -79,20 +79,27 @@ function AppContent() {
   const isHome = pathname === "/";
   const isLiveRoute = pathname.startsWith("/live/");
   const liveSlug = isLiveRoute ? pathname.split("/")[2] || "" : "";
-  const rosterHref = isLiveRoute && liveSlug
-    ? `/roster?live=1&slug=${encodeURIComponent(liveSlug)}`
-    : "/roster";
+  const liveBasePath = isLiveRoute && liveSlug ? `/live/${liveSlug}` : "";
 
-  const navigationItems = [
-    { href: "/", label: "Accueil", icon: faHouse, active: !isLiveRoute },
-    { href: rosterHref, label: "Effectifs", icon: faUsers, active: true },
-    { href: "/tracker", label: "Match", icon: faStopwatch, active: !isLiveRoute },
-    { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: !isLiveRoute },
-    { href: "/settings", label: "Réglages", icon: faGear, active: !isLiveRoute },
+  const defaultNavigationItems = [
+    { href: "/", label: "Accueil", icon: faHouse, active: true },
+    { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
+    { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
+    { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
+    { href: "/settings", label: "Réglages", icon: faGear, active: true },
     ...(connected && account?.isAdmin
-      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: !isLiveRoute }]
+      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
       : []),
   ] as const;
+
+  const liveNavigationItems = liveSlug
+    ? [
+        { href: `/live/${liveSlug}`, label: "Live", icon: faStopwatch, active: true },
+        { href: `/live/${liveSlug}/roster`, label: "Effectifs", icon: faUsers, active: true },
+      ]
+    : [];
+
+  const navigationItems = isLiveRoute ? liveNavigationItems : defaultNavigationItems;
 
   return (
     <>
@@ -111,6 +118,8 @@ function AppContent() {
                 item.active &&
                 (itemPathname === "/"
                   ? pathname === "/"
+                  : itemPathname === liveBasePath
+                    ? pathname === itemPathname
                   : pathname === itemPathname || pathname.startsWith(`${itemPathname}/`));
 
               return (

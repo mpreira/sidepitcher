@@ -12,6 +12,7 @@ export default [
     route("settings", "routes/settings.tsx"),
     route("admin/accounts", "routes/admin-accounts.tsx"),
     route("live/:publicSlug", "routes/live-view.tsx"),
+    route("live/:publicSlug/roster", "routes/live-roster.tsx"),
     route("admin/db", "routes/admin-db.tsx"),
     route("api/account", "routes/api/account.ts"),
     route("api/admin/accounts", "routes/api/admin-accounts.ts"),
