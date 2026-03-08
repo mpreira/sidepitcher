@@ -1,19 +1,3 @@
-import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faArrowsRotate,
-    faCircle,
-    faCircleCheck,
-    faCircleXmark,
-    faDroplet,
-    faFutbol,
-    faKitMedical,
-    faRightLeft,
-    faShield,
-    faTriangleExclamation,
-    faVideo,
-} from "@fortawesome/free-solid-svg-icons";
-
 interface Props {
     types: string[];
     onSelect: (type: string) => void;
@@ -21,9 +5,9 @@ interface Props {
 
 const COMMAND_ICON_MAP: Record<string, string> = {
     "Essai": "🏉",
-    "Transformation": "🔄",
+    "Transformation": "🎯",
     "Pénalité réussie": "✅",
-    "Drop": "🛡️",
+    "Drop": "🦶",
     "Essai de pénalité": "✅",
     "Pénalité manquée": "❌",
     "Carton jaune": "🟨",

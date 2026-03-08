@@ -1,3 +1,5 @@
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import type { Team, Player, Event } from "~/types/tracker";
 import { createPlayerEvent, createSubstitutionEvent, findPlayerNumberInTeam } from "~/utils/EventUtils";
@@ -177,7 +179,7 @@ export default function EventForm({
                         onChange={(e) => setUseManualMoment(e.target.checked)}
                         className="mr-2"
                     />
-                    Définir l'heure manuellement
+                    Temps
                 </label>
                 {useManualMoment && (
                     <>
