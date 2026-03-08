@@ -139,6 +139,7 @@ export default function LiveViewPage() {
   const teams: Team[] = snapshot.teams.map((team) => ({
     id: team.id,
     name: team.name,
+    nickname: team.nickname,
     rosterId: "live",
     starters: [],
     substitutes: [],
