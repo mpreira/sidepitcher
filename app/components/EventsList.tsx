@@ -21,10 +21,16 @@ export default function EventsList({ events, remove }: Props) {
 
   const formatEventTimeline = (event: Event) => {
     if (typeof event.timelineMinute === "number") {
-      return formatTimelineMoment(event.timelineMinute, event.timelineAdditionalMinute || 0);
+      return formatTimelineMoment(
+        event.timelineMinute,
+        event.timelineAdditionalMinute || 0,
+        event.timelineSecond || 0
+      );
     }
 
-    return `${Math.floor(event.time / 60)}'`;
+    const minute = Math.floor(event.time / 60);
+    const second = event.time % 60;
+    return formatTimelineMoment(minute, 0, second);
   };
 
   const EVENT_ICONS: Record<string, string> = {
@@ -69,7 +75,7 @@ export default function EventsList({ events, remove }: Props) {
                 {e.type !== "Arbitrage Vidéo" && e.player && (
                   <>
                     {" de "}
-                    <strong>{e.playerNumber ? ` (#${e.playerNumber})` : "" }{e.player.name}</strong>
+                    <strong>{e.playerNumber ? ` ${e.playerNumber} ` : "" }{e.player.name}</strong>
                     
                   </>
                 )}
@@ -77,9 +83,9 @@ export default function EventsList({ events, remove }: Props) {
                 {e.playerOut && e.playerIn && (
                   <>
                     {" — "}
-                    <strong>{e.playerNumber ? ` (#${e.playerNumber})` : "" } {e.playerOut.name}</strong>
+                    <strong>{e.playerNumber ? ` ${e.playerNumber} ` : "" } {e.playerOut.name}</strong>
                     {" → "}
-                    <strong>{e.playerNumber ? ` (#${e.playerNumber})` : "" } {e.playerIn.name}</strong>
+                    <strong>{e.playerNumber ? ` ${e.playerNumber} ` : "" } {e.playerIn.name}</strong>
                   </>
                 )}
                 {e.concussion && " 🚨 commotion"}
