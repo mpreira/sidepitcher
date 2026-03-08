@@ -1006,35 +1006,60 @@ export default function Tracker() {
                             },
                         ];
 
+                        const formatStatLabel = (label: string, value: number) => {
+                            const forms: Record<string, { singular: string; plural: string }> = {
+                                "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
+                                "En Avant": { singular: "En-avant", plural: "En-avants" },
+                                "Touche volée": { singular: "Touche volée", plural: "Touches volées" },
+                                "Touche Perdue": { singular: "Touche perdue", plural: "Touches perdues" },
+                                "Mêlée Gagnée": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
+                                "Mêlée Perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
+                                "Turnover": { singular: "Turnover", plural: "Turnovers" },
+                                "Offloads": { singular: "Offload", plural: "Offloads" },
+                                "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
+                            };
+
+                            const form = forms[label];
+                            if (!form) return label;
+                            return value > 1 ? form.plural : form.singular;
+                        };
+
                         return (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {selectedTeams.map((team, teamIdx) => (
-                                    <div key={team.id} className="border-neutral-700 bg-neutral-900 rounded p-4 space-y-3">
-                                        <h4 className="text-sm font-semibold text-center">
-                                            {team.name.replace(/\s+J\d+$/, "")}
+                                    <div key={team.id} className="border border-neutral-700 bg-neutral-900 rounded p-3 space-y-3">
+                                        <h4 className="text-sm sm:text-base font-semibold text-center text-white">
+                                            {getDisplayTeamLabel(team)}
                                         </h4>
-                                        <ul className="space-y-2">
-                                            {teamStats.map((stat) => (
-                                                <li key={stat.label} className="flex items-center justify-between gap-2">
-                                                    <span className="text-sm">{stat.label}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-red-600"
-                                                            onClick={() => stat.onAdjust(teamIdx, -1)}
-                                                        >
-                                                            −
-                                                        </button>
-                                                        <span className="min-w-8 text-center font-semibold">{stat.values[teamIdx] || 0}</span>
-                                                        <button
-                                                            className="px-2 py-1 bg-neutral-400 text-white rounded hover:bg-green-600"
-                                                            onClick={() => stat.onAdjust(teamIdx, 1)}
-                                                        >
-                                                            +
-                                                        </button>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {teamStats.map((stat) => {
+                                                const statValue = stat.values[teamIdx] || 0;
+                                                return (
+                                                    <div key={stat.label} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
+                                                        <div className="flex items-center justify-between gap-1">
+                                                            <button
+                                                                className="h-7 w-7 rounded bg-neutral-700 text-white hover:bg-red-700"
+                                                                onClick={() => stat.onAdjust(teamIdx, -1)}
+                                                                aria-label={`Diminuer ${stat.label}`}
+                                                            >
+                                                                ◀
+                                                            </button>
+                                                            <span className="text-2xl leading-none text-white font-bold min-w-8">{statValue}</span>
+                                                            <button
+                                                                className="h-7 w-7 rounded bg-neutral-700 text-white hover:bg-green-700"
+                                                                onClick={() => stat.onAdjust(teamIdx, 1)}
+                                                                aria-label={`Augmenter ${stat.label}`}
+                                                            >
+                                                                ▶
+                                                            </button>
+                                                        </div>
+                                                        <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
+                                                            {formatStatLabel(stat.label, statValue)}
+                                                        </p>
                                                     </div>
-                                                </li>
-                                            ))}
-                                        </ul>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
