@@ -183,8 +183,9 @@ export default function EventForm({
                 </label>
                 {useManualMoment && (
                     <>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <label className="leading-none" htmlFor="manualHalfSelect">Mi-temps</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                            <div className="flex flex-col gap-1">
+                                <label className="leading-none" htmlFor="manualHalfSelect">Mi-temps</label>
                             <select
                                 id="manualHalfSelect"
                                 className="flex-1 text-base font-light text-neutral-300"
@@ -194,8 +195,7 @@ export default function EventForm({
                                 <option value={1}>MT1</option>
                                 <option value={2}>MT2</option>
                             </select>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            </div>
                             <div className="flex flex-col gap-1">
                                 <label className="leading-none" htmlFor="manualMinuteInput">Minute</label>
                                 <input
