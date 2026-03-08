@@ -304,6 +304,17 @@ export default function Tracker() {
         const team2Name = getDisplayTeamLabel(selectedTeams[1]);
         const displayedPenalties = getDisplayedPenalties();
         const displayedEnAvant = getDisplayedEnAvant();
+        const statRows = [
+            { label: "Pénalités", left: displayedPenalties[0] || 0, right: displayedPenalties[1] || 0 },
+            { label: "En-avants", left: displayedEnAvant[0] || 0, right: displayedEnAvant[1] || 0 },
+            { label: "Touches volées", left: teamToucheGagnee[0] || 0, right: teamToucheGagnee[1] || 0 },
+            { label: "Touches perdues", left: teamTouchePerdue[0] || 0, right: teamTouchePerdue[1] || 0 },
+            { label: "Mêlées gagnées", left: teamMeleeGagnee[0] || 0, right: teamMeleeGagnee[1] || 0 },
+            { label: "Mêlées perdues", left: teamMeleePerdue[0] || 0, right: teamMeleePerdue[1] || 0 },
+            { label: "Turnovers", left: teamTurnover[0] || 0, right: teamTurnover[1] || 0 },
+            { label: "Offloads", left: teamOffloads[0] || 0, right: teamOffloads[1] || 0 },
+            { label: "Jeu au pied", left: teamJeuAuPied[0] || 0, right: teamJeuAuPied[1] || 0 },
+        ];
         const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamToucheGagnee[0] || 0} touches volées, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleeGagnee[0] || 0} mêlées gagnées, ${teamMeleePerdue[0] || 0} mêlées perdues, ${teamTurnover[0] || 0} turnovers, ${teamOffloads[0] || 0} offloads, ${teamJeuAuPied[0] || 0} jeux au pied / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamToucheGagnee[1] || 0} touches volées, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleeGagnee[1] || 0} mêlées gagnées, ${teamMeleePerdue[1] || 0} mêlées perdues, ${teamTurnover[1] || 0} turnovers, ${teamOffloads[1] || 0} offloads, ${teamJeuAuPied[1] || 0} jeux au pied`;
         
         const summaryEvent: Event = {
@@ -313,7 +324,20 @@ export default function Tracker() {
             timelineMinute: summaryMoment.minute,
             timelineAdditionalMinute: summaryMoment.additionalMinute,
             timelineSecond: summaryMoment.second,
-            summary: summary
+            summary: summary,
+            summaryTable: {
+                halfLabel,
+                teams: [
+                    {
+                        teamName: team1Name,
+                        stats: statRows.map((row) => ({ label: row.label, value: row.left })),
+                    },
+                    {
+                        teamName: team2Name,
+                        stats: statRows.map((row) => ({ label: row.label, value: row.right })),
+                    },
+                ],
+            },
         };
 
         addEvent(summaryEvent);

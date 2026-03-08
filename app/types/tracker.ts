@@ -27,6 +27,21 @@ export interface Team {
     substitutes: CompositionEntry[]; // numbers 16–23
 }
 
+export interface EventSummaryTableStat {
+    label: string;
+    value: number;
+}
+
+export interface EventSummaryTableTeam {
+    teamName: string;
+    stats: EventSummaryTableStat[];
+}
+
+export interface EventSummaryTable {
+    halfLabel: string;
+    teams: [EventSummaryTableTeam, EventSummaryTableTeam];
+}
+
 export interface Event {
     type: string;
     time: number; // seconds since match start
@@ -46,4 +61,5 @@ export interface Event {
     playerInNumber?: number;
     // for half-time summaries
     summary?: string;
+    summaryTable?: EventSummaryTable;
 }

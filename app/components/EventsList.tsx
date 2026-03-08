@@ -63,15 +63,56 @@ export default function EventsList({ events, remove }: Props) {
     return `${icon} ${event.type}`;
   }
 
+  function renderSummaryEvent(event: Event) {
+    if (!event.summaryTable) {
+      return (
+        <>
+          {formatEventTimeline(event)} - <strong>{event.summary}</strong>
+        </>
+      );
+    }
+
+    const [leftTeam, rightTeam] = event.summaryTable.teams;
+    const rowCount = Math.max(leftTeam.stats.length, rightTeam.stats.length);
+
+    return (
+      <div className="w-full space-y-2">
+        <div>
+          {formatEventTimeline(event)} - <strong>{event.summaryTable.halfLabel}</strong>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs sm:text-sm border border-neutral-700 rounded">
+            <thead>
+              <tr className="bg-neutral-900">
+                <th className="w-1/2 px-2 py-1 text-left border-b border-neutral-700">{leftTeam.teamName}</th>
+                <th className="w-1/2 px-2 py-1 text-left border-b border-neutral-700">{rightTeam.teamName}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: rowCount }).map((_, idx) => {
+                const leftStat = leftTeam.stats[idx];
+                const rightStat = rightTeam.stats[idx];
+                return (
+                  <tr key={idx} className="border-b border-neutral-800 last:border-b-0">
+                    <td className="px-2 py-1">{leftStat ? `${leftStat.label}: ${leftStat.value}` : "-"}</td>
+                    <td className="px-2 py-1">{rightStat ? `${rightStat.label}: ${rightStat.value}` : "-"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ul className="space-y-1">
       {events.map((e, idx) => (
         <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
           <span className="min-w-0 break-words">
             {e.summary ? (
-              <>
-                {formatEventTimeline(e)} - <strong>{e.summary}</strong>
-              </>
+              renderSummaryEvent(e)
             ) : (
               <>
                 {formatEventTimeline(e)} - {getEventLabel(e)}
