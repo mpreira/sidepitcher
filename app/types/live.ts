@@ -21,6 +21,9 @@ export interface LiveSnapshot {
   touchePerdue: number[];
   meleeGagnee: number[];
   meleePerdue: number[];
+  turnover: number[];
+  offloads: number[];
+  jeuAuPied: number[];
 }
 
 export interface LiveStreamMessage {

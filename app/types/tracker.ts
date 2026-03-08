@@ -28,7 +28,12 @@ export interface Team {
 export interface Event {
     type: string;
     time: number; // seconds since match start
+    timelineHalf?: 1 | 2;
+    timelineMinute?: number;
+    timelineAdditionalMinute?: number;
+    timelineSecond?: number;
     team?: Team;
+    videoReason?: "essai" | "jeu déloyal";
     player?: Player;
     playerNumber?: number;
     concussion?: boolean;

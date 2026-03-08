@@ -82,6 +82,8 @@ export function exportSummaryToClipboard(
                 line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
                 line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
+            if (e.videoReason)
+                line += ` — TMO - ${e.videoReason}`;
             if (e.concussion) line += " 🚨 commotion";
             lines.push(line);
         }
@@ -125,6 +127,8 @@ export function exportSummaryToPdf(
                 line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
                 line += ` — ${e.playerOut.name} → ${e.playerIn.name}`;
+            if (e.videoReason)
+                line += ` — TMO - ${e.videoReason}`;
             if (e.concussion) line += " 🚨 commotion";
             doc.text(line, 10, y);
         }
@@ -151,6 +155,7 @@ export function buildEventSummary(events: Event[]): Record<string, number> {
 export function buildDetailedEventSummary(events: Event[]): Array<{
     type: string;
     team?: string;
+    videoReason?: string;
     player?: string;
     playerNumber?: number;
     playerOut?: string;
@@ -161,6 +166,7 @@ export function buildDetailedEventSummary(events: Event[]): Array<{
     return events.map((e) => ({
         type: e.type,
         team: e.team ? displayTeamName(e.team.name) : undefined,
+        videoReason: e.videoReason,
         player: e.player?.name,
         playerNumber: e.playerNumber,
         playerOut: e.playerOut?.name,

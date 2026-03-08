@@ -157,10 +157,13 @@ export default function LiveViewPage() {
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <StatBlock label="Pénalités" values={snapshot.penalties} />
         <StatBlock label="En-avant" values={snapshot.enAvant} />
-        <StatBlock label="Touches gagnées" values={snapshot.toucheGagnee} />
+        <StatBlock label="Touches volées" values={snapshot.toucheGagnee} />
         <StatBlock label="Touches perdues" values={snapshot.touchePerdue} />
         <StatBlock label="Mêlées gagnées" values={snapshot.meleeGagnee} />
         <StatBlock label="Mêlées perdues" values={snapshot.meleePerdue} />
+        <StatBlock label="Turnover" values={snapshot.turnover || [0, 0]} />
+        <StatBlock label="Offloads" values={snapshot.offloads || [0, 0]} />
+        <StatBlock label="Jeu au pied" values={snapshot.jeuAuPied || [0, 0]} />
       </section>
 
       <section className="space-y-2">
@@ -178,14 +181,24 @@ export default function LiveViewPage() {
                     </>
                   ) : (
                     <>
-                      {formatTime(event.time)} - {event.type} de{" "}
-                      {event.player && (
+                      {event.type === "Arbitrage Vidéo" ? (
                         <>
-                          <strong>{event.player.name}</strong>
-                          {event.playerNumber ? ` (#${event.playerNumber})` : ""}
+                          {formatTime(event.time)} - {event.type}
+                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
+                          {event.videoReason && ` — TMO - ${event.videoReason}`}
+                        </>
+                      ) : (
+                        <>
+                          {formatTime(event.time)} - {event.type} de{" "}
+                          {event.player && (
+                            <>
+                              <strong>{event.player.name}</strong>
+                              {event.playerNumber ? ` (#${event.playerNumber})` : ""}
+                            </>
+                          )}
+                          {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
                         </>
                       )}
-                      {event.team && ` (${event.team.name.replace(/\s+J\d+$/, "")})`}
                       {event.playerOut && event.playerIn && (
                         <>
                           {" — "}
