@@ -91,7 +91,7 @@ function AppContent() {
       ? [{ href: "/account", label: account.name, icon: faCircleUser, active: true }]
       : []),
     ...(connected && account?.isAdmin
-      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
+      ? [{ href: "/admin", label: "Admin", icon: faUserShield, active: true }]
       : []),
   ] as const;
 

@@ -10,6 +10,7 @@ export default [
     route("syntheses", "routes/syntheses.tsx"),
     route("syntheses/:summaryId", "routes/synthese-detail.tsx"),
     route("account", "routes/settings.tsx"),
+    route("admin", "routes/admin.tsx"),
     route("admin/accounts", "routes/admin-accounts.tsx"),
     route("live/:publicSlug", "routes/live-view.tsx"),
     route("live/:publicSlug/roster", "routes/live-roster.tsx"),

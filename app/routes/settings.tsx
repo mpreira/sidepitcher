@@ -383,7 +383,7 @@ export default function SettingsPage() {
           <h2 className="font-semibold">Administration</h2>
           <p className="text-sm text-neutral-300">Le compte admin peut gerer tous les comptes via la page dediee.</p>
           <Link
-            to="/admin/accounts"
+            to="/admin"
             className="inline-block px-4 py-2 rounded bg-amber-600 text-white hover:bg-amber-700"
           >
             Ouvrir la page admin
