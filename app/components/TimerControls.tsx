@@ -1,4 +1,4 @@
-import { faCheck, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
+import { fa1, fa2, faArrowRotateLeft, faCheck, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 
@@ -60,7 +60,8 @@ export default function TimerControls({
           }`}
           onClick={onSetFirstHalf}
         >
-          1ère
+          <FontAwesomeIcon icon={fa1} className="sm:mr-2" />
+          <span className="hidden sm:inline">1ère</span>
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
@@ -69,7 +70,8 @@ export default function TimerControls({
           onClick={onSetSecondHalf}
           disabled={currentHalf === 2 || matchEnded}
         >
-          2ème
+          <FontAwesomeIcon icon={fa2} className="sm:mr-2" />
+          <span className="hidden sm:inline">2ème</span>
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
@@ -88,7 +90,8 @@ export default function TimerControls({
           className="px-4 py-2 bg-blue-500/20 text-blue-500 rounded"
           onClick={onReset}
         >
-          Reset
+          <FontAwesomeIcon icon={faArrowRotateLeft} className="sm:mr-2" />
+          <span className="hidden sm:inline">Reset</span>
         </button>
       </div>
 
