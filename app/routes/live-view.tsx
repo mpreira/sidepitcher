@@ -130,6 +130,24 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
   );
 }
 
+function formatStatLabel(label: string, value: number): string {
+  const forms: Record<string, { singular: string; plural: string }> = {
+    "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
+    "En-avant": { singular: "En-avant", plural: "En-avants" },
+    "Touche volée": { singular: "Touche volée", plural: "Touches volées" },
+    "Touche perdue": { singular: "Touche perdue", plural: "Touches perdues" },
+    "Mêlée gagnée": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
+    "Mêlée perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
+    "Turnover": { singular: "Turnover", plural: "Turnovers" },
+    "Offload": { singular: "Offload", plural: "Offloads" },
+    "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
+  };
+
+  const form = forms[label];
+  if (!form) return label;
+  return value > 1 ? form.plural : form.singular;
+}
+
 export async function loader({ params }: { params: { publicSlug?: string } }) {
   const publicSlug = params.publicSlug;
   if (!publicSlug) {
@@ -291,12 +309,19 @@ export default function LiveViewPage() {
             <div className="grid grid-cols-3 gap-2">
               {teamStats.map((stat) => (
                 <div key={`${team.id}-${stat.label}`} className="rounded border border-neutral-800 bg-neutral-950 p-2 text-center">
+                  {(() => {
+                    const statValue = stat.values[teamIdx] || 0;
+                    return (
+                      <>
                   <p className="text-2xl leading-none text-white font-bold">
-                    {stat.values[teamIdx] || 0}
+                    {statValue}
                   </p>
                   <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
-                    {stat.label}
+                    {formatStatLabel(stat.label, statValue)}
                   </p>
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
