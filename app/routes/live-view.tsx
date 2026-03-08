@@ -279,37 +279,39 @@ export default function LiveViewPage() {
         {snapshot.events.length === 0 ? (
           <p>Aucune action enregistrée.</p>
         ) : (
-          <ul className="space-y-1">
-            {liveEvents.map((event, index) => (
-              <li key={`${event.time}-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
-                <span className="min-w-0 break-words">
-                  {event.summary ? (
-                    renderSummaryEvent(event)
-                  ) : (
-                    <>
-                      {formatEventTimeline(event)} - {getEventLabel(event)}
-                      {event.type !== "Arbitrage Vidéo" && event.player && (
-                        <>
-                          {isCardEvent(event.type) ? " pour " : " de "}
-                          <strong>{event.player.name}</strong>
-                        </>
-                      )}
-                      {event.team && ` ${displayTeamName(event.team)}`}
-                      {event.playerOut && event.playerIn && (
-                        <>
-                          {" — "}
-                          <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
-                          {" → "}
-                          <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
-                        </>
-                      )}
-                      {event.concussion && " 🚨 commotion"}
-                    </>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-[28rem] overflow-y-auto pr-1">
+            <ul className="space-y-1">
+              {liveEvents.map((event, index) => (
+                <li key={`${event.time}-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
+                  <span className="min-w-0 break-words">
+                    {event.summary ? (
+                      renderSummaryEvent(event)
+                    ) : (
+                      <>
+                        {formatEventTimeline(event)} - {getEventLabel(event)}
+                        {event.type !== "Arbitrage Vidéo" && event.player && (
+                          <>
+                            {isCardEvent(event.type) ? " pour " : " de "}
+                            <strong>{event.player.name}</strong>
+                          </>
+                        )}
+                        {event.team && ` ${displayTeamName(event.team)}`}
+                        {event.playerOut && event.playerIn && (
+                          <>
+                            {" — "}
+                            <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
+                            {" → "}
+                            <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
+                          </>
+                        )}
+                        {event.concussion && " 🚨 commotion"}
+                      </>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
     </main>
