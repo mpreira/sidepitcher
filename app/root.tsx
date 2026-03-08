@@ -19,6 +19,7 @@ import {
   faUserShield,
   faArrowUp,
   faArrowDown,
+  faCircleUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
@@ -87,7 +88,7 @@ function AppContent() {
     { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
     { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
     ...(connected && account
-      ? [{ href: "/account", label: account.name, icon: faGear, active: true }]
+      ? [{ href: "/account", label: account.name, icon: faCircleUser, active: true }]
       : []),
     ...(connected && account?.isAdmin
       ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
