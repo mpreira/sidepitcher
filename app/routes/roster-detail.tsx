@@ -41,6 +41,11 @@ function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
     return rosterSlugId.slice(idx + 1);
 }
 
+function getSortableLastName(fullName: string): string {
+    const { first, last } = parsePlayerName(fullName.trim());
+    return (last || first).trim();
+}
+
 export default function RosterDetailPage() {
     const { rosterSlugId } = useParams();
     const {
@@ -92,6 +97,18 @@ export default function RosterDetailPage() {
         () => roster?.players.find((player) => player.id === editingPlayerId) ?? null,
         [roster?.players, editingPlayerId]
     );
+
+    const sortedRosterPlayers = useMemo(() => {
+        if (!roster) return [];
+
+        return [...roster.players].sort((firstPlayer, secondPlayer) => {
+            const firstLastName = getSortableLastName(firstPlayer.name);
+            const secondLastName = getSortableLastName(secondPlayer.name);
+            const lastNameComparison = firstLastName.localeCompare(secondLastName, "fr", { sensitivity: "base" });
+            if (lastNameComparison !== 0) return lastNameComparison;
+            return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
+        });
+    }, [roster]);
 
     const compositionName = matchDay ? `${roster?.name} J${matchDay}` : null;
     const hasCompositionForDay = Boolean(
@@ -739,11 +756,11 @@ export default function RosterDetailPage() {
                 )}
                 {isRosterPlayersExpanded && (
                     <>
-                        {roster.players.length === 0 ? (
+                        {sortedRosterPlayers.length === 0 ? (
                             <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
                         ) : (
                             <ul className="space-y-4">
-                                {roster.players.map((player) => (
+                                {sortedRosterPlayers.map((player) => (
                                     <li key={player.id} className="border-b w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
                                         <div className="flex items-center justify-between gap-2">
                                             <span>{player.name}</span>
