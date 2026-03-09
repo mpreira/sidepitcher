@@ -5,7 +5,7 @@ import { formatTimelineMoment } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft } from "@fortawesome/free-solid-svg-icons";
+import { faArrowCircleLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
@@ -324,6 +324,7 @@ export default function SyntheseDetailPage() {
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
                 onClick={() => exportSummaryToPdf(summary.events, summary.currentTime, summary.summary)}
             >
+                <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF
             </button>
 

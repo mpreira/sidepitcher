@@ -54,14 +54,18 @@ export default function EventsList({ events, remove }: Props) {
   const isCardEvent = (type: Event["type"]) =>
     type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
 
+  function withSpaceAfterIcon(icon: string, label: string): string {
+    return `${icon} ${label}`.replace(/\s+/g, " ").trim();
+  }
+
   function getEventLabel(event: Event): string {
     const icon = EVENT_ICONS[event.type] || "📍";
 
     if (event.type === "Arbitrage Vidéo") {
-      return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
+      return withSpaceAfterIcon(icon, `${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`);
     }
 
-    return `${icon} ${event.type}`;
+    return withSpaceAfterIcon(icon, event.type);
   }
 
   function renderSummaryEvent(event: Event) {
