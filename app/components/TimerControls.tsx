@@ -38,7 +38,7 @@ export default function TimerControls({
     <section className="space-y-2 w-full max-w-full">
       <div className="flex flex-wrap items-center gap-2 justify-center">
         <button
-          className={`px-4 py-2 text-white rounded shrink-0 ${running ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}`}
+          className={`px-4 py-2 text-white rounded shrink-0 ${running ? "bg-gradient-to-br from-orange-500 to-orange-600" : "bg-gradient-to-br from-green-400 to-green-600"}`}
           onClick={onStartStop}
         >
           {running ? (
@@ -56,7 +56,7 @@ export default function TimerControls({
         <button
           id="halfSelect"
           className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 1 ? "bg-blue-600 text-white" : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
+            currentHalf === 1 ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" : "bg-gradient-to-br from-gray-700 to-gray-900 text-gray-300 hover:bg-gray-800"
           }`}
           onClick={onSetFirstHalf}
         >
@@ -65,7 +65,7 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 2 ? "bg-blue-600 text-white" : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
+            currentHalf === 2 ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" : "bg-gradient-to-br from-gray-700 to-gray-900 text-gray-300 hover:bg-gray-800"
           }`}
           onClick={onSetSecondHalf}
           disabled={currentHalf === 2 || matchEnded}
@@ -75,7 +75,7 @@ export default function TimerControls({
         </button>
         <button
           className={`px-4 py-2 rounded shrink-0 ${
-            matchEnded ? "bg-gray-300 text-gray-700": "bg-red-600 text-white hover:bg-red-700"
+            matchEnded ? "bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700": "bg-gradient-to-br from-red-600 to-red-700 text-white"
           }`}
           onClick={onEndMatch}
           disabled={matchEnded || currentHalf === 1}
@@ -84,7 +84,7 @@ export default function TimerControls({
           <span className="hidden sm:inline">Fin de match</span>
         </button>
         <button
-          className="border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 rounded px-4 py-2 shrink-0"
+          className="border-neutral-700 bg-gradient-to-br from-neutral-900 to-neutral-800 text-neutral-300 hover:bg-neutral-800 rounded px-4 py-2 shrink-0"
           onClick={onReset}
         >
           <FontAwesomeIcon icon={faArrowRotateLeft} className="sm:mr-2" />
@@ -106,7 +106,7 @@ export default function TimerControls({
           />
           <button
             id="applyManualTimeButton"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded hover:bg-blue-700"
             onClick={onApplyManualTime}
           >
             <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />
