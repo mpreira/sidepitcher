@@ -39,21 +39,21 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
         <section className="space-y-2">
             <div className="mt-2 flex flex-col justify-center sm:flex-row gap-2">
                 <button
-                    className="px-4 py-2 bg-green-600 text-white rounded w-full sm:w-auto"
+                    className="btn-gradient px-4 py-2 bg-green-600 text-white rounded w-full sm:w-auto"
                     onClick={saveSummary}
                 >
                     <FontAwesomeIcon icon={faFloppyDisk} className="mr-2" />
                     Sauvegarder la synthese
                 </button>
                 <button
-                    className="px-4 py-2 bg-indigo-600 text-white rounded w-full sm:w-auto"
+                    className="btn-gradient px-4 py-2 bg-indigo-600 text-white rounded w-full sm:w-auto"
                     onClick={() => exportSummaryToClipboard(events, currentTime, summary)}
                 >
                     <FontAwesomeIcon icon={faCopy} className="mr-2" />
                     Copier la synthèse
                 </button>
                 <button
-                    className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
+                    className="btn-gradient px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
                     onClick={() => exportSummaryToPdf(events, currentTime, summary)}
                 >
                     <FontAwesomeIcon icon={faDownload} className="mr-2" />
