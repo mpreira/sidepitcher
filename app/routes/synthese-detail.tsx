@@ -320,23 +320,82 @@ export default function SyntheseDetailPage() {
             <p className="text-sm text-gray-700">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
+            <Link to="/syntheses" className="text-white text-base">
+                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                Retour aux synthèses
+            </Link>
+            <br /> 
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
                 onClick={() =>
                     exportSummaryToPdf(summary.events, summary.currentTime, summary.summary, {
                         title: `Synthèse - ${getTeamsLabel()}`,
                         fileName: getTeamsLabel(),
+                        layout: {
+                            dateLine: `Date: ${new Date(summary.createdAt).toLocaleString("fr-FR")}`,
+                            resumeColumns: summaryByTeam
+                                ? [
+                                    {
+                                        title: summaryByTeam.leftTeam.teamName,
+                                        lines:
+                                            Array.from(summaryByTeam.leftTeam.values.entries()).map(
+                                                ([type, count]) => `${type}: ${count}`
+                                            ) || [],
+                                    },
+                                    {
+                                        title: summaryByTeam.rightTeam.teamName,
+                                        lines:
+                                            Array.from(summaryByTeam.rightTeam.values.entries()).map(
+                                                ([type, count]) => `${type}: ${count}`
+                                            ) || [],
+                                    },
+                                ]
+                                : undefined,
+                            statsColumns: recapStats
+                                ? [
+                                    {
+                                        title: recapStats.leftTeam.teamName,
+                                        lines: recapStats.leftTeam.stats.map(
+                                            ([label, values]) =>
+                                                `${formatSummaryStatLabel(label, values.mt2 || values.mt1)}: ${values.mt1} -> ${values.mt2}`
+                                        ),
+                                    },
+                                    {
+                                        title: recapStats.rightTeam.teamName,
+                                        lines: recapStats.rightTeam.stats.map(
+                                            ([label, values]) =>
+                                                `${formatSummaryStatLabel(label, values.mt2 || values.mt1)}: ${values.mt1} -> ${values.mt2}`
+                                        ),
+                                    },
+                                ]
+                                : undefined,
+                            factsTitle: "Faits de match",
+                            factLines: factEvents.map((event) => {
+                                let line = `${formatEventTimeline(event)} - ${getEventLabel(event)}`;
+
+                                if (event.type !== "Arbitrage Vidéo" && event.player) {
+                                    line += `${isCardEvent(event.type) ? " pour " : " de "}${event.player.name}`;
+                                }
+                                if (event.team) {
+                                    line += ` ${displayEventTeamName(event.team)}`;
+                                }
+                                if (event.playerOut && event.playerIn) {
+                                    line += ` - ${event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}${event.playerOut.name}`;
+                                    line += ` -> ${event.playerInNumber ? `#${event.playerInNumber} ` : ""}${event.playerIn.name}`;
+                                }
+                                if (event.concussion) {
+                                    line += " - commotion";
+                                }
+
+                                return line;
+                            }),
+                        },
                     })
                 }
             >
                 <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF
             </button>
-
-            <Link to="/syntheses" className="text-white text-base">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
-                Retour aux synthèses
-            </Link>
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Résumé</h2>

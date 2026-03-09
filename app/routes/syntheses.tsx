@@ -3,7 +3,7 @@ import { useState, useLayoutEffect } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faArrowCircleLeft, faTrashCan, faUser } from "@fortawesome/free-solid-svg-icons";
 import { listSummaries } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
@@ -117,22 +117,22 @@ export default function SynthesesPage() {
                 body: JSON.stringify({ id }),
             });
             setSummaries((prev) => prev.filter((item) => item.id !== id));
-            setDeleteMessage("Synthese supprimee.");
+            setDeleteMessage("Synthèse supprimée.");
         } catch (e) {
-            setDeleteMessage("Impossible de supprimer la synthese.");
+            setDeleteMessage("Impossible de supprimer la synthèse.");
         }
     }
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-            <h1 className="text-2xl font-bold">Anciennes syntheses</h1>
+            <h1 className="text-2xl font-bold">Anciennes synthèses</h1>
+            {account?.name && <p className="text-xs text-neutral-400"><FontAwesomeIcon icon={faUser} className="mr-1" />{account.name}</p>}
             <Link to="/tracker" className="text-white text-base font-medium">
                 <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour au suivi
             </Link>
-            {account?.name && <p className="text-xs text-neutral-400">Compte: {account.name}</p>}
             {summaries.length === 0 ? (
-                <p className="text-sm text-gray-600">Aucune synthese disponible.</p>
+                <p className="text-sm text-gray-600">Aucune synthèse disponible.</p>
             ) : (
                 <ul className="space-y-2">
                     {summaries.map((summary) => (

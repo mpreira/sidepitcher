@@ -2,6 +2,25 @@ import type { Team, Player, Event } from "~/types/tracker";
 import { jsPDF } from "jspdf";
 import { formatTime } from "./TimeUtils";
 
+interface PdfColumnData {
+    title: string;
+    lines: string[];
+}
+
+interface PdfSynthesisLayout {
+    dateLine?: string;
+    resumeColumns?: [PdfColumnData, PdfColumnData];
+    statsColumns?: [PdfColumnData, PdfColumnData];
+    factsTitle?: string;
+    factLines?: string[];
+}
+
+interface PdfExportOptions {
+    title?: string;
+    fileName?: string;
+    layout?: PdfSynthesisLayout;
+}
+
 function displayTeamName(team: Team): string {
     return team.nickname || team.name.replace(/\s+J\d+$/, "");
 }
@@ -105,45 +124,179 @@ export function exportSummaryToPdf(
     events: Event[],
     currentTime: number,
     summary: Record<string, number>,
-    options?: { title?: string; fileName?: string }
+    options?: PdfExportOptions
 ): void {
     const doc = new jsPDF();
-    let y = 10;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const contentWidth = pageWidth - margin * 2;
+    const bottomLimit = pageHeight - margin;
+    const defaultLineHeight = 5;
+    let y = margin;
+
+    const ensureSpace = (requiredHeight: number) => {
+        if (y + requiredHeight <= bottomLimit) return;
+        doc.addPage();
+        y = margin;
+    };
+
+    const drawWrappedText = (
+        text: string,
+        opts?: {
+            fontSize?: number;
+            lineHeight?: number;
+            x?: number;
+            width?: number;
+            bold?: boolean;
+            color?: [number, number, number];
+        }
+    ) => {
+        const fontSize = opts?.fontSize ?? 10;
+        const lineHeight = opts?.lineHeight ?? defaultLineHeight;
+        const x = opts?.x ?? margin;
+        const width = opts?.width ?? contentWidth;
+        const lines = doc.splitTextToSize(text || "", width);
+
+        doc.setFontSize(fontSize);
+        doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
+        const [r, g, b] = opts?.color || [24, 24, 27];
+        doc.setTextColor(r, g, b);
+        ensureSpace(lines.length * lineHeight + 1);
+        doc.text(lines, x, y);
+        y += lines.length * lineHeight;
+    };
+
+    const drawSectionTitle = (title: string) => {
+        y += 2;
+        drawWrappedText(title, { fontSize: 11, lineHeight: 5.5, bold: true, color: [39, 39, 42] });
+        doc.setDrawColor(212, 212, 216);
+        ensureSpace(2);
+        doc.line(margin, y + 0.5, margin + contentWidth, y + 0.5);
+        y += 3;
+    };
+
+    const drawTwoColumns = (
+        columns: [PdfColumnData, PdfColumnData],
+        valueColors?: [[number, number, number], [number, number, number]]
+    ) => {
+        const [left, right] = columns;
+        const gap = 6;
+        const colWidth = (contentWidth - gap) / 2;
+        const leftX = margin;
+        const rightX = margin + colWidth + gap;
+        const paddingX = 3;
+        const paddingTop = 4;
+        const titleLineHeight = 5;
+        const bodyLineHeight = 4.6;
+
+        const prepareColumn = (column: PdfColumnData, width: number) => {
+            const titleLines = doc.splitTextToSize(column.title || "", width - paddingX * 2);
+            const bodyLines = column.lines.flatMap((line) => doc.splitTextToSize(line || "", width - paddingX * 2));
+            const height =
+                paddingTop +
+                titleLines.length * titleLineHeight +
+                2 +
+                Math.max(1, bodyLines.length) * bodyLineHeight +
+                3;
+
+            return { titleLines, bodyLines, height };
+        };
+
+        const leftPrepared = prepareColumn(left, colWidth);
+        const rightPrepared = prepareColumn(right, colWidth);
+        const blockHeight = Math.max(leftPrepared.height, rightPrepared.height);
+
+        ensureSpace(blockHeight + 2);
+
+        doc.setDrawColor(212, 212, 216);
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(leftX, y, colWidth, blockHeight, 2, 2, "FD");
+        doc.roundedRect(rightX, y, colWidth, blockHeight, 2, 2, "FD");
+
+        const drawColumnContent = (
+            prepared: { titleLines: string[]; bodyLines: string[] },
+            x: number,
+            color?: [number, number, number]
+        ) => {
+            let localY = y + paddingTop;
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(24, 24, 27);
+            if (prepared.titleLines.length > 0) {
+                doc.text(prepared.titleLines, x + paddingX, localY);
+                localY += prepared.titleLines.length * titleLineHeight;
+            }
+
+            localY += 2;
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(color ? color[0] : 51, color ? color[1] : 51, color ? color[2] : 51);
+
+            const linesToRender = prepared.bodyLines.length > 0 ? prepared.bodyLines : ["-"];
+            doc.text(linesToRender, x + paddingX, localY);
+        };
+
+        drawColumnContent(leftPrepared, leftX, valueColors?.[0]);
+        drawColumnContent(rightPrepared, rightX, valueColors?.[1]);
+        doc.setTextColor(24, 24, 27);
+        y += blockHeight + 4;
+    };
+
     const documentTitle = options?.title?.trim() || `Feuille de match (${formatTime(currentTime)})`;
-    doc.setFontSize(12);
-    doc.text(documentTitle, 10, y);
-    y += 10;
-    
-    for (const [type, count] of Object.entries(summary)) {
-        doc.text(`${type}: ${count}`, 10, y);
-        y += 7;
-    }
-    
-    y += 5;
-    doc.text("Event timeline:", 10, y);
-    y += 7;
-    
-    events.forEach((e) => {
-        if (e.summary) {
-            doc.text(`${formatTime(e.time)} - ${e.summary}`, 10, y);
+    drawWrappedText(documentTitle, { fontSize: 14, lineHeight: 6.5, bold: true, color: [17, 24, 39] });
+    y += 0.5;
+
+    if (options?.layout) {
+        if (options.layout.dateLine) {
+            drawWrappedText(options.layout.dateLine, { fontSize: 9, lineHeight: 4.5, color: [82, 82, 91] });
+            y += 2;
+        }
+
+        if (options.layout.resumeColumns) {
+            drawSectionTitle("Résumé");
+            drawTwoColumns(options.layout.resumeColumns, [[74, 222, 128], [96, 165, 250]]);
+        }
+
+        if (options.layout.statsColumns) {
+            drawSectionTitle("Statistiques équipes");
+            drawTwoColumns(options.layout.statsColumns, [[74, 222, 128], [96, 165, 250]]);
+        }
+
+        drawSectionTitle(options.layout.factsTitle || "Faits de match");
+        const facts = options.layout.factLines || [];
+        if (facts.length === 0) {
+                drawWrappedText("Aucun événement.", { fontSize: 9, lineHeight: 4.5, color: [82, 82, 91] });
         } else {
+            facts.forEach((line) => {
+                    drawWrappedText(`• ${line}`, { fontSize: 9, lineHeight: 4.5, color: [39, 39, 42] });
+                y += 0.5;
+            });
+        }
+    } else {
+        for (const [type, count] of Object.entries(summary)) {
+            drawWrappedText(`${type}: ${count}`, { fontSize: 10, lineHeight: 5 });
+        }
+
+        drawSectionTitle("Event timeline");
+        events.forEach((e) => {
+            if (e.summary) {
+                drawWrappedText(`${formatTime(e.time)} - ${e.summary}`, { fontSize: 9, lineHeight: 4.5 });
+                return;
+            }
+
             let line = `${formatTime(e.time)} - ${e.type}`;
             if (e.team) line += ` (${displayTeamName(e.team)})`;
-            if (e.player)
-                line += ` — ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
+            if (e.player) line += ` - ${e.player.name}${e.playerNumber ? ` (#${e.playerNumber})` : ""}`;
             if (e.playerOut && e.playerIn)
-                line += ` — ${e.playerOutNumber ? `#${e.playerOutNumber} ` : ""}${e.playerOut.name} → ${e.playerInNumber ? `#${e.playerInNumber} ` : ""}${e.playerIn.name}`;
-            if (e.videoReason)
-                line += ` — TMO - ${e.videoReason}`;
-            if (e.concussion) line += " 🚨 commotion";
-            doc.text(line, 10, y);
-        }
-        y += 7;
-        if (y > 280) {
-            doc.addPage();
-            y = 10;
-        }
-    });
+                line += ` - ${e.playerOutNumber ? `#${e.playerOutNumber} ` : ""}${e.playerOut.name} -> ${e.playerInNumber ? `#${e.playerInNumber} ` : ""}${e.playerIn.name}`;
+            if (e.videoReason) line += ` - TMO - ${e.videoReason}`;
+            if (e.concussion) line += " - commotion";
+
+            drawWrappedText(line, { fontSize: 9, lineHeight: 4.5 });
+        });
+    }
     
     const baseFileName = (options?.fileName?.trim() || "summary")
         .toLowerCase()
