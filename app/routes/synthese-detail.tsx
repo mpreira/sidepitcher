@@ -60,6 +60,18 @@ function FormattedDateTime({ dateString }: { dateString: string }) {
 export default function SyntheseDetailPage() {
     const summary = useLoaderData<typeof loader>();
     const { teams: allTeams } = useTeams();
+    const STAT_LABEL_ORDER = [
+        "Essais",
+        "Pénalités",
+        "En-avants",
+        "Touches volées",
+        "Touches perdues",
+        "Mêlées gagnées",
+        "Mêlées perdues",
+        "Turnovers",
+        "Offloads",
+        "Jeu au pied",
+    ];
     const EVENT_ICONS: Record<string, string> = {
         "Essai": "🏉",
         "Transformation": "🎯",
@@ -171,58 +183,136 @@ export default function SyntheseDetailPage() {
         return teamsLabel;
     };
 
-    const getTeamStatsFromRecap = () => {
-        const recapEvent = [...summary.events]
-            .reverse()
-            .find((event) => event.type === "Récapitulatif" && event.summaryTable);
-
-        const selectedTeams = summary.teams || [];
-        const teamIds = selectedTeams.map((team) => team.id);
-
-        const triesByTeamId = new Map<string, number>();
-        summary.events.forEach((event) => {
-            if ((event.type === "Essai" || event.type === "Essai de pénalité") && event.team?.id) {
-                triesByTeamId.set(event.team.id, (triesByTeamId.get(event.team.id) || 0) + 1);
-            }
-        });
-
-        const getTryCountForIndex = (index: number) => {
-            const teamId = teamIds[index];
-            if (!teamId) return 0;
-            return triesByTeamId.get(teamId) || 0;
-        };
-
-        if (!recapEvent?.summaryTable) {
-            if (selectedTeams.length >= 2) {
-                return {
-                    leftTeam: {
-                        teamName: displayTeamName(selectedTeams[0].name),
-                        stats: [{ label: "Essais", value: getTryCountForIndex(0) }],
-                    },
-                    rightTeam: {
-                        teamName: displayTeamName(selectedTeams[1].name),
-                        stats: [{ label: "Essais", value: getTryCountForIndex(1) }],
-                    },
-                };
-            }
-            return null;
+    const getOrderedTeams = () => {
+        const storedTeams = summary.teams || [];
+        if (storedTeams.length >= 2) {
+            return storedTeams.slice(0, 2).map((team) => ({ id: team.id, name: displayTeamName(team.name) }));
         }
 
-        const [leftTeam, rightTeam] = recapEvent.summaryTable.teams;
+        const inferred: Array<{ id: string; name: string }> = [];
+        for (const event of summary.events) {
+            if (!event.team?.id || !event.team.name) continue;
+            if (inferred.some((team) => team.id === event.team?.id)) continue;
+            inferred.push({ id: event.team.id, name: displayTeamName(event.team.name) });
+            if (inferred.length === 2) break;
+        }
+
+        if (inferred.length >= 2) {
+            return inferred;
+        }
+
+        if (summary.matchDay) {
+            const fallback: Array<{ id: string; name: string }> = [];
+            for (const team of allTeams) {
+                if (!team.name.includes(`J${summary.matchDay}`)) continue;
+                if (fallback.some((entry) => entry.id === team.id)) continue;
+                fallback.push({ id: team.id, name: displayTeamName(team.name) });
+                if (fallback.length === 2) break;
+            }
+            return fallback;
+        }
+
+        return inferred;
+    };
+
+    const orderedTeams = getOrderedTeams();
+
+    const getSummaryByTeam = () => {
+        if (orderedTeams.length < 2) return null;
+
+        const counters = [new Map<string, number>(), new Map<string, number>()];
+
+        summary.events.forEach((event) => {
+            if (!event.team?.id) return;
+            if (event.type === "Récapitulatif" || event.summaryTable || event.summary) return;
+
+            const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+            if (teamIndex === -1) return;
+
+            const current = counters[teamIndex].get(event.type) || 0;
+            counters[teamIndex].set(event.type, current + 1);
+        });
 
         return {
             leftTeam: {
-                teamName: leftTeam.teamName,
-                stats: [{ label: "Essais", value: getTryCountForIndex(0) }, ...leftTeam.stats],
+                teamName: orderedTeams[0].name,
+                values: counters[0],
             },
             rightTeam: {
-                teamName: rightTeam.teamName,
-                stats: [{ label: "Essais", value: getTryCountForIndex(1) }, ...rightTeam.stats],
+                teamName: orderedTeams[1].name,
+                values: counters[1],
             },
         };
     };
 
-    const teamStats = getTeamStatsFromRecap();
+    const getTeamStatsByHalf = () => {
+        if (orderedTeams.length < 2) return null;
+
+        type StatHalfValue = { mt1: number; mt2: number };
+        const teamStats = [new Map<string, StatHalfValue>(), new Map<string, StatHalfValue>()];
+
+        const ensureStat = (teamIndex: number, label: string) => {
+            const current = teamStats[teamIndex].get(label);
+            if (current) return current;
+            const next = { mt1: 0, mt2: 0 };
+            teamStats[teamIndex].set(label, next);
+            return next;
+        };
+
+        summary.events.forEach((event) => {
+            if ((event.type === "Essai" || event.type === "Essai de pénalité") && event.team?.id) {
+                const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+                if (teamIndex === -1) return;
+
+                const half = event.timelineHalf || (event.time >= 40 * 60 ? 2 : 1);
+                const tries = ensureStat(teamIndex, "Essais");
+                if (half === 1) tries.mt1 += 1;
+                else tries.mt2 += 1;
+            }
+        });
+
+        summary.events.forEach((event) => {
+            if (event.type !== "Récapitulatif" || !event.summaryTable) return;
+
+            const half = event.summaryTable.halfLabel.toUpperCase().includes("2") ? 2 : 1;
+            event.summaryTable.teams.slice(0, 2).forEach((team, teamIndex) => {
+                team.stats.forEach((stat) => {
+                    const values = ensureStat(teamIndex, stat.label);
+                    if (half === 1) values.mt1 = stat.value;
+                    else values.mt2 = stat.value;
+                });
+            });
+        });
+
+        const sortStats = (entries: Array<[string, StatHalfValue]>) => {
+            return entries.sort((first, second) => {
+                const firstIndex = STAT_LABEL_ORDER.indexOf(first[0]);
+                const secondIndex = STAT_LABEL_ORDER.indexOf(second[0]);
+
+                if (firstIndex === -1 && secondIndex === -1) {
+                    return first[0].localeCompare(second[0], "fr", { sensitivity: "base" });
+                }
+                if (firstIndex === -1) return 1;
+                if (secondIndex === -1) return -1;
+                return firstIndex - secondIndex;
+            });
+        };
+
+        return {
+            leftTeam: {
+                teamName: orderedTeams[0].name,
+                stats: sortStats(Array.from(teamStats[0].entries())),
+            },
+            rightTeam: {
+                teamName: orderedTeams[1].name,
+                stats: sortStats(Array.from(teamStats[1].entries())),
+            },
+        };
+    };
+
+    const recapStats = getTeamStatsByHalf();
+    const summaryByTeam = getSummaryByTeam();
+    const factEvents = summary.events.filter((event) => !(event.type === "Récapitulatif" || event.summaryTable || event.summary));
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
@@ -239,43 +329,68 @@ export default function SyntheseDetailPage() {
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Resume</h2>
-                {Object.keys(summary.summary).length === 0 ? (
-                    <p className="text-sm text-gray-600">Pas de donnees.</p>
+                {!summaryByTeam ? (
+                    <p className="text-sm text-gray-600">Resume par equipe indisponible.</p>
                 ) : (
-                    <ul className="space-y-1">
-                        {Object.entries(summary.summary).map(([type, count]) => (
-                            <li key={type}>
-                                {type}: {count}
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
+                        <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
+                            <h3 className="font-semibold mb-2">{summaryByTeam.leftTeam.teamName}</h3>
+                            {summaryByTeam.leftTeam.values.size === 0 ? (
+                                <p className="text-sm text-gray-400">Aucun evenement d'equipe.</p>
+                            ) : (
+                                <ul className="space-y-1 text-sm">
+                                    {Array.from(summaryByTeam.leftTeam.values.entries()).map(([type, count]) => (
+                                        <li key={`summary-left-${type}`}>
+                                            <span>{type}: </span>
+                                            <span className="font-bold text-green-400">{count}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                        <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
+                            <h3 className="font-semibold mb-2">{summaryByTeam.rightTeam.teamName}</h3>
+                            {summaryByTeam.rightTeam.values.size === 0 ? (
+                                <p className="text-sm text-gray-400">Aucun evenement d'equipe.</p>
+                            ) : (
+                                <ul className="space-y-1 text-sm">
+                                    {Array.from(summaryByTeam.rightTeam.values.entries()).map(([type, count]) => (
+                                        <li key={`summary-right-${type}`}>
+                                            <span>{type}: </span>
+                                            <span className="font-bold text-blue-400">{count}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
                 )}
             </section>
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Statistiques équipes</h2>
-                {!teamStats ? (
+                {!recapStats ? (
                     <p className="text-sm text-gray-600">Statistiques par équipe indisponibles.</p>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{teamStats.leftTeam.teamName}</h3>
+                            <h3 className="font-semibold mb-2">{recapStats.leftTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
-                                {teamStats.leftTeam.stats.map((stat, idx) => (
+                                {recapStats.leftTeam.stats.map(([label, values], idx) => (
                                     <li key={`left-${idx}`}>
-                                        <span>{formatSummaryStatLabel(stat.label, stat.value)}: </span>
-                                        <span className="font-bold text-green-400">{stat.value}</span>
+                                        <span>{formatSummaryStatLabel(label, values.mt2 || values.mt1)}: </span>
+                                        <span className="font-bold text-green-400">{values.mt1} -&gt; {values.mt2}</span>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{teamStats.rightTeam.teamName}</h3>
+                            <h3 className="font-semibold mb-2">{recapStats.rightTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
-                                {teamStats.rightTeam.stats.map((stat, idx) => (
+                                {recapStats.rightTeam.stats.map(([label, values], idx) => (
                                     <li key={`right-${idx}`}>
-                                        <span>{formatSummaryStatLabel(stat.label, stat.value)}: </span>
-                                        <span className="font-bold text-blue-400">{stat.value}</span>
+                                        <span>{formatSummaryStatLabel(label, values.mt2 || values.mt1)}: </span>
+                                        <span className="font-bold text-blue-400">{values.mt1} -&gt; {values.mt2}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -286,75 +401,31 @@ export default function SyntheseDetailPage() {
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Faits de match</h2>
-                {summary.events.length === 0 ? (
+                {factEvents.length === 0 ? (
                     <p className="text-sm text-gray-600">Aucun evenement.</p>
                 ) : (
                     <ul className="space-y-1 text-white">
-                        {summary.events.map((event, index) => (
+                        {factEvents.map((event, index) => (
                             <li key={`${event.time}-${index}`} className="flex flex-col gap-2 text-sm">
-                                {event.summary && event.summaryTable ? (
-                                    <div className="w-full space-y-2">
-                                        <div>
-                                            {formatEventTimeline(event)} - <strong>{event.summaryTable.halfLabel}</strong>
-                                        </div>
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-xs sm:text-sm border border-neutral-700 rounded">
-                                                <thead>
-                                                    <tr className="bg-neutral-900">
-                                                        <th className="w-1/2 px-2 py-1 text-left border-b border-neutral-700">{event.summaryTable.teams[0].teamName}</th>
-                                                        <th className="w-1/2 px-2 py-1 text-left border-b border-neutral-700">{event.summaryTable.teams[1].teamName}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {Array.from({ length: Math.max(event.summaryTable.teams[0].stats.length, event.summaryTable.teams[1].stats.length) }).map((_, idx) => {
-                                                        const leftStat = event.summaryTable?.teams[0].stats[idx];
-                                                        const rightStat = event.summaryTable?.teams[1].stats[idx];
-                                                        return (
-                                                            <tr key={idx} className="border-b border-neutral-800 last:border-b-0">
-                                                                <td className="px-2 py-1">
-                                                                    {leftStat ? (
-                                                                        <>
-                                                                            <span>{formatSummaryStatLabel(leftStat.label, leftStat.value)}: </span>
-                                                                            <span className="font-bold text-green-400">{leftStat.value}</span>
-                                                                        </>
-                                                                    ) : "-"}
-                                                                </td>
-                                                                <td className="px-2 py-1">
-                                                                    {rightStat ? (
-                                                                        <>
-                                                                            <span>{formatSummaryStatLabel(rightStat.label, rightStat.value)}: </span>
-                                                                            <span className="font-bold text-blue-400">{rightStat.value}</span>
-                                                                        </>
-                                                                    ) : "-"}
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <span>
-                                        {formatEventTimeline(event)} - {getEventLabel(event)}
-                                        {event.type !== "Arbitrage Vidéo" && event.player && (
-                                            <>
-                                                {isCardEvent(event.type) ? " pour " : " de "}
-                                                <strong>{event.player.name}</strong>
-                                            </>
-                                        )}
-                                        {event.team && ` ${displayEventTeamName(event.team)}`}
-                                        {event.playerOut && event.playerIn && (
-                                            <>
-                                                {" — "}
-                                                <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
-                                                {" → "}
-                                                <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
-                                            </>
-                                        )}
-                                        {event.concussion && " 🚨 commotion"}
-                                    </span>
-                                )}
+                                <span>
+                                    {formatEventTimeline(event)} - {getEventLabel(event)}
+                                    {event.type !== "Arbitrage Vidéo" && event.player && (
+                                        <>
+                                            {isCardEvent(event.type) ? " pour " : " de "}
+                                            <strong>{event.player.name}</strong>
+                                        </>
+                                    )}
+                                    {event.team && ` ${displayEventTeamName(event.team)}`}
+                                    {event.playerOut && event.playerIn && (
+                                        <>
+                                            {" — "}
+                                            <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
+                                            {" → "}
+                                            <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
+                                        </>
+                                    )}
+                                    {event.concussion && " 🚨 commotion"}
+                                </span>
                             </li>
                         ))}
                     </ul>
