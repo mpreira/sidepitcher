@@ -42,9 +42,9 @@ body {
 
 @layer components {
   .sp-input-shell {
-    @apply relative rounded-md border border-neutral-700 border-l-4 border-l-transparent bg-neutral-900 px-3 pt-5 pb-2;
+    @apply relative rounded-md border border-transparent border-l-4 border-l-transparent bg-neutral-800 px-3 pt-5 pb-2;
     @apply transition-colors duration-150;
-    @apply focus-within:border-l-sky-500 focus-within:bg-neutral-900/95;
+    @apply focus-within:border-sky-700/60 focus-within:border-l-sky-500;
   }
 
   .sp-input-label {
