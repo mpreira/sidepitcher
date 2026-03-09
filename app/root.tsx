@@ -15,7 +15,6 @@ import {
   faStopwatch,
   faUsers,
   faFileLines,
-  faGear,
   faUserShield,
   faArrowUp,
   faArrowDown,
