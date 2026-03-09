@@ -333,16 +333,21 @@ export default function SyntheseDetailPage() {
                 Télécharger PDF
             </button>
 
+            <Link to="/syntheses" className="text-white text-base">
+                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                Retour aux synthèses
+            </Link>
+
             <section className="space-y-2">
-                <h2 className="font-semibold">Resume</h2>
+                <h2 className="font-semibold">Résumé</h2>
                 {!summaryByTeam ? (
-                    <p className="text-sm text-gray-600">Resume par equipe indisponible.</p>
+                    <p className="text-sm text-gray-600">Résumé par équipe indisponible.</p>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
                             <h3 className="font-semibold mb-2">{summaryByTeam.leftTeam.teamName}</h3>
                             {summaryByTeam.leftTeam.values.size === 0 ? (
-                                <p className="text-sm text-gray-400">Aucun evenement d'equipe.</p>
+                                <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
                             ) : (
                                 <ul className="space-y-1 text-sm">
                                     {Array.from(summaryByTeam.leftTeam.values.entries()).map(([type, count]) => (
@@ -357,7 +362,7 @@ export default function SyntheseDetailPage() {
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
                             <h3 className="font-semibold mb-2">{summaryByTeam.rightTeam.teamName}</h3>
                             {summaryByTeam.rightTeam.values.size === 0 ? (
-                                <p className="text-sm text-gray-400">Aucun evenement d'equipe.</p>
+                                <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
                             ) : (
                                 <ul className="space-y-1 text-sm">
                                     {Array.from(summaryByTeam.rightTeam.values.entries()).map(([type, count]) => (
@@ -408,7 +413,7 @@ export default function SyntheseDetailPage() {
             <section className="space-y-2">
                 <h2 className="font-semibold">Faits de match</h2>
                 {factEvents.length === 0 ? (
-                    <p className="text-sm text-gray-600">Aucun evenement.</p>
+                    <p className="text-sm text-gray-600">Aucun événement.</p>
                 ) : (
                     <ul className="space-y-1 text-white">
                         {factEvents.map((event, index) => (
@@ -437,11 +442,6 @@ export default function SyntheseDetailPage() {
                     </ul>
                 )}
             </section>
-
-            <Link to="/syntheses" className="text-white text-base">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
-                Retour aux syntheses
-            </Link>
         </main>
     );
 }

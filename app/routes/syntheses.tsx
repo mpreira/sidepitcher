@@ -126,6 +126,10 @@ export default function SynthesesPage() {
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <h1 className="text-2xl font-bold">Anciennes syntheses</h1>
+            <Link to="/tracker" className="text-white text-base font-medium">
+                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                Retour au suivi
+            </Link>
             {account?.name && <p className="text-xs text-neutral-400">Compte: {account.name}</p>}
             {summaries.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucune synthese disponible.</p>
@@ -154,10 +158,6 @@ export default function SynthesesPage() {
             {deleteMessage && (
                 <p className="text-sm text-green-700">{deleteMessage}</p>
             )}
-            <Link to="/tracker" className="text-white text-base font-medium">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
-                Retour au suivi
-            </Link>
         </main>
     );
 }
