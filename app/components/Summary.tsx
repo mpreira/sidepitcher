@@ -14,6 +14,12 @@ interface Props {
 
 export default function Summary({ events, currentTime, teams, matchDay, onSaved }: Props) {
     const summary = buildEventSummary(events);
+    const teamLabel = teams.length >= 2
+        ? `${teams[0].name.replace(/\s+J\d+$/, "")} vs ${teams[1].name.replace(/\s+J\d+$/, "")}`
+        : teams.length === 1
+            ? teams[0].name.replace(/\s+J\d+$/, "")
+            : "Match";
+    const summaryTitle = matchDay ? `J${matchDay} - ${teamLabel}` : teamLabel;
 
     async function saveSummary() {
         try {
@@ -46,7 +52,7 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                     Sauvegarder la synthese
                 </button>
                 <button
-                    className="bg-gradient-to-br from-indigo-400 to-indigo-600 px-4 py-2 text-white rounded w-full sm:w-auto"
+                    className="bg-gradient-to-br from-indigo-500 to-indigo-700 px-4 py-2 text-white rounded w-full sm:w-auto"
                     onClick={() => exportSummaryToClipboard(events, currentTime, summary)}
                 >
                     <FontAwesomeIcon icon={faCopy} className="mr-2" />
@@ -54,7 +60,12 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                 </button>
                 <button
                     className="bg-gradient-to-br from-gray-600 to-gray-800 px-4 py-2 text-white rounded w-full sm:w-auto"
-                    onClick={() => exportSummaryToPdf(events, currentTime, summary)}
+                    onClick={() =>
+                        exportSummaryToPdf(events, currentTime, summary, {
+                            title: `Synthèse - ${summaryTitle}`,
+                            fileName: summaryTitle,
+                        })
+                    }
                 >
                     <FontAwesomeIcon icon={faDownload} className="mr-2" />
                     Télécharger PDF

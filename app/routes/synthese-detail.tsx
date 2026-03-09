@@ -322,7 +322,12 @@ export default function SyntheseDetailPage() {
             </p>
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
-                onClick={() => exportSummaryToPdf(summary.events, summary.currentTime, summary.summary)}
+                onClick={() =>
+                    exportSummaryToPdf(summary.events, summary.currentTime, summary.summary, {
+                        title: `Synthèse - ${getTeamsLabel()}`,
+                        fileName: getTeamsLabel(),
+                    })
+                }
             >
                 <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF

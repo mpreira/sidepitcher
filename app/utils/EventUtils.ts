@@ -104,12 +104,14 @@ export function exportSummaryToClipboard(
 export function exportSummaryToPdf(
     events: Event[],
     currentTime: number,
-    summary: Record<string, number>
+    summary: Record<string, number>,
+    options?: { title?: string; fileName?: string }
 ): void {
     const doc = new jsPDF();
     let y = 10;
+    const documentTitle = options?.title?.trim() || `Feuille de match (${formatTime(currentTime)})`;
     doc.setFontSize(12);
-    doc.text(`Feuille de match (time ${formatTime(currentTime)})`, 10, y);
+    doc.text(documentTitle, 10, y);
     y += 10;
     
     for (const [type, count] of Object.entries(summary)) {
@@ -143,7 +145,14 @@ export function exportSummaryToPdf(
         }
     });
     
-    doc.save("summary.pdf");
+    const baseFileName = (options?.fileName?.trim() || "summary")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+    doc.save(`${baseFileName || "summary"}.pdf`);
 }
 
 /**
