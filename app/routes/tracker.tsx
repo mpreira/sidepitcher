@@ -13,9 +13,10 @@ import Scoreboard from "~/components/Scoreboard";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { useTrackerClock } from "~/hooks/useTrackerClock";
+import { useTrackerEvents } from "~/hooks/useTrackerEvents";
 import { useTrackerStats } from "~/hooks/useTrackerStats";
 import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
-import { getTimelineMomentFromClock, getTimelineSortKey } from "~/utils/TimeUtils";
+import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Side Pitcher" }];
@@ -58,7 +59,6 @@ export default function Tracker() {
         applyManualTime,
         resetClock,
     } = useTrackerClock();
-    const [events, setEvents] = useState<Event[]>([]);
     const { rosters, teams, activeRosterId, matchDay, championship, sport } = useTeams();
     
     const activeRoster = useMemo(() => rosters.find((r) => r.id === activeRosterId) ?? null, [rosters, activeRosterId]);
@@ -96,32 +96,18 @@ export default function Tracker() {
 
     const selectedTeamIds = useMemo(() => [team1Id, team2Id], [team1Id, team2Id]);
 
-    function getEventSortKey(event: Event): number {
-        if (event.timelineHalf && typeof event.timelineMinute === "number") {
-            return getTimelineSortKey({
-                half: event.timelineHalf,
-                minute: event.timelineMinute,
-                additionalMinute: event.timelineAdditionalMinute || 0,
-                second: event.timelineSecond || 0,
-            });
-        }
-
-        return event.time;
-    }
-
-    function sortEventsByTimeline(list: Event[]): Event[] {
-        return [...list].sort((firstEvent, secondEvent) => {
-            const firstSortKey = getEventSortKey(firstEvent);
-            const secondSortKey = getEventSortKey(secondEvent);
-            if (firstSortKey !== secondSortKey) return firstSortKey - secondSortKey;
-            return firstEvent.time - secondEvent.time;
-        });
-    }
-
-    function getSelectedTeamIndex(teamId?: string): number {
-        if (!teamId) return -1;
-        return selectedTeamIds.findIndex((id) => id === teamId);
-    }
+    const {
+        events,
+        addEvent,
+        removeEvent,
+        resetEvents,
+        matchFactsEvents,
+        computeScores,
+        computeBonuses,
+    } = useTrackerEvents({
+        selectedTeamIds,
+        selectedTeamsCount: selectedTeams.length,
+    });
 
     function getDisplayTeamLabel(team: { name: string; nickname?: string }): string {
         return team.nickname || team.name.replace(/\s+J\d+$/, "");
@@ -193,7 +179,7 @@ export default function Tracker() {
     }, [championship, matchDay]);
 
     function resetTrackerInfos() {
-        setEvents([]);
+        resetEvents();
         resetClock();
         setActiveCommand(null);
         resetStats();
@@ -237,8 +223,8 @@ export default function Tracker() {
         };
     }, [running]);
 
-    function addEvent(e: Event) {
-        setEvents((ev) => sortEventsByTimeline([...ev, e]));
+    function handleAddEvent(event: Event) {
+        addEvent(event);
         setActiveCommand(null);
     }
 
@@ -282,7 +268,7 @@ export default function Tracker() {
             },
         };
 
-        addEvent(summaryEvent);
+        handleAddEvent(summaryEvent);
     }
 
     async function saveTeamSelection() {
@@ -312,65 +298,6 @@ export default function Tracker() {
         } catch (e) {
             setSaveMessage("Erreur lors de la sauvegarde.");
         }
-    }
-
-    function computeScores(): number[] {
-        const points: Record<string, number> = {
-            Essai: 5,
-            "Essai de pénalité": 7,
-            Transformation: 2,
-            "Pénalité réussie": 3,
-            Drop: 3,
-        };
-        const base = selectedTeams.map(() => 0);
-        events.forEach((e) => {
-            if (e.team) {
-                const idx = getSelectedTeamIndex(e.team.id);
-                if (idx !== -1 && points[e.type]) {
-                    base[idx] += points[e.type] || 0;
-                }
-            }
-        });
-        return base.map((v) => Math.max(0, v));
-    }
-
-    function computeTries(): number[] {
-        const tries = selectedTeams.map(() => 0);
-        events.forEach((event) => {
-            if (event.type !== "Essai" && event.type !== "Essai de pénalité") return;
-            if (!event.team?.id) return;
-
-            const idx = getSelectedTeamIndex(event.team.id);
-            if (idx !== -1) {
-                tries[idx] += 1;
-            }
-        });
-        return tries;
-    }
-
-    function computeBonuses(scores: number[]): string[] {
-        if (selectedTeams.length < 2) return selectedTeams.map(() => "");
-
-        const tries = computeTries();
-        const bonuses = ["", ""];
-
-        for (let idx = 0; idx < 2; idx++) {
-            const opponentIdx = idx === 0 ? 1 : 0;
-            const tags: string[] = [];
-
-            if ((tries[idx] || 0) - (tries[opponentIdx] || 0) >= 3) {
-                tags.push("BO");
-            }
-
-            const pointsBehind = (scores[opponentIdx] || 0) - (scores[idx] || 0);
-            if (pointsBehind > 0 && pointsBehind <= 5) {
-                tags.push("BD");
-            }
-
-            bonuses[idx] = tags.join(" ");
-        }
-
-        return bonuses;
     }
 
     const hasTrackingContent =
@@ -427,8 +354,6 @@ export default function Tracker() {
         // Match user expectation: fully reinitialize the page state.
         window.location.reload();
     }
-
-    const matchFactsEvents = useMemo(() => [...events].reverse(), [events]);
 
     const buildLiveSnapshot = useCallback((): LiveSnapshot => {
         const displayedPenalties = getDisplayedPenalties();
@@ -488,10 +413,6 @@ export default function Tracker() {
         matchDay,
         buildLiveSnapshot,
     });
-
-    function removeEvent(index: number) {
-        setEvents((ev) => ev.filter((_, i) => i !== index));
-    }
 
     function handleTeam1Change(nextTeamId: string) {
         if (nextTeamId !== team1Id) {
@@ -738,7 +659,7 @@ export default function Tracker() {
                                     teams={selectedTeams}
                                     currentTime={time}
                                     currentHalf={currentHalf}
-                                    onSubmit={addEvent}
+                                    onSubmit={handleAddEvent}
                                     onCancel={() => setActiveCommand(null)}
                                 />
                             </div>
