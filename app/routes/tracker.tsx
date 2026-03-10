@@ -73,7 +73,6 @@ export default function Tracker() {
     
     const activeRoster = useMemo(() => rosters.find((r) => r.id === activeRosterId) ?? null, [rosters, activeRosterId]);
     
-    const activeTeams = useMemo(() => teams.filter((t) => t.rosterId === activeRosterId), [teams, activeRosterId]);
     const rosterNicknameById = useMemo(
         () => new Map(rosters.map((roster) => [roster.id, roster.nickname || ""])),
         [rosters]
@@ -152,12 +151,9 @@ export default function Tracker() {
     const [teamEnAvant, setTeamEnAvant] = useState<number[]>([0, 0]);
     // manual en-avant adjustments (on top of computed values)
     const [manualEnAvantAdjustments, setManualEnAvantAdjustments] = useState<number[]>([0, 0]);
-    const [teamToucheGagnee, setTeamToucheGagnee] = useState<number[]>([0, 0]);
     const [teamTouchePerdue, setTeamTouchePerdue] = useState<number[]>([0, 0]);
-    const [teamMeleeGagnee, setTeamMeleeGagnee] = useState<number[]>([0, 0]);
     const [teamMeleePerdue, setTeamMeleePerdue] = useState<number[]>([0, 0]);
     const [teamTurnover, setTeamTurnover] = useState<number[]>([0, 0]);
-    const [teamOffloads, setTeamOffloads] = useState<number[]>([0, 0]);
     const [teamJeuAuPied, setTeamJeuAuPied] = useState<number[]>([0, 0]);
 
     useEffect(() => {
@@ -216,12 +212,9 @@ export default function Tracker() {
         setManualPenaltyAdjustments([0, 0]);
         setTeamEnAvant([0, 0]);
         setManualEnAvantAdjustments([0, 0]);
-        setTeamToucheGagnee([0, 0]);
         setTeamTouchePerdue([0, 0]);
-        setTeamMeleeGagnee([0, 0]);
         setTeamMeleePerdue([0, 0]);
         setTeamTurnover([0, 0]);
-        setTeamOffloads([0, 0]);
         setTeamJeuAuPied([0, 0]);
         setLiveMatchId(null);
         setLivePublicSlug(null);
@@ -474,24 +467,8 @@ export default function Tracker() {
         });
     }
 
-    function adjustToucheGagnee(idx: number, delta: number) {
-        setTeamToucheGagnee((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
     function adjustTouchePerdue(idx: number, delta: number) {
         setTeamTouchePerdue((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
-    function adjustMeleeGagnee(idx: number, delta: number) {
-        setTeamMeleeGagnee((prev) => {
             const copy = [...prev];
             copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
             return copy;
@@ -508,14 +485,6 @@ export default function Tracker() {
 
     function adjustTurnover(idx: number, delta: number) {
         setTeamTurnover((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
-    function adjustOffloads(idx: number, delta: number) {
-        setTeamOffloads((prev) => {
             const copy = [...prev];
             copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
             return copy;
@@ -554,12 +523,9 @@ export default function Tracker() {
         manualPenaltyAdjustments.some((value) => value !== 0) ||
         teamEnAvant.some((value) => value !== 0) ||
         manualEnAvantAdjustments.some((value) => value !== 0) ||
-        teamToucheGagnee.some((value) => value !== 0) ||
         teamTouchePerdue.some((value) => value !== 0) ||
-        teamMeleeGagnee.some((value) => value !== 0) ||
         teamMeleePerdue.some((value) => value !== 0) ||
         teamTurnover.some((value) => value !== 0) ||
-        teamOffloads.some((value) => value !== 0) ||
         teamJeuAuPied.some((value) => value !== 0);
 
     const getTrackingSignature = useCallback(() => {
@@ -573,12 +539,9 @@ export default function Tracker() {
             manualPenaltyAdjustments,
             teamEnAvant,
             manualEnAvantAdjustments,
-            teamToucheGagnee,
             teamTouchePerdue,
-            teamMeleeGagnee,
             teamMeleePerdue,
             teamTurnover,
-            teamOffloads,
             teamJeuAuPied,
         });
     }, [
@@ -591,12 +554,9 @@ export default function Tracker() {
         manualPenaltyAdjustments,
         teamEnAvant,
         manualEnAvantAdjustments,
-        teamToucheGagnee,
         teamTouchePerdue,
-        teamMeleeGagnee,
         teamMeleePerdue,
         teamTurnover,
-        teamOffloads,
         teamJeuAuPied,
     ]);
 
@@ -634,12 +594,9 @@ export default function Tracker() {
             scores: computeScores(),
             penalties: displayedPenalties,
             enAvant: displayedEnAvant,
-            toucheGagnee: teamToucheGagnee,
             touchePerdue: teamTouchePerdue,
-            meleeGagnee: teamMeleeGagnee,
             meleePerdue: teamMeleePerdue,
             turnover: teamTurnover,
-            offloads: teamOffloads,
             jeuAuPied: teamJeuAuPied,
         };
     }, [
@@ -651,13 +608,10 @@ export default function Tracker() {
         team1Id,
         team2Id,
         teamEnAvant,
-        teamMeleeGagnee,
         teamMeleePerdue,
         teamPenalties,
-        teamToucheGagnee,
         teamTouchePerdue,
         teamTurnover,
-        teamOffloads,
         teamJeuAuPied,
         time,
         manualEnAvantAdjustments,

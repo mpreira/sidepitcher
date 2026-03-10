@@ -248,6 +248,7 @@ export default function SyntheseDetailPage() {
     const recapStats = getTeamStatsByHalf();
     const summaryByTeam = getSummaryByTeam();
     const factEvents = summary.events.filter((event) => !(event.type === "Récapitulatif" || event.summaryTable || event.summary));
+    const getPluralReferenceValue = (values: { mt1: number; mt2: number }) => Math.max(values.mt1, values.mt2);
 
     const scorePointsByType: Record<string, number> = {
         "Essai": 5,
@@ -331,14 +332,14 @@ export default function SyntheseDetailPage() {
                                         title: recapStats.leftTeam.teamName,
                                         lines: recapStats.leftTeam.stats.map(
                                             ([label, values]) =>
-                                                `${formatSummaryStatLabel(label, values.mt2 || values.mt1)}: ${values.mt1} -> ${values.mt2}`
+                                                `${formatSummaryStatLabel(label, getPluralReferenceValue(values))}: ${values.mt1} -> ${values.mt2}`
                                         ),
                                     },
                                     {
                                         title: recapStats.rightTeam.teamName,
                                         lines: recapStats.rightTeam.stats.map(
                                             ([label, values]) =>
-                                                `${formatSummaryStatLabel(label, values.mt2 || values.mt1)}: ${values.mt1} -> ${values.mt2}`
+                                                `${formatSummaryStatLabel(label, getPluralReferenceValue(values))}: ${values.mt1} -> ${values.mt2}`
                                         ),
                                     },
                                 ]
@@ -426,7 +427,7 @@ export default function SyntheseDetailPage() {
                             <ul className="space-y-1 text-sm">
                                 {recapStats.leftTeam.stats.map(([label, values], idx) => (
                                     <li key={`left-${idx}`}>
-                                        <span>{formatSummaryStatLabel(label, values.mt2 || values.mt1)}: </span>
+                                        <span>{formatSummaryStatLabel(label, getPluralReferenceValue(values))}: </span>
                                         <span className="font-bold text-green-400">{values.mt1} -&gt; {values.mt2}</span>
                                     </li>
                                 ))}
@@ -437,7 +438,7 @@ export default function SyntheseDetailPage() {
                             <ul className="space-y-1 text-sm">
                                 {recapStats.rightTeam.stats.map(([label, values], idx) => (
                                     <li key={`right-${idx}`}>
-                                        <span>{formatSummaryStatLabel(label, values.mt2 || values.mt1)}: </span>
+                                        <span>{formatSummaryStatLabel(label, getPluralReferenceValue(values))}: </span>
                                         <span className="font-bold text-blue-400">{values.mt1} -&gt; {values.mt2}</span>
                                     </li>
                                 ))}

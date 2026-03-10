@@ -18,12 +18,9 @@ export interface LiveSnapshot {
   scores: number[];
   penalties: number[];
   enAvant: number[];
-  toucheGagnee: number[];
   touchePerdue: number[];
-  meleeGagnee: number[];
   meleePerdue: number[];
   turnover: number[];
-  offloads: number[];
   jeuAuPied: number[];
 }
 

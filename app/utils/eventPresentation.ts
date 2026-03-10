@@ -80,7 +80,7 @@ export function formatSummaryStatLabel(label: string, value: number): string {
 
   const form = forms[label];
   if (!form) return label;
-  return value > 1 ? form.plural : form.singular;
+  return value === 1 ? form.singular : form.plural;
 }
 
 export function formatStatLabel(label: string, value: number): string {
@@ -98,5 +98,5 @@ export function formatStatLabel(label: string, value: number): string {
 
   const form = forms[label];
   if (!form) return label;
-  return value > 1 ? form.plural : form.singular;
+  return value === 1 ? form.singular : form.plural;
 }
