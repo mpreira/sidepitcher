@@ -4,6 +4,7 @@ import type { Team } from "~/types/tracker";
 interface Props {
   teams: Team[];
   scores: number[];
+  bonuses?: string[];
   mainTimerText?: string;
   secondaryTimerText?: string;
 }
@@ -11,10 +12,12 @@ interface Props {
 export default function Scoreboard({
   teams,
   scores,
+  bonuses,
   mainTimerText,
   secondaryTimerText,
 }: Props) {
   const displayScore = (idx: number) => scores[idx] || 0;
+  const displayBonus = (idx: number) => bonuses?.[idx] || "";
 
   const getTeamColor = (team: Team | undefined): string | undefined => {
     const color = team?.color?.trim();
@@ -41,6 +44,9 @@ export default function Scoreboard({
           <>
             <div className="text-lg font-semibold mb-1">{displayTeamName(teams[0])}</div>
             <div className="text-6xl font-bold">{displayScore(0)}</div>
+            {displayBonus(0) && (
+              <div className="mt-2 rounded bg-black/20 px-2 py-1 text-xs font-bold tracking-wide">{displayBonus(0)}</div>
+            )}
           </>
         ) : (
           <div className="text-lg italic">Aucune équipe</div>
@@ -66,6 +72,9 @@ export default function Scoreboard({
           <>
             <div className="text-lg font-semibold mb-1">{displayTeamName(teams[1])}</div>
             <div className="text-6xl font-bold">{displayScore(1)}</div>
+            {displayBonus(1) && (
+              <div className="mt-2 rounded bg-black/20 px-2 py-1 text-xs font-bold tracking-wide">{displayBonus(1)}</div>
+            )}
           </>
         ) : (
           <div className="text-lg italic">Aucune équipe</div>

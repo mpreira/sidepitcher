@@ -41,6 +41,7 @@ export interface Account {
   name: string;
   email: string;
   isAdmin: boolean;
+  isApproved: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +55,7 @@ export interface AccountListItem {
   name: string;
   email: string;
   isAdmin: boolean;
+  isApproved: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,11 +90,11 @@ const LEGACY_ACCOUNT_ID = "legacy-account";
 const LEGACY_ACCOUNT_NAME = "Compte historique";
 const LEGACY_ACCOUNT_ACCESS_CODE = "SIDEPITCHERLEGACY";
 const LEGACY_ACCOUNT_EMAIL = "legacy@sidepitcher.local";
-const LEGACY_ACCOUNT_PASSWORD = "legacy-unsafe-password";
-const ADMIN_ACCOUNT_ID = "admin-account";
-const ADMIN_ACCOUNT_NAME = "Admin";
-const ADMIN_ACCOUNT_EMAIL = "mlpreira@gmail.com";
-const ADMIN_ACCOUNT_PASSWORD = "test01";
+const LEGACY_ACCOUNT_PASSWORD = crypto.randomUUID();
+const ADMIN_ACCOUNT_ID = process.env.BOOTSTRAP_ADMIN_ID?.trim() || "admin-account";
+const ADMIN_ACCOUNT_NAME = process.env.BOOTSTRAP_ADMIN_NAME?.trim() || "Admin";
+const ADMIN_ACCOUNT_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim() || "";
+const ADMIN_ACCOUNT_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD?.trim() || "";
 const ANONYMOUS_SCOPE_PREFIX = "anon:";
 const ANONYMOUS_DATA_TTL_MS = 24 * 60 * 60 * 1000;
 const ANONYMOUS_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
@@ -222,6 +224,7 @@ function mapAccountRow(row: {
   name: string;
   email: string;
   is_admin: boolean;
+  is_approved: boolean;
   created_at: string;
   updated_at: string;
 }): Account {
@@ -230,6 +233,7 @@ function mapAccountRow(row: {
     name: row.name,
     email: row.email,
     isAdmin: row.is_admin,
+    isApproved: row.is_approved,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
@@ -288,6 +292,10 @@ async function ensureLegacyAccount(pool: Pool): Promise<void> {
 }
 
 async function ensureAdminAccount(pool: Pool): Promise<void> {
+  if (!ADMIN_ACCOUNT_EMAIL || !ADMIN_ACCOUNT_PASSWORD) {
+    return;
+  }
+
   const now = new Date().toISOString();
   await pool.query(
     `INSERT INTO accounts (id, name, email, password_hash, is_admin, access_code_hash, created_at, updated_at)
@@ -318,6 +326,7 @@ async function initializeSchema(pool: Pool) {
       email TEXT,
       password_hash TEXT,
       is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+      is_approved BOOLEAN NOT NULL DEFAULT TRUE,
       access_code_hash TEXT UNIQUE NOT NULL,
       created_at TIMESTAMPTZ NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -326,6 +335,7 @@ async function initializeSchema(pool: Pool) {
     ALTER TABLE accounts ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE accounts ADD COLUMN IF NOT EXISTS password_hash TEXT;
     ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_approved BOOLEAN NOT NULL DEFAULT TRUE;
     ALTER TABLE accounts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
     CREATE TABLE IF NOT EXISTS account_rosters_state (
@@ -396,6 +406,11 @@ async function initializeSchema(pool: Pool) {
   await pool.query(
     `UPDATE accounts
      SET updated_at = COALESCE(updated_at, created_at, NOW())`
+  );
+  await pool.query(
+    `UPDATE accounts
+     SET is_approved = TRUE
+     WHERE is_approved IS NULL`
   );
   await pool.query(`ALTER TABLE accounts ALTER COLUMN email SET NOT NULL`);
   await pool.query(`ALTER TABLE accounts ALTER COLUMN password_hash SET NOT NULL`);
@@ -582,10 +597,11 @@ export async function getAccountById(accountId: string): Promise<Account | null>
     name: string;
     email: string;
     is_admin: boolean;
+    is_approved: boolean;
     created_at: string;
     updated_at: string;
   }>(
-    `SELECT id, name, email, is_admin, created_at, updated_at
+    `SELECT id, name, email, is_admin, is_approved, created_at, updated_at
      FROM accounts
      WHERE id = $1`,
     [accountId]
@@ -599,7 +615,7 @@ export async function getAccountById(accountId: string): Promise<Account | null>
 export async function authenticateAccountByEmail(input: {
   email: string;
   password: string;
-}): Promise<Account | null> {
+}): Promise<{ account: Account | null; reason?: "invalid-credentials" | "not-approved" }> {
   await ensureInitialized();
   const normalized = normalizeEmail(input.email);
   if (!normalized) return null;
@@ -610,21 +626,23 @@ export async function authenticateAccountByEmail(input: {
     name: string;
     email: string;
     is_admin: boolean;
+    is_approved: boolean;
     created_at: string;
     updated_at: string;
     password_hash: string;
   }>(
-    `SELECT id, name, email, is_admin, created_at, updated_at, password_hash
+    `SELECT id, name, email, is_admin, is_approved, created_at, updated_at, password_hash
      FROM accounts
      WHERE LOWER(email) = $1`,
     [normalized]
   );
 
   const row = result.rows[0];
-  if (!row) return null;
+  if (!row) return { account: null, reason: "invalid-credentials" };
   const valid = verifyPassword(input.password, row.password_hash);
-  if (!valid) return null;
-  return mapAccountRow(row);
+  if (!valid) return { account: null, reason: "invalid-credentials" };
+  if (!row.is_approved) return { account: null, reason: "not-approved" };
+  return { account: mapAccountRow(row) };
 }
 
 export async function createAccount(input: {
@@ -632,6 +650,7 @@ export async function createAccount(input: {
   email: string;
   password: string;
   isAdmin?: boolean;
+  isApproved?: boolean;
 }): Promise<CreateAccountResult> {
   await ensureInitialized();
   const pool = getPool();
@@ -644,6 +663,7 @@ export async function createAccount(input: {
 
   const passwordHash = hashPassword(input.password);
   const isAdmin = Boolean(input.isAdmin);
+  const isApproved = typeof input.isApproved === "boolean" ? input.isApproved : isAdmin;
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const id = crypto.randomUUID();
@@ -657,13 +677,14 @@ export async function createAccount(input: {
         name: string;
         email: string;
         is_admin: boolean;
+        is_approved: boolean;
         created_at: string;
         updated_at: string;
       }>(
-        `INSERT INTO accounts (id, name, email, password_hash, is_admin, access_code_hash, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
-         RETURNING id, name, email, is_admin, created_at, updated_at`,
-        [id, accountName, email, passwordHash, isAdmin, accessCodeHash, createdAt]
+        `INSERT INTO accounts (id, name, email, password_hash, is_admin, is_approved, access_code_hash, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+         RETURNING id, name, email, is_admin, is_approved, created_at, updated_at`,
+        [id, accountName, email, passwordHash, isAdmin, isApproved, accessCodeHash, createdAt]
       );
 
       const account = mapAccountRow(result.rows[0]);
@@ -689,6 +710,7 @@ export async function renameAccount(accountId: string, name: string): Promise<Ac
     name: string;
     email: string;
     is_admin: boolean;
+    is_approved: boolean;
     created_at: string;
     updated_at: string;
   }>(
@@ -696,7 +718,7 @@ export async function renameAccount(accountId: string, name: string): Promise<Ac
      SET name = $2,
          updated_at = $3
      WHERE id = $1
-     RETURNING id, name, email, is_admin, created_at, updated_at`,
+    RETURNING id, name, email, is_admin, is_approved, created_at, updated_at`,
     [accountId, nextName, new Date().toISOString()]
   );
 
@@ -716,10 +738,11 @@ export async function listAccountsForAdmin(): Promise<AccountListItem[]> {
     name: string;
     email: string;
     is_admin: boolean;
+    is_approved: boolean;
     created_at: string;
     updated_at: string;
   }>(
-    `SELECT id, name, email, is_admin, created_at, updated_at
+    `SELECT id, name, email, is_admin, is_approved, created_at, updated_at
      FROM accounts
      ORDER BY created_at DESC`
   );
@@ -733,6 +756,7 @@ export async function updateAccountByAdmin(input: {
   email?: string;
   password?: string;
   isAdmin?: boolean;
+  isApproved?: boolean;
 }): Promise<Account> {
   await ensureInitialized();
   const pool = getPool();
@@ -744,6 +768,7 @@ export async function updateAccountByAdmin(input: {
   const nextName = input.name ? trimAccountName(input.name) : existing.name;
   const nextEmail = input.email ? normalizeEmail(input.email) : existing.email;
   const nextIsAdmin = typeof input.isAdmin === "boolean" ? input.isAdmin : existing.isAdmin;
+  const nextIsApproved = typeof input.isApproved === "boolean" ? input.isApproved : existing.isApproved;
   const nextPasswordHash = input.password?.trim()
     ? (() => {
         validatePasswordInput(input.password ?? "");
@@ -756,6 +781,7 @@ export async function updateAccountByAdmin(input: {
     name: string;
     email: string;
     is_admin: boolean;
+    is_approved: boolean;
     created_at: string;
     updated_at: string;
   }>(
@@ -763,15 +789,17 @@ export async function updateAccountByAdmin(input: {
      SET name = $2,
          email = $3,
          is_admin = $4,
-         password_hash = COALESCE($5, password_hash),
-         updated_at = $6
+         is_approved = $5,
+         password_hash = COALESCE($6, password_hash),
+         updated_at = $7
      WHERE id = $1
-     RETURNING id, name, email, is_admin, created_at, updated_at`,
+     RETURNING id, name, email, is_admin, is_approved, created_at, updated_at`,
     [
       input.accountId,
       nextName,
       nextEmail,
       nextIsAdmin,
+      nextIsApproved,
       nextPasswordHash,
       new Date().toISOString(),
     ]
@@ -825,6 +853,7 @@ export async function updateAccountCredentials(input: {
     name: string;
     email: string;
     is_admin: boolean;
+    is_approved: boolean;
     created_at: string;
     updated_at: string;
   }>(
@@ -833,7 +862,7 @@ export async function updateAccountCredentials(input: {
          password_hash = COALESCE($3, password_hash),
          updated_at = $4
      WHERE id = $1
-     RETURNING id, name, email, is_admin, created_at, updated_at`,
+     RETURNING id, name, email, is_admin, is_approved, created_at, updated_at`,
     [input.accountId, nextEmail, nextPasswordHash, new Date().toISOString()]
   );
 

@@ -1,13 +1,19 @@
 import { Link, useLoaderData } from "react-router";
 import { useLayoutEffect, useState } from "react";
 import type { Event } from "~/types/tracker";
-import { formatTimelineMoment } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
+import {
+    displayTeamName as displayEventTeamName,
+    formatEventTimeline,
+    formatSummaryStatLabel,
+    getEventLabel,
+    isCardEvent,
+} from "~/utils/eventPresentation";
 
 interface StoredSummary {
     id: string;
@@ -43,7 +49,7 @@ export async function loader({ request, params }: { request: Request; params: { 
 }
 
 export function meta() {
-    return [{ title: "Synthese" }];
+    return [{ title: "Synthèse" }];
 }
 
 function FormattedDateTime({ dateString }: { dateString: string }) {
@@ -64,83 +70,12 @@ export default function SyntheseDetailPage() {
         "Essais",
         "Pénalités",
         "En-avants",
-        "Touches volées",
         "Touches perdues",
-        "Mêlées gagnées",
         "Mêlées perdues",
         "Turnovers",
-        "Offloads",
         "Jeu au pied",
     ];
-    const EVENT_ICONS: Record<string, string> = {
-        "Essai": "🏉",
-        "Transformation": "🎯",
-        "Pénalité réussie": "✅",
-        "Pénalité manquée": "❌",
-        "Drop": "🦶",
-        "Essai de pénalité": "⚖️",
-        "Carton jaune": "🟨",
-        "Carton rouge": "🟥",
-        "Carton orange": "🟧",
-        "Changement": "🔁",
-        "Saignement": "🩸",
-        "Blessure": "🩹",
-        "Arbitrage Vidéo": "📺",
-        "Récapitulatif": "📝",
-    };
-
     const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
-    const displayEventTeamName = (eventTeam: Event["team"]) => {
-        if (!eventTeam) return "";
-        return eventTeam.nickname || displayTeamName(eventTeam.name);
-    };
-
-    const isCardEvent = (type: Event["type"]) =>
-        type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
-
-    const formatEventTimeline = (event: Event) => {
-        if (typeof event.timelineMinute === "number") {
-            return formatTimelineMoment(
-                event.timelineMinute,
-                event.timelineAdditionalMinute || 0,
-                event.timelineSecond || 0,
-                event.timelineHalf
-            );
-        }
-
-        const minute = Math.floor(event.time / 60);
-        const second = event.time % 60;
-        return formatTimelineMoment(minute, 0, second);
-    };
-
-    const formatSummaryStatLabel = (label: string, value: number) => {
-        const forms: Record<string, { singular: string; plural: string }> = {
-            "Essais": { singular: "Essai", plural: "Essais" },
-            "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
-            "En-avants": { singular: "En-avant", plural: "En-avants" },
-            "Touches volées": { singular: "Touche volée", plural: "Touches volées" },
-            "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-            "Mêlées gagnées": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
-            "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-            "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-            "Offloads": { singular: "Offload", plural: "Offloads" },
-            "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
-        };
-
-        const form = forms[label];
-        if (!form) return label;
-        return value > 1 ? form.plural : form.singular;
-    };
-
-    function getEventLabel(event: Event): string {
-        const icon = EVENT_ICONS[event.type] || "📍";
-
-        if (event.type === "Arbitrage Vidéo") {
-            return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
-        }
-
-        return `${icon} ${event.type}`;
-    }
     const getTeamsLabel = () => {
         const storedTeams: Array<{ id: string; name: string }> = summary.teams || [];
         let teamsLabel = "";
@@ -313,31 +248,144 @@ export default function SyntheseDetailPage() {
     const recapStats = getTeamStatsByHalf();
     const summaryByTeam = getSummaryByTeam();
     const factEvents = summary.events.filter((event) => !(event.type === "Récapitulatif" || event.summaryTable || event.summary));
+    const getPluralReferenceValue = (values: { mt1: number; mt2: number }) => Math.max(values.mt1, values.mt2);
+
+    const scorePointsByType: Record<string, number> = {
+        "Essai": 5,
+        "Essai de pénalité": 7,
+        "Transformation": 2,
+        "Pénalité réussie": 3,
+        "Drop": 3,
+    };
+
+    const getScoreByTeam = (onlyFirstHalf: boolean) => {
+        if (orderedTeams.length < 2) return [0, 0] as const;
+
+        const scores = [0, 0];
+        summary.events.forEach((event) => {
+            const points = scorePointsByType[event.type] || 0;
+            if (!points || !event.team?.id) return;
+
+            const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+            if (teamIndex === -1) return;
+
+            if (onlyFirstHalf) {
+                const isFirstHalf =
+                    event.timelineHalf === 1 ||
+                    (event.timelineHalf == null && event.time < 40 * 60);
+                if (!isFirstHalf) return;
+            }
+
+            scores[teamIndex] += points;
+        });
+
+        return [scores[0], scores[1]] as const;
+    };
+
+    const [finalScoreLeft, finalScoreRight] = getScoreByTeam(false);
+    const [halfScoreLeft, halfScoreRight] = getScoreByTeam(true);
+    const finalScoreText = orderedTeams.length >= 2
+        ? `${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name}`
+        : `${finalScoreLeft} - ${finalScoreRight}`;
+    const halfTimeScoreText = `${halfScoreLeft} - ${halfScoreRight}`;
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-            <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-gray-700 mb-2">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
+            <Link to="/syntheses" className="text-white text-base">
+                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                Retour aux synthèses
+            </Link>
+            <br /><br /> 
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
-                onClick={() => exportSummaryToPdf(summary.events, summary.currentTime, summary.summary)}
+                onClick={() =>
+                    exportSummaryToPdf(summary.events, summary.currentTime, summary.summary, {
+                        title: `Synthèse - ${getTeamsLabel()}`,
+                        fileName: getTeamsLabel(),
+                        layout: {
+                            dateLine: `Date: ${new Date(summary.createdAt).toLocaleString("fr-FR")}`,
+                            scoreLine: `${finalScoreText}\n${halfTimeScoreText}`,
+                            resumeColumns: summaryByTeam
+                                ? [
+                                    {
+                                        title: summaryByTeam.leftTeam.teamName,
+                                        lines:
+                                            Array.from(summaryByTeam.leftTeam.values.entries()).map(
+                                                ([type, count]) => `${type}: ${count}`
+                                            ) || [],
+                                    },
+                                    {
+                                        title: summaryByTeam.rightTeam.teamName,
+                                        lines:
+                                            Array.from(summaryByTeam.rightTeam.values.entries()).map(
+                                                ([type, count]) => `${type}: ${count}`
+                                            ) || [],
+                                    },
+                                ]
+                                : undefined,
+                            statsColumns: recapStats
+                                ? [
+                                    {
+                                        title: recapStats.leftTeam.teamName,
+                                        lines: recapStats.leftTeam.stats.map(
+                                            ([label, values]) =>
+                                                `${formatSummaryStatLabel(label, getPluralReferenceValue(values))}: ${values.mt1} -> ${values.mt2}`
+                                        ),
+                                    },
+                                    {
+                                        title: recapStats.rightTeam.teamName,
+                                        lines: recapStats.rightTeam.stats.map(
+                                            ([label, values]) =>
+                                                `${formatSummaryStatLabel(label, getPluralReferenceValue(values))}: ${values.mt1} -> ${values.mt2}`
+                                        ),
+                                    },
+                                ]
+                                : undefined,
+                            factsTitle: "Faits de match",
+                            factLines: factEvents.map((event) => {
+                                let line = `${formatEventTimeline(event)} - ${getEventLabel(event)}`;
+
+                                if (event.type !== "Arbitrage Vidéo" && event.player) {
+                                    line += `${isCardEvent(event.type) ? " pour " : " de "}${event.player.name}`;
+                                }
+                                if (event.team) {
+                                    line += ` ${displayEventTeamName(event.team)}`;
+                                }
+                                if (event.playerOut && event.playerIn) {
+                                    line += ` - ${event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}${event.playerOut.name}`;
+                                    line += ` -> ${event.playerInNumber ? `#${event.playerInNumber} ` : ""}${event.playerIn.name}`;
+                                }
+                                if (event.concussion) {
+                                    line += " - commotion";
+                                }
+
+                                return line;
+                            }),
+                        },
+                    })
+                }
             >
                 <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF
             </button>
-
+            <h1 className="text-2xl text-center font-bold">{finalScoreText}</h1>
+            <h3 className="text-xl text-center font-semibold">
+                <span className="block text-base font-medium text-gray-300">{halfTimeScoreText}</span>
+            </h3>
+        
             <section className="space-y-2">
-                <h2 className="font-semibold">Resume</h2>
+                <h2 className="font-semibold">Résumé</h2>
                 {!summaryByTeam ? (
-                    <p className="text-sm text-gray-600">Resume par equipe indisponible.</p>
+                    <p className="text-sm text-gray-600">Résumé par équipe indisponible.</p>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{summaryByTeam.leftTeam.teamName}</h3>
+                            <h3 className="font-semibold text-center mb-2">{summaryByTeam.leftTeam.teamName}</h3>
                             {summaryByTeam.leftTeam.values.size === 0 ? (
-                                <p className="text-sm text-gray-400">Aucun evenement d'equipe.</p>
+                                <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
                             ) : (
                                 <ul className="space-y-1 text-sm">
                                     {Array.from(summaryByTeam.leftTeam.values.entries()).map(([type, count]) => (
@@ -352,7 +400,7 @@ export default function SyntheseDetailPage() {
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
                             <h3 className="font-semibold mb-2">{summaryByTeam.rightTeam.teamName}</h3>
                             {summaryByTeam.rightTeam.values.size === 0 ? (
-                                <p className="text-sm text-gray-400">Aucun evenement d'equipe.</p>
+                                <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
                             ) : (
                                 <ul className="space-y-1 text-sm">
                                     {Array.from(summaryByTeam.rightTeam.values.entries()).map(([type, count]) => (
@@ -375,22 +423,22 @@ export default function SyntheseDetailPage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{recapStats.leftTeam.teamName}</h3>
+                            <h3 className="font-semibold text-center mb-2">{recapStats.leftTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
                                 {recapStats.leftTeam.stats.map(([label, values], idx) => (
                                     <li key={`left-${idx}`}>
-                                        <span>{formatSummaryStatLabel(label, values.mt2 || values.mt1)}: </span>
+                                        <span>{formatSummaryStatLabel(label, getPluralReferenceValue(values))}: </span>
                                         <span className="font-bold text-green-400">{values.mt1} -&gt; {values.mt2}</span>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{recapStats.rightTeam.teamName}</h3>
+                            <h3 className="font-semibold text-center mb-2">{recapStats.rightTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
                                 {recapStats.rightTeam.stats.map(([label, values], idx) => (
                                     <li key={`right-${idx}`}>
-                                        <span>{formatSummaryStatLabel(label, values.mt2 || values.mt1)}: </span>
+                                        <span>{formatSummaryStatLabel(label, getPluralReferenceValue(values))}: </span>
                                         <span className="font-bold text-blue-400">{values.mt1} -&gt; {values.mt2}</span>
                                     </li>
                                 ))}
@@ -403,7 +451,7 @@ export default function SyntheseDetailPage() {
             <section className="space-y-2">
                 <h2 className="font-semibold">Faits de match</h2>
                 {factEvents.length === 0 ? (
-                    <p className="text-sm text-gray-600">Aucun evenement.</p>
+                    <p className="text-sm text-gray-600">Aucun événement.</p>
                 ) : (
                     <ul className="space-y-1 text-white">
                         {factEvents.map((event, index) => (
@@ -432,11 +480,6 @@ export default function SyntheseDetailPage() {
                     </ul>
                 )}
             </section>
-
-            <Link to="/syntheses" className="text-white text-base">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
-                Retour aux syntheses
-            </Link>
         </main>
     );
 }

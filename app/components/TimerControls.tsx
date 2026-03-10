@@ -1,6 +1,5 @@
-import { fa1, fa2, faArrowRotateLeft, faCheck, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRotateLeft, faCheck, faHourglassEnd, faHourglassStart, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
 
 interface Props {
   time: number;
@@ -60,7 +59,7 @@ export default function TimerControls({
           }`}
           onClick={onSetFirstHalf}
         >
-          <FontAwesomeIcon icon={fa1} className="sm:mr-2" />
+          <FontAwesomeIcon icon={faHourglassStart} className="sm:mr-2" />
           <span className="hidden sm:inline">1ère</span>
         </button>
         <button
@@ -70,7 +69,7 @@ export default function TimerControls({
           onClick={onSetSecondHalf}
           disabled={currentHalf === 2 || matchEnded}
         >
-          <FontAwesomeIcon icon={fa2} className="sm:mr-2" />
+          <FontAwesomeIcon icon={faHourglassEnd} className="sm:mr-2" />
           <span className="hidden sm:inline">2ème</span>
         </button>
         <button

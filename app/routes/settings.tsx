@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAccount } from "~/context/AccountContext";
 
 export function meta() {
@@ -8,6 +8,7 @@ export function meta() {
 
 export default function SettingsPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { account, connected, loading, refreshAccount, logout } = useAccount();
   const [authMode, setAuthMode] = useState<"create" | "login">("login");
   const [renameName, setRenameName] = useState("");
@@ -74,7 +75,7 @@ export default function SettingsPage() {
       }
 
       await refreshAccount();
-      setMessage("Nouveau compte cree et active.");
+      setMessage("Compte cree. En attente de validation par un admin.");
       setNewName("");
       setNewEmail("");
       setNewPassword("");
@@ -106,8 +107,12 @@ export default function SettingsPage() {
         }),
       });
 
-      const data = (await response.json()) as { ok?: boolean };
+      const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) {
+        if (data.error === "account-not-approved") {
+          setError("Compte en attente de validation admin.");
+          return;
+        }
         setError("Identifiants invalides.");
         return;
       }
@@ -116,6 +121,7 @@ export default function SettingsPage() {
       setMessage("Connexion reussie.");
       setLoginEmail("");
       setLoginPassword("");
+      navigate("/", { replace: true });
     } catch {
       setError("Impossible de se connecter.");
     } finally {

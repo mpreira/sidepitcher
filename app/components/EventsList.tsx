@@ -2,7 +2,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
 import type { Event } from "~/types/tracker";
-import { formatTimelineMoment } from "~/utils/TimeUtils";
+import {
+  displayTeamName,
+  formatEventTimeline,
+  formatSummaryStatLabel,
+  getEventLabel,
+  isCardEvent,
+} from "~/utils/eventPresentation";
 
 interface Props {
   events: Event[];
@@ -12,60 +18,6 @@ interface Props {
 export default function EventsList({ events, remove }: Props) {
   if (events.length === 0) {
     return <p>Aucune action enregistrée.</p>;
-  }
-
-  const displayTeamName = (team: Event["team"]) => {
-    if (!team) return "";
-    return team.nickname || team.name.replace(/\s+J\d+$/, "");
-  };
-
-  const formatEventTimeline = (event: Event) => {
-    if (typeof event.timelineMinute === "number") {
-      return formatTimelineMoment(
-        event.timelineMinute,
-        event.timelineAdditionalMinute || 0,
-        event.timelineSecond || 0,
-        event.timelineHalf
-      );
-    }
-
-    const minute = Math.floor(event.time / 60);
-    const second = event.time % 60;
-    return formatTimelineMoment(minute, 0, second);
-  };
-
-  const EVENT_ICONS: Record<string, string> = {
-    "Essai": "🏉",
-    "Transformation": "🎯",
-    "Pénalité réussie": "✅",
-    "Pénalité manquée": "❌",
-    "Drop": "🦶",
-    "Essai de pénalité": "⚖️",
-    "Carton jaune": "🟨",
-    "Carton rouge": "🟥",
-    "Carton orange": "🟧",
-    "Changement": "🔁",
-    "Saignement": "🩸",
-    "Blessure": "🩹",
-    "Arbitrage Vidéo": "📺",
-    "Récapitulatif": "📝",
-  };
-
-  const isCardEvent = (type: Event["type"]) =>
-    type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
-
-  function withSpaceAfterIcon(icon: string, label: string): string {
-    return `${icon} ${label}`.replace(/\s+/g, " ").trim();
-  }
-
-  function getEventLabel(event: Event): string {
-    const icon = EVENT_ICONS[event.type] || "📍";
-
-    if (event.type === "Arbitrage Vidéo") {
-      return withSpaceAfterIcon(icon, `${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`);
-    }
-
-    return withSpaceAfterIcon(icon, event.type);
   }
 
   function renderSummaryEvent(event: Event) {
@@ -79,24 +31,6 @@ export default function EventsList({ events, remove }: Props) {
 
     const [leftTeam, rightTeam] = event.summaryTable.teams;
     const rowCount = Math.max(leftTeam.stats.length, rightTeam.stats.length);
-
-    const formatSummaryStatLabel = (label: string, value: number) => {
-      const forms: Record<string, { singular: string; plural: string }> = {
-        "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
-        "En-avants": { singular: "En-avant", plural: "En-avants" },
-        "Touches volées": { singular: "Touche volée", plural: "Touches volées" },
-        "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-        "Mêlées gagnées": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
-        "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-        "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-        "Offloads": { singular: "Offload", plural: "Offloads" },
-        "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
-      };
-
-      const form = forms[label];
-      if (!form) return label;
-      return value > 1 ? form.plural : form.singular;
-    };
 
     return (
       <div className="w-full space-y-2">
