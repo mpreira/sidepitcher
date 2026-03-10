@@ -349,7 +349,7 @@ export default function SyntheseDetailPage() {
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-            <p className="text-sm text-gray-700 mb-4">
+            <p className="text-sm text-gray-700 mb-2">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
             <Link to="/syntheses" className="text-white text-base">

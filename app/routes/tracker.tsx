@@ -616,6 +616,7 @@ export default function Tracker() {
     }
 
     const canPublishLive = selectedTeams.length === 2 && Boolean(team1Id) && Boolean(team2Id) && team1Id !== team2Id;
+    const matchFactsEvents = useMemo(() => [...events].reverse(), [events]);
 
     const buildLiveSnapshot = useCallback((): LiveSnapshot => {
         const displayedPenalties = getDisplayedPenalties();
@@ -1131,7 +1132,10 @@ export default function Tracker() {
             <section className="space-y-2">
                 <h2 className="font-semibold">Faits de match</h2>
                 <div className="max-h-[28rem] overflow-y-auto pr-1">
-                    <EventsList events={events} remove={removeEvent} />
+                    <EventsList
+                        events={matchFactsEvents}
+                        remove={(displayIndex) => removeEvent(events.length - 1 - displayIndex)}
+                    />
                 </div>
             </section>
 
