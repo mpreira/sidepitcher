@@ -13,6 +13,9 @@ import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
+import { useTrackerClock } from "~/hooks/useTrackerClock";
+import { useTrackerStats } from "~/hooks/useTrackerStats";
+import { formatStatLabel } from "~/utils/eventPresentation";
 import { getTimelineMomentFromClock, getTimelineSortKey } from "~/utils/TimeUtils";
 
 export function meta({}: Route.MetaArgs) {
@@ -39,35 +42,23 @@ const TRACKER_ACTION_TAB_STORAGE_KEY = "sidepitcher.tracker.actionTab";
 
 export default function Tracker() {
     const { account } = useAccount();
-    const [time, setTime] = useState(0);
-    const [running, setRunning] = useState(false);
-    const [currentHalf, setCurrentHalf] = useState<1 | 2>(1);
-    const [manualTimeInput, setManualTimeInput] = useState("");
-    const [matchEnded, setMatchEnded] = useState(false);
-
-    function formatTime(sec: number) {
-        const m = Math.floor(sec / 60);
-        const s = sec % 60;
-        return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-    }
-
-    // compute display times based on current half
-    function getDisplayTimes() {
-        const HALF_SECONDS = 40 * 60; // 40 minutes
-        const isSecondHalf = currentHalf === 2;
-        
-        if (currentHalf === 1) {
-            const mainTime = Math.min(time, HALF_SECONDS);
-            const secondaryTime = time > HALF_SECONDS ? time - HALF_SECONDS : null;
-            return { mainTime, secondaryTime };
-        } else {
-            // 2nd half: main time goes from 40:00 to 80:00, then secondary shows extra time
-            const effectiveTime = time - HALF_SECONDS; // time since start of 2nd half
-            const mainTime = Math.min(effectiveTime, HALF_SECONDS) + HALF_SECONDS; // display from 40:00 to 80:00
-            const secondaryTime = effectiveTime > HALF_SECONDS ? effectiveTime - HALF_SECONDS : null;
-            return { mainTime, secondaryTime };
-        }
-    }
+    const {
+        time,
+        setTime,
+        running,
+        setRunning,
+        currentHalf,
+        setCurrentHalf,
+        manualTimeInput,
+        setManualTimeInput,
+        matchEnded,
+        setMatchEnded,
+        formatTime,
+        getDisplayTimes,
+        adjustTime,
+        applyManualTime,
+        resetClock,
+    } = useTrackerClock();
     const [events, setEvents] = useState<Event[]>([]);
     const { rosters, teams, activeRosterId, matchDay, championship, sport } = useTeams();
     
@@ -143,18 +134,26 @@ export default function Tracker() {
         return team.nickname || team.name.replace(/\s+J\d+$/, "");
     }
 
-    // penalty counts (fouls) for each team - computed from events
-    const [teamPenalties, setTeamPenalties] = useState<number[]>([0, 0]);
-    // manual penalty adjustments (on top of computed values)
-    const [manualPenaltyAdjustments, setManualPenaltyAdjustments] = useState<number[]>([0, 0]);
-    // en-avant counts for each team - computed from events
-    const [teamEnAvant, setTeamEnAvant] = useState<number[]>([0, 0]);
-    // manual en-avant adjustments (on top of computed values)
-    const [manualEnAvantAdjustments, setManualEnAvantAdjustments] = useState<number[]>([0, 0]);
-    const [teamTouchePerdue, setTeamTouchePerdue] = useState<number[]>([0, 0]);
-    const [teamMeleePerdue, setTeamMeleePerdue] = useState<number[]>([0, 0]);
-    const [teamTurnover, setTeamTurnover] = useState<number[]>([0, 0]);
-    const [teamJeuAuPied, setTeamJeuAuPied] = useState<number[]>([0, 0]);
+    const {
+        teamPenalties,
+        manualPenaltyAdjustments,
+        teamEnAvant,
+        manualEnAvantAdjustments,
+        teamTouchePerdue,
+        teamMeleePerdue,
+        teamTurnover,
+        teamJeuAuPied,
+        adjustPenalties,
+        adjustEnAvant,
+        adjustTouchePerdue,
+        adjustMeleePerdue,
+        adjustTurnover,
+        adjustJeuAuPied,
+        getDisplayedPenalties,
+        getDisplayedEnAvant,
+        resetStats,
+        hasStatsContent,
+    } = useTrackerStats(events, selectedTeamIds);
 
     useEffect(() => {
         const storedTab = window.localStorage.getItem(TRACKER_ACTION_TAB_STORAGE_KEY);
@@ -202,20 +201,9 @@ export default function Tracker() {
 
     function resetTrackerInfos() {
         setEvents([]);
-        setTime(0);
-        setRunning(false);
-        setCurrentHalf(1);
-        setMatchEnded(false);
-        setManualTimeInput("");
+        resetClock();
         setActiveCommand(null);
-        setTeamPenalties([0, 0]);
-        setManualPenaltyAdjustments([0, 0]);
-        setTeamEnAvant([0, 0]);
-        setManualEnAvantAdjustments([0, 0]);
-        setTeamTouchePerdue([0, 0]);
-        setTeamMeleePerdue([0, 0]);
-        setTeamTurnover([0, 0]);
-        setTeamJeuAuPied([0, 0]);
+        resetStats();
         setLiveMatchId(null);
         setLivePublicSlug(null);
         setLiveAdminToken(null);
@@ -247,34 +235,6 @@ export default function Tracker() {
 
         prevContextRef.current = { matchDay, championship, sport };
     }, [matchDay, championship, sport]);
-
-    // count penalties (fouls) from events
-    useEffect(() => {
-        const counts = [0, 0];
-        events.forEach((e) => {
-            if (e.type === "Pénalité" && e.team) {
-                const idx = getSelectedTeamIndex(e.team.id);
-                if (idx !== -1) {
-                    counts[idx]++;
-                }
-            }
-        });
-        setTeamPenalties(counts);
-    }, [events, selectedTeamIds]);
-
-    // count en-avant from events
-    useEffect(() => {
-        const counts = [0, 0];
-        events.forEach((e) => {
-            if (e.type === "En-avant" && e.team) {
-                const idx = getSelectedTeamIndex(e.team.id);
-                if (idx !== -1) {
-                    counts[idx]++;
-                }
-            }
-        });
-        setTeamEnAvant(counts);
-    }, [events, selectedTeamIds]);
 
 // timer interval
     useEffect(() => {
@@ -333,32 +293,6 @@ export default function Tracker() {
         };
 
         addEvent(summaryEvent);
-    }
-
-    function adjustTime(delta: number) {
-        setTime((t) => Math.max(0, t + delta));
-    }
-
-    function parseManualTime(input: string): number | null {
-        const trimmed = input.trim();
-        if (!trimmed) return null;
-        const parts = trimmed.split(':');
-        if (parts.length === 2) {
-            const mins = parseInt(parts[0], 10);
-            const secs = parseInt(parts[1], 10);
-            if (!isNaN(mins) && !isNaN(secs) && mins >= 0 && secs >= 0 && secs < 60) {
-                return mins * 60 + secs;
-            }
-        }
-        return null;
-    }
-
-    function applyManualTime() {
-        const parsedTime = parseManualTime(manualTimeInput);
-        if (parsedTime !== null) {
-            setTime(parsedTime);
-            setManualTimeInput("");
-        }
     }
 
     async function saveTeamSelection() {
@@ -449,84 +383,13 @@ export default function Tracker() {
         return bonuses;
     }
 
-    function adjustPenalties(idx: number, delta: number) {
-        setManualPenaltyAdjustments((prev) => {
-            const copy = [...prev];
-            const newValue = (copy[idx] || 0) + delta;
-            copy[idx] = newValue;
-            return copy;
-        });
-    }
-
-    function adjustEnAvant(idx: number, delta: number) {
-        setManualEnAvantAdjustments((prev) => {
-            const copy = [...prev];
-            const newValue = (copy[idx] || 0) + delta;
-            copy[idx] = newValue;
-            return copy;
-        });
-    }
-
-    function adjustTouchePerdue(idx: number, delta: number) {
-        setTeamTouchePerdue((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
-    function adjustMeleePerdue(idx: number, delta: number) {
-        setTeamMeleePerdue((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
-    function adjustTurnover(idx: number, delta: number) {
-        setTeamTurnover((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
-    function adjustJeuAuPied(idx: number, delta: number) {
-        setTeamJeuAuPied((prev) => {
-            const copy = [...prev];
-            copy[idx] = Math.max(0, (copy[idx] || 0) + delta);
-            return copy;
-        });
-    }
-
-    function getDisplayedPenalties(): number[] {
-        return teamPenalties.map((count, idx) => {
-            const total = count + (manualPenaltyAdjustments[idx] || 0);
-            return Math.max(0, total); // cannot be negative
-        });
-    }
-
-    function getDisplayedEnAvant(): number[] {
-        return teamEnAvant.map((count, idx) => {
-            const total = count + (manualEnAvantAdjustments[idx] || 0);
-            return Math.max(0, total); // cannot be negative
-        });
-    }
-
     const hasTrackingContent =
         time !== 0 ||
         running ||
         currentHalf !== 1 ||
         matchEnded ||
         events.length > 0 ||
-        teamPenalties.some((value) => value !== 0) ||
-        manualPenaltyAdjustments.some((value) => value !== 0) ||
-        teamEnAvant.some((value) => value !== 0) ||
-        manualEnAvantAdjustments.some((value) => value !== 0) ||
-        teamTouchePerdue.some((value) => value !== 0) ||
-        teamMeleePerdue.some((value) => value !== 0) ||
-        teamTurnover.some((value) => value !== 0) ||
-        teamJeuAuPied.some((value) => value !== 0);
+        hasStatsContent;
 
     const getTrackingSignature = useCallback(() => {
         return JSON.stringify({
@@ -991,21 +854,6 @@ export default function Tracker() {
                                 onAdjust: adjustJeuAuPied,
                             },
                         ];
-
-                        const formatStatLabel = (label: string, value: number) => {
-                            const forms: Record<string, { singular: string; plural: string }> = {
-                                "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
-                                "En Avant": { singular: "En-avant", plural: "En-avants" },
-                                "Touche Perdue": { singular: "Touche perdue", plural: "Touches perdues" },
-                                "Mêlée Perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-                                "Turnover": { singular: "Turnover", plural: "Turnovers" },
-                                "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
-                            };
-
-                            const form = forms[label];
-                            if (!form) return label;
-                            return value > 1 ? form.plural : form.singular;
-                        };
 
                         return (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
