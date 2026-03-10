@@ -5,10 +5,27 @@ interface NewAccountNotificationInput {
   accountEmail: string;
 }
 
+function sanitizeEnvSecret(value: string | undefined): string {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  // Render/UI copy-paste can accidentally include wrapping quotes.
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
+}
+
 export async function sendNewAccountNotificationEmail(
   input: NewAccountNotificationInput
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = sanitizeEnvSecret(process.env.RESEND_API_KEY);
   const from = process.env.RESEND_FROM_EMAIL ?? "SidePitcher <onboarding@resend.dev>";
   const adminNotificationEmail =
     process.env.ADMIN_NOTIFICATION_EMAIL?.trim() || DEFAULT_ADMIN_NOTIFICATION_EMAIL;
@@ -38,7 +55,10 @@ export async function sendNewAccountNotificationEmail(
 
   if (!response.ok) {
     const details = await response.text();
-    throw new Error(`Unable to send account notification email (status ${response.status}): ${details}`);
+    const keyFingerprint = apiKey.length >= 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : "too-short";
+    throw new Error(
+      `Unable to send account notification email (status ${response.status}, key ${keyFingerprint}): ${details}`
+    );
   }
 
   console.info("[mailer] account notification email sent", {
