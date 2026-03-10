@@ -48,7 +48,7 @@ export async function sendNewAccountNotificationEmail(
     body: JSON.stringify({
       from,
       to: [adminNotificationEmail],
-      subject: "Nouveau compte SidePitcher",
+      subject: "Nouveau compte créé surSidePitcher",
       text: `Un nouveau compte a été créé.\n\nNom: ${input.accountName}\nEmail: ${input.accountEmail}`,
     }),
   });

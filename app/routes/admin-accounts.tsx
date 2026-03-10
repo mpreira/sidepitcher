@@ -36,9 +36,14 @@ export default function AdminAccountsPage() {
   const data = useLoaderData<typeof loader>();
   const [accounts, setAccounts] = useState<AdminAccountItem[]>(() => data.accounts ?? []);
   const [passwordDraft, setPasswordDraft] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<"pending" | "approved">("pending");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const pendingAccounts = accounts.filter((item) => !item.isApproved);
+  const approvedAccounts = accounts.filter((item) => item.isApproved);
+  const visibleAccounts = activeTab === "pending" ? pendingAccounts : approvedAccounts;
 
   async function refreshAccounts() {
     const response = await fetch("/api/admin/accounts");
@@ -114,13 +119,67 @@ export default function AdminAccountsPage() {
     }
   }
 
+  async function approveAccount(item: AdminAccountItem) {
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/admin/accounts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId: item.id,
+          isApproved: true,
+        }),
+      });
+      const payload = (await response.json()) as { ok?: boolean };
+      if (!response.ok || !payload.ok) {
+        setError("Impossible de valider ce compte.");
+        return;
+      }
+
+      await refreshAccounts();
+      setMessage("Compte valide avec succes.");
+    } catch {
+      setError("Impossible de valider ce compte.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
       <h1 className="text-2xl font-bold">Administration des comptes</h1>
       <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecte.</p>
 
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("pending")}
+          className={`px-3 py-1 rounded text-sm border ${
+            activeTab === "pending"
+              ? "bg-amber-600 text-white border-amber-500"
+              : "bg-neutral-800 text-neutral-300 border-neutral-700"
+          }`}
+        >
+          A valider ({pendingAccounts.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("approved")}
+          className={`px-3 py-1 rounded text-sm border ${
+            activeTab === "approved"
+              ? "bg-emerald-700 text-white border-emerald-600"
+              : "bg-neutral-800 text-neutral-300 border-neutral-700"
+          }`}
+        >
+          Valides ({approvedAccounts.length})
+        </button>
+      </div>
+
       <ul className="space-y-3">
-        {accounts.map((item) => (
+        {visibleAccounts.map((item) => (
           <li key={item.id} className="rounded border border-neutral-700 p-3 space-y-2 bg-neutral-900">
             <div className="sp-input-shell">
               <label className="sp-input-label" htmlFor={`adminName-${item.id}`}>Nom</label>
@@ -184,20 +243,6 @@ export default function AdminAccountsPage() {
               />
               Admin
             </label>
-            <label className="text-sm flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={item.isApproved}
-                onChange={(event) =>
-                  setAccounts((prev) =>
-                    prev.map((entry) =>
-                      entry.id === item.id ? { ...entry, isApproved: event.target.checked } : entry
-                    )
-                  )
-                }
-              />
-              Compte validé
-            </label>
             <div className="flex gap-2">
               <button
                 onClick={() => updateAccount(item)}
@@ -206,6 +251,15 @@ export default function AdminAccountsPage() {
               >
                 Mettre a jour
               </button>
+              {!item.isApproved && (
+                <button
+                  onClick={() => approveAccount(item)}
+                  disabled={busy}
+                  className="flex-1 px-3 py-1 rounded bg-emerald-700 text-white hover:bg-emerald-800 disabled:bg-gray-500"
+                >
+                  Valider le compte
+                </button>
+              )}
               <button
                 onClick={() => deleteAccount(item.id)}
                 disabled={busy || item.id === data.adminId}
@@ -217,6 +271,12 @@ export default function AdminAccountsPage() {
           </li>
         ))}
       </ul>
+
+      {visibleAccounts.length === 0 && (
+        <p className="text-sm text-neutral-400">
+          {activeTab === "pending" ? "Aucun compte en attente de validation." : "Aucun compte valide."}
+        </p>
+      )}
 
       {message && <p className="text-sm text-green-400">{message}</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}
