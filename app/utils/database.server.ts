@@ -88,11 +88,11 @@ const LEGACY_ACCOUNT_ID = "legacy-account";
 const LEGACY_ACCOUNT_NAME = "Compte historique";
 const LEGACY_ACCOUNT_ACCESS_CODE = "SIDEPITCHERLEGACY";
 const LEGACY_ACCOUNT_EMAIL = "legacy@sidepitcher.local";
-const LEGACY_ACCOUNT_PASSWORD = "legacy-unsafe-password";
-const ADMIN_ACCOUNT_ID = "admin-account";
-const ADMIN_ACCOUNT_NAME = "Admin";
-const ADMIN_ACCOUNT_EMAIL = "mlpreira@gmail.com";
-const ADMIN_ACCOUNT_PASSWORD = "test01";
+const LEGACY_ACCOUNT_PASSWORD = crypto.randomUUID();
+const ADMIN_ACCOUNT_ID = process.env.BOOTSTRAP_ADMIN_ID?.trim() || "admin-account";
+const ADMIN_ACCOUNT_NAME = process.env.BOOTSTRAP_ADMIN_NAME?.trim() || "Admin";
+const ADMIN_ACCOUNT_EMAIL = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim() || "";
+const ADMIN_ACCOUNT_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD?.trim() || "";
 const ANONYMOUS_SCOPE_PREFIX = "anon:";
 const ANONYMOUS_DATA_TTL_MS = 24 * 60 * 60 * 1000;
 const ANONYMOUS_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
@@ -288,6 +288,10 @@ async function ensureLegacyAccount(pool: Pool): Promise<void> {
 }
 
 async function ensureAdminAccount(pool: Pool): Promise<void> {
+  if (!ADMIN_ACCOUNT_EMAIL || !ADMIN_ACCOUNT_PASSWORD) {
+    return;
+  }
+
   const now = new Date().toISOString();
   await pool.query(
     `INSERT INTO accounts (id, name, email, password_hash, is_admin, access_code_hash, created_at, updated_at)
