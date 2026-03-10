@@ -21,6 +21,28 @@ interface PdfExportOptions {
     layout?: PdfSynthesisLayout;
 }
 
+function sanitizePdfText(value: string): string {
+    return (value || "")
+        .replace(/\uFE0F/g, "")
+        .replace(/🏉/g, "[ESSAI]")
+        .replace(/🎯/g, "[TRANSFO]")
+        .replace(/✅/g, "[OK]")
+        .replace(/❌/g, "[KO]")
+        .replace(/🦶/g, "[DROP]")
+        .replace(/⚖/g, "[PEN]")
+        .replace(/🟨/g, "[CJ]")
+        .replace(/🟥/g, "[CR]")
+        .replace(/🟧/g, "[CO]")
+        .replace(/🔁/g, "[CHG]")
+        .replace(/🩸/g, "[SAIGN]")
+        .replace(/🩹/g, "[BLES]")
+        .replace(/📺/g, "[VIDEO]")
+        .replace(/📝/g, "[RECAP]")
+        .replace(/📍/g, "[EVT]")
+        .replace(/🚨/g, "[ALERTE]")
+        .replace(/[—–]/g, "-");
+}
+
 function displayTeamName(team: Team): string {
     return team.nickname || team.name.replace(/\s+J\d+$/, "");
 }
@@ -156,7 +178,7 @@ export function exportSummaryToPdf(
         const lineHeight = opts?.lineHeight ?? defaultLineHeight;
         const x = opts?.x ?? margin;
         const width = opts?.width ?? contentWidth;
-        const lines = doc.splitTextToSize(text || "", width);
+        const lines = doc.splitTextToSize(sanitizePdfText(text), width);
 
         doc.setFontSize(fontSize);
         doc.setFont("helvetica", opts?.bold ? "bold" : "normal");

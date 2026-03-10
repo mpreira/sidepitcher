@@ -324,7 +324,7 @@ export default function SyntheseDetailPage() {
                 <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour aux synthèses
             </Link>
-            <br /> 
+            <br /><br /> 
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
                 onClick={() =>
