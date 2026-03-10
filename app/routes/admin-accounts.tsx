@@ -181,6 +181,18 @@ export default function AdminAccountsPage() {
       <ul className="space-y-3">
         {visibleAccounts.map((item) => (
           <li key={item.id} className="rounded border border-neutral-700 p-3 space-y-2 bg-neutral-900">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-neutral-400">ID: {item.id}</p>
+              <span
+                className={`text-xs px-2 py-1 rounded-full border ${
+                  item.isApproved
+                    ? "bg-emerald-900/50 text-emerald-300 border-emerald-700"
+                    : "bg-amber-900/50 text-amber-300 border-amber-700"
+                }`}
+              >
+                {item.isApproved ? "Valide" : "En attente"}
+              </span>
+            </div>
             <div className="sp-input-shell">
               <label className="sp-input-label" htmlFor={`adminName-${item.id}`}>Nom</label>
               <input
