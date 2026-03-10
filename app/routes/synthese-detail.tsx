@@ -348,16 +348,17 @@ export default function SyntheseDetailPage() {
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-            <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-gray-700 text-center mb-4">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
-            <h3 className="text-xl text-center font-semibold">{scoreLineText}</h3>
             <Link to="/syntheses" className="text-white text-base">
                 <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour aux synthèses
             </Link>
             <br /><br /> 
+            <h1 className="text-2xl text-center font-bold">{getTeamsLabel()}</h1>
+            <h3 className="text-xl text-center font-semibold">{scoreLineText}</h3>
+            
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
                 onClick={() =>
