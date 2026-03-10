@@ -71,12 +71,9 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
     const forms: Record<string, { singular: string; plural: string }> = {
       "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
       "En-avants": { singular: "En-avant", plural: "En-avants" },
-      "Touches volées": { singular: "Touche volée", plural: "Touches volées" },
       "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-      "Mêlées gagnées": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
       "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
       "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-      "Offloads": { singular: "Offload", plural: "Offloads" },
       "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
     };
 
@@ -134,12 +131,9 @@ function formatStatLabel(label: string, value: number): string {
   const forms: Record<string, { singular: string; plural: string }> = {
     "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
     "En-avant": { singular: "En-avant", plural: "En-avants" },
-    "Touche volée": { singular: "Touche volée", plural: "Touches volées" },
     "Touche perdue": { singular: "Touche perdue", plural: "Touches perdues" },
-    "Mêlée gagnée": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
     "Mêlée perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
     "Turnover": { singular: "Turnover", plural: "Turnovers" },
-    "Offload": { singular: "Offload", plural: "Offloads" },
     "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
   };
 
@@ -281,12 +275,9 @@ export default function LiveViewPage() {
   const teamStats = [
     { label: "Pénalité", values: snapshot.penalties },
     { label: "En-avant", values: snapshot.enAvant },
-    { label: "Touche volée", values: snapshot.toucheGagnee },
     { label: "Touche perdue", values: snapshot.touchePerdue },
-    { label: "Mêlée gagnée", values: snapshot.meleeGagnee },
     { label: "Mêlée perdue", values: snapshot.meleePerdue },
     { label: "Turnover", values: snapshot.turnover || [0, 0] },
-    { label: "Offload", values: snapshot.offloads || [0, 0] },
     { label: "Jeu au pied", values: snapshot.jeuAuPied || [0, 0] },
   ];
 

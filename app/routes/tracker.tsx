@@ -309,15 +309,12 @@ export default function Tracker() {
         const statRows = [
             { label: "Pénalités", left: displayedPenalties[0] || 0, right: displayedPenalties[1] || 0 },
             { label: "En-avants", left: displayedEnAvant[0] || 0, right: displayedEnAvant[1] || 0 },
-            { label: "Touches volées", left: teamToucheGagnee[0] || 0, right: teamToucheGagnee[1] || 0 },
             { label: "Touches perdues", left: teamTouchePerdue[0] || 0, right: teamTouchePerdue[1] || 0 },
-            { label: "Mêlées gagnées", left: teamMeleeGagnee[0] || 0, right: teamMeleeGagnee[1] || 0 },
             { label: "Mêlées perdues", left: teamMeleePerdue[0] || 0, right: teamMeleePerdue[1] || 0 },
             { label: "Turnovers", left: teamTurnover[0] || 0, right: teamTurnover[1] || 0 },
-            { label: "Offloads", left: teamOffloads[0] || 0, right: teamOffloads[1] || 0 },
             { label: "Jeu au pied", left: teamJeuAuPied[0] || 0, right: teamJeuAuPied[1] || 0 },
         ];
-        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamToucheGagnee[0] || 0} touches volées, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleeGagnee[0] || 0} mêlées gagnées, ${teamMeleePerdue[0] || 0} mêlées perdues, ${teamTurnover[0] || 0} turnovers, ${teamOffloads[0] || 0} offloads, ${teamJeuAuPied[0] || 0} jeux au pied / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamToucheGagnee[1] || 0} touches volées, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleeGagnee[1] || 0} mêlées gagnées, ${teamMeleePerdue[1] || 0} mêlées perdues, ${teamTurnover[1] || 0} turnovers, ${teamOffloads[1] || 0} offloads, ${teamJeuAuPied[1] || 0} jeux au pied`;
+        const summary = `${halfLabel} : ${team1Name} : ${displayedPenalties[0]} pénalités, ${displayedEnAvant[0]} en-avants, ${teamTouchePerdue[0] || 0} touches perdues, ${teamMeleePerdue[0] || 0} mêlées perdues, ${teamTurnover[0] || 0} turnovers, ${teamJeuAuPied[0] || 0} jeux au pied / ${team2Name} : ${displayedPenalties[1]} pénalités, ${displayedEnAvant[1]} en-avants, ${teamTouchePerdue[1] || 0} touches perdues, ${teamMeleePerdue[1] || 0} mêlées perdues, ${teamTurnover[1] || 0} turnovers, ${teamJeuAuPied[1] || 0} jeux au pied`;
         
         const summaryEvent: Event = {
             type: "Récapitulatif",
@@ -1019,19 +1016,9 @@ export default function Tracker() {
                                 onAdjust: adjustEnAvant,
                             },
                             {
-                                label: "Touche volée",
-                                values: teamToucheGagnee,
-                                onAdjust: adjustToucheGagnee,
-                            },
-                            {
                                 label: "Touche Perdue",
                                 values: teamTouchePerdue,
                                 onAdjust: adjustTouchePerdue,
-                            },
-                            {
-                                label: "Mêlée Gagnée",
-                                values: teamMeleeGagnee,
-                                onAdjust: adjustMeleeGagnee,
                             },
                             {
                                 label: "Mêlée Perdue",
@@ -1044,11 +1031,6 @@ export default function Tracker() {
                                 onAdjust: adjustTurnover,
                             },
                             {
-                                label: "Offloads",
-                                values: teamOffloads,
-                                onAdjust: adjustOffloads,
-                            },
-                            {
                                 label: "Jeu au pied",
                                 values: teamJeuAuPied,
                                 onAdjust: adjustJeuAuPied,
@@ -1059,12 +1041,9 @@ export default function Tracker() {
                             const forms: Record<string, { singular: string; plural: string }> = {
                                 "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
                                 "En Avant": { singular: "En-avant", plural: "En-avants" },
-                                "Touche volée": { singular: "Touche volée", plural: "Touches volées" },
                                 "Touche Perdue": { singular: "Touche perdue", plural: "Touches perdues" },
-                                "Mêlée Gagnée": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
                                 "Mêlée Perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
                                 "Turnover": { singular: "Turnover", plural: "Turnovers" },
-                                "Offloads": { singular: "Offload", plural: "Offloads" },
                                 "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
                             };
 

@@ -64,12 +64,9 @@ export default function SyntheseDetailPage() {
         "Essais",
         "Pénalités",
         "En-avants",
-        "Touches volées",
         "Touches perdues",
-        "Mêlées gagnées",
         "Mêlées perdues",
         "Turnovers",
-        "Offloads",
         "Jeu au pied",
     ];
     const EVENT_ICONS: Record<string, string> = {
@@ -118,12 +115,9 @@ export default function SyntheseDetailPage() {
             "Essais": { singular: "Essai", plural: "Essais" },
             "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
             "En-avants": { singular: "En-avant", plural: "En-avants" },
-            "Touches volées": { singular: "Touche volée", plural: "Touches volées" },
             "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-            "Mêlées gagnées": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
             "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
             "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-            "Offloads": { singular: "Offload", plural: "Offloads" },
             "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
         };
 
