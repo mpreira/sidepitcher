@@ -7,6 +7,7 @@ import TimerControls from "~/components/TimerControls";
 import CommandPanel from "~/components/CommandPanel";
 import EventForm from "~/components/EventForm";
 import EventsList from "~/components/EventsList";
+import TrackerTeamSelection from "~/components/TrackerTeamSelection";
 import TrackerStatsPanel from "~/components/TrackerStatsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
@@ -445,63 +446,15 @@ export default function Tracker() {
                 </p>
             )}
 
-            <section className="space-y-2">
-                {teamsForDay.length === 0 ? (
-                    <p className="text-sm text-gray-600">Aucune composition pour cette journée.</p>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div className="sp-input-shell">
-                                <label className="sp-input-label" htmlFor="team1Select">Équipe 1</label>
-                                <select
-                                    id="team1Select"
-                                    className="sp-input-control"
-                                    value={team1Id}
-                                    onChange={(e) => handleTeam1Change(e.target.value)}
-                                >
-                                    <option value="">-- Équipe 1 --</option>
-                                    {teamsForDay.map((team) => (
-                                        <option key={team.id} value={team.id}>
-                                            {team.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="sp-input-shell">
-                                <label className="sp-input-label" htmlFor="team2Select">Équipe 2</label>
-                                <select
-                                    id="team2Select"
-                                    className="sp-input-control"
-                                    value={team2Id}
-                                    onChange={(e) => handleTeam2Change(e.target.value)}
-                                >
-                                    <option value="">-- Équipe 2 --</option>
-                                    {teamsForDay.map((team) => (
-                                        <option key={team.id} value={team.id}>
-                                            {team.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        {team1Id && team2Id && team1Id === team2Id && (
-                            <p className="text-sm text-red-600">Équipe 1 et Équipe 2 doivent être différentes.</p>
-                        )}
-                        <button
-                            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
-                            onClick={saveTeamSelection}
-                            disabled={!team1Id || !team2Id || team1Id === team2Id}
-                        >
-                            Valider
-                        </button>
-                        {saveMessage && (
-                            <p className={`text-sm ${saveMessage.includes("✓") ? "text-green-700" : "text-red-600"}`}>
-                                {saveMessage}
-                            </p>
-                        )}
-                    </>
-                )}
-            </section>
+            <TrackerTeamSelection
+                teamsForDay={teamsForDay}
+                team1Id={team1Id}
+                team2Id={team2Id}
+                onTeam1Change={handleTeam1Change}
+                onTeam2Change={handleTeam2Change}
+                onSave={saveTeamSelection}
+                saveMessage={saveMessage}
+            />
 
             <section className="space-y-2 border border-neutral-700 rounded p-3 bg-neutral-900">
                 <p className="text-sm text-neutral-300">Diffusion externe en lecture seule</p>
