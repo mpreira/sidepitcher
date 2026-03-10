@@ -342,9 +342,10 @@ export default function SyntheseDetailPage() {
 
     const [finalScoreLeft, finalScoreRight] = getScoreByTeam(false);
     const [halfScoreLeft, halfScoreRight] = getScoreByTeam(true);
-    const scoreLineText = orderedTeams.length >= 2
-        ? `${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name} (${halfScoreLeft} - ${halfScoreRight})`
-        : `${finalScoreLeft} - ${finalScoreRight} (${halfScoreLeft} - ${halfScoreRight})`;
+    const finalScoreText = orderedTeams.length >= 2
+        ? `${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name}`
+        : `${finalScoreLeft} - ${finalScoreRight}`;
+    const halfTimeScoreText = `${halfScoreLeft} - ${halfScoreRight}`;
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
@@ -357,7 +358,10 @@ export default function SyntheseDetailPage() {
             </Link>
             <br /><br /> 
             <h1 className="text-2xl text-center font-bold">{getTeamsLabel()}</h1>
-            <h3 className="text-xl text-center font-semibold">{scoreLineText}</h3>
+            <h3 className="text-xl text-center font-semibold">
+                <span className="block">{finalScoreText}</span>
+                <span className="block text-base font-medium text-gray-300">{halfTimeScoreText}</span>
+            </h3>
             
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
@@ -367,7 +371,7 @@ export default function SyntheseDetailPage() {
                         fileName: getTeamsLabel(),
                         layout: {
                             dateLine: `Date: ${new Date(summary.createdAt).toLocaleString("fr-FR")}`,
-                            scoreLine: scoreLineText,
+                            scoreLine: `${finalScoreText}\n${halfTimeScoreText}`,
                             resumeColumns: summaryByTeam
                                 ? [
                                     {
