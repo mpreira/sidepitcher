@@ -48,7 +48,14 @@ export const action: ActionFunction = async ({ request }) => {
         accountName: created.account.name,
         accountEmail: created.account.email,
       });
-    } catch {
+    } catch (error) {
+      console.error("[account:create] notification email failed", {
+        accountId: created.account.id,
+        accountEmail: created.account.email,
+        to: process.env.ADMIN_NOTIFICATION_EMAIL ?? "mlpreira@gmail.com",
+        from: process.env.RESEND_FROM_EMAIL ?? "SidePitcher <onboarding@resend.dev>",
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Notification failures should not block account creation.
     }
 

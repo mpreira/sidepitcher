@@ -33,6 +33,6 @@ export async function sendNewAccountNotificationEmail(
 
   if (!response.ok) {
     const details = await response.text();
-    throw new Error(`Unable to send account notification email: ${details}`);
+    throw new Error(`Unable to send account notification email (status ${response.status}): ${details}`);
   }
 }
