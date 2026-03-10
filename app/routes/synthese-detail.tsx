@@ -1,13 +1,19 @@
 import { Link, useLoaderData } from "react-router";
 import { useLayoutEffect, useState } from "react";
 import type { Event } from "~/types/tracker";
-import { formatTimelineMoment } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowCircleLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
+import {
+    displayTeamName as displayEventTeamName,
+    formatEventTimeline,
+    formatSummaryStatLabel,
+    getEventLabel,
+    isCardEvent,
+} from "~/utils/eventPresentation";
 
 interface StoredSummary {
     id: string;
@@ -69,72 +75,7 @@ export default function SyntheseDetailPage() {
         "Turnovers",
         "Jeu au pied",
     ];
-    const EVENT_ICONS: Record<string, string> = {
-        "Essai": "🏉",
-        "Transformation": "🎯",
-        "Pénalité réussie": "✅",
-        "Pénalité manquée": "❌",
-        "Drop": "🦶",
-        "Essai de pénalité": "⚖️",
-        "Carton jaune": "🟨",
-        "Carton rouge": "🟥",
-        "Carton orange": "🟧",
-        "Changement": "🔁",
-        "Saignement": "🩸",
-        "Blessure": "🩹",
-        "Arbitrage Vidéo": "📺",
-        "Récapitulatif": "📝",
-    };
-
     const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
-    const displayEventTeamName = (eventTeam: Event["team"]) => {
-        if (!eventTeam) return "";
-        return eventTeam.nickname || displayTeamName(eventTeam.name);
-    };
-
-    const isCardEvent = (type: Event["type"]) =>
-        type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
-
-    const formatEventTimeline = (event: Event) => {
-        if (typeof event.timelineMinute === "number") {
-            return formatTimelineMoment(
-                event.timelineMinute,
-                event.timelineAdditionalMinute || 0,
-                event.timelineSecond || 0,
-                event.timelineHalf
-            );
-        }
-
-        const minute = Math.floor(event.time / 60);
-        const second = event.time % 60;
-        return formatTimelineMoment(minute, 0, second);
-    };
-
-    const formatSummaryStatLabel = (label: string, value: number) => {
-        const forms: Record<string, { singular: string; plural: string }> = {
-            "Essais": { singular: "Essai", plural: "Essais" },
-            "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
-            "En-avants": { singular: "En-avant", plural: "En-avants" },
-            "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-            "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-            "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-            "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
-        };
-
-        const form = forms[label];
-        if (!form) return label;
-        return value > 1 ? form.plural : form.singular;
-    };
-
-    function getEventLabel(event: Event): string {
-        const icon = EVENT_ICONS[event.type] || "📍";
-
-        if (event.type === "Arbitrage Vidéo") {
-            return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
-        }
-
-        return `${icon} ${event.type}`;
-    }
     const getTeamsLabel = () => {
         const storedTeams: Array<{ id: string; name: string }> = summary.teams || [];
         let teamsLabel = "";

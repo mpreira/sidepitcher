@@ -3,57 +3,16 @@ import { useLoaderData } from "react-router";
 import Scoreboard from "~/components/Scoreboard";
 import type { LiveSnapshot, LiveStreamMessage } from "~/types/live";
 import type { Team } from "~/types/tracker";
-import { formatTime, formatTimelineMoment } from "~/utils/TimeUtils";
+import { formatTime } from "~/utils/TimeUtils";
 import { getLiveMatchByPublicSlug } from "~/utils/database.server";
-
-const EVENT_ICONS: Record<string, string> = {
-  "Essai": "🏉",
-  "Transformation": "🎯",
-  "Pénalité réussie": "✅",
-  "Pénalité manquée": "❌",
-  "Drop": "🦶",
-  "Essai de pénalité": "⚖️",
-  "Carton jaune": "🟨",
-  "Carton rouge": "🟥",
-  "Carton orange": "🟧",
-  "Changement": "🔁",
-  "Saignement": "🩸",
-  "Blessure": "🩹",
-  "Arbitrage Vidéo": "📺",
-  "Récapitulatif": "📝",
-};
-
-function getEventLabel(event: LiveSnapshot["events"][number]): string {
-  const icon = EVENT_ICONS[event.type] || "📍";
-  if (event.type === "Arbitrage Vidéo") {
-    return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
-  }
-  return `${icon} ${event.type}`;
-}
-
-function isCardEvent(type: string): boolean {
-  return type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
-}
-
-function displayTeamName(team: LiveSnapshot["events"][number]["team"]) {
-  if (!team) return "";
-  return team.nickname || team.name.replace(/\s+J\d+$/, "");
-}
-
-function formatEventTimeline(event: LiveSnapshot["events"][number]): string {
-  if (typeof event.timelineMinute === "number") {
-    return formatTimelineMoment(
-      event.timelineMinute,
-      event.timelineAdditionalMinute || 0,
-      event.timelineSecond || 0,
-      event.timelineHalf
-    );
-  }
-
-  const minute = Math.floor(event.time / 60);
-  const second = event.time % 60;
-  return formatTimelineMoment(minute, 0, second);
-}
+import {
+  displayTeamName,
+  formatEventTimeline,
+  formatStatLabel,
+  formatSummaryStatLabel,
+  getEventLabel,
+  isCardEvent,
+} from "~/utils/eventPresentation";
 
 function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
   if (!event.summaryTable) {
@@ -66,21 +25,6 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
 
   const [leftTeam, rightTeam] = event.summaryTable.teams;
   const rowCount = Math.max(leftTeam.stats.length, rightTeam.stats.length);
-
-  const formatSummaryStatLabel = (label: string, value: number) => {
-    const forms: Record<string, { singular: string; plural: string }> = {
-      "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
-      "En-avants": { singular: "En-avant", plural: "En-avants" },
-      "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-      "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-      "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-      "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
-    };
-
-    const form = forms[label];
-    if (!form) return label;
-    return value > 1 ? form.plural : form.singular;
-  };
 
   return (
     <div className="w-full space-y-2">
@@ -125,21 +69,6 @@ function renderSummaryEvent(event: LiveSnapshot["events"][number]) {
       </div>
     </div>
   );
-}
-
-function formatStatLabel(label: string, value: number): string {
-  const forms: Record<string, { singular: string; plural: string }> = {
-    "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
-    "En-avant": { singular: "En-avant", plural: "En-avants" },
-    "Touche perdue": { singular: "Touche perdue", plural: "Touches perdues" },
-    "Mêlée perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-    "Turnover": { singular: "Turnover", plural: "Turnovers" },
-    "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
-  };
-
-  const form = forms[label];
-  if (!form) return label;
-  return value > 1 ? form.plural : form.singular;
 }
 
 export async function loader({ params }: { params: { publicSlug?: string } }) {
