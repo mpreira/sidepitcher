@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
-import { faCaretLeft, faCaretRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { Route } from "./+types/tracker";
 import type { Event } from "~/types/tracker";
 import type { LiveSnapshot } from "~/types/live";
@@ -9,13 +7,14 @@ import TimerControls from "~/components/TimerControls";
 import CommandPanel from "~/components/CommandPanel";
 import EventForm from "~/components/EventForm";
 import EventsList from "~/components/EventsList";
+import TrackerStatsPanel from "~/components/TrackerStatsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { useTrackerClock } from "~/hooks/useTrackerClock";
 import { useTrackerStats } from "~/hooks/useTrackerStats";
-import { formatStatLabel } from "~/utils/eventPresentation";
+import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock, getTimelineSortKey } from "~/utils/TimeUtils";
 
 export function meta({}: Route.MetaArgs) {
@@ -84,12 +83,6 @@ export default function Tracker() {
     const [actionTab, setActionTab] = useState<"events" | "stats">("events");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
-    const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
-    const [livePublicSlug, setLivePublicSlug] = useState<string | null>(null);
-    const [liveAdminToken, setLiveAdminToken] = useState<string | null>(null);
-    const [liveMessage, setLiveMessage] = useState<string>("");
-    const [liveBusy, setLiveBusy] = useState(false);
-    const publishTimerRef = useRef<number | null>(null);
     const contextInitializedRef = useRef(false);
     const prevContextRef = useRef<{ matchDay: string | number; championship: string; sport: string } | null>(null);
 
@@ -204,10 +197,7 @@ export default function Tracker() {
         resetClock();
         setActiveCommand(null);
         resetStats();
-        setLiveMatchId(null);
-        setLivePublicSlug(null);
-        setLiveAdminToken(null);
-        setLiveMessage("");
+        clearLiveState();
         setSavedTrackingSignature(null);
     }
 
@@ -438,7 +428,6 @@ export default function Tracker() {
         window.location.reload();
     }
 
-    const canPublishLive = selectedTeams.length === 2 && Boolean(team1Id) && Boolean(team2Id) && team1Id !== team2Id;
     const matchFactsEvents = useMemo(() => [...events].reverse(), [events]);
 
     const buildLiveSnapshot = useCallback((): LiveSnapshot => {
@@ -481,91 +470,24 @@ export default function Tracker() {
         manualPenaltyAdjustments,
     ]);
 
-    const liveViewerUrl = useMemo(() => {
-        if (!livePublicSlug || typeof window === "undefined") return "";
-        return `${window.location.origin}/live/${livePublicSlug}`;
-    }, [livePublicSlug]);
-
-    async function activateLivePublic() {
-        if (!canPublishLive) {
-            setLiveMessage("Sélectionnez deux équipes différentes pour activer le live.");
-            return;
-        }
-
-        if (liveMatchId && liveAdminToken && livePublicSlug) {
-            setLiveMessage("Le live public est déjà actif.");
-            return;
-        }
-
-        setLiveBusy(true);
-        try {
-            const response = await fetch("/api/live-matches", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    championship,
-                    matchDay: typeof matchDay === "number" ? matchDay : parseInt(matchDay || "", 10),
-                    state: buildLiveSnapshot(),
-                }),
-            });
-
-            const data = await response.json();
-            if (!response.ok || !data?.ok) {
-                setLiveMessage("Impossible d'activer le live public.");
-                return;
-            }
-
-            setLiveMatchId(data.matchId);
-            setLivePublicSlug(data.publicSlug);
-            setLiveAdminToken(data.adminToken);
-            setLiveMessage("Live public activé.");
-        } catch {
-            setLiveMessage("Impossible d'activer le live public.");
-        } finally {
-            setLiveBusy(false);
-        }
-    }
-
-    async function publishLiveSnapshot() {
-        if (!liveMatchId || !liveAdminToken || !canPublishLive) return;
-
-        try {
-            await fetch(`/api/live-matches/${liveMatchId}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-live-admin-token": liveAdminToken,
-                },
-                body: JSON.stringify({ state: buildLiveSnapshot() }),
-            });
-        } catch {
-            // Keep tracker usable even if publication fails temporarily.
-        }
-    }
-
-    useEffect(() => {
-        if (!liveMatchId || !liveAdminToken || !canPublishLive) return;
-
-        if (publishTimerRef.current) {
-            window.clearTimeout(publishTimerRef.current);
-        }
-
-        publishTimerRef.current = window.setTimeout(() => {
-            void publishLiveSnapshot();
-        }, 350);
-
-        return () => {
-            if (publishTimerRef.current) {
-                window.clearTimeout(publishTimerRef.current);
-                publishTimerRef.current = null;
-            }
-        };
-    }, [
-        liveMatchId,
-        liveAdminToken,
+    const {
         canPublishLive,
+        liveBusy,
+        liveMessage,
+        livePublicSlug,
+        liveViewerUrl,
+        activateLivePublic,
+        copyLiveViewerUrl,
+        closeLivePublic,
+        clearLiveState,
+    } = useLiveBroadcast({
+        selectedTeamsCount: selectedTeams.length,
+        team1Id,
+        team2Id,
+        championship,
+        matchDay,
         buildLiveSnapshot,
-    ]);
+    });
 
     function removeEvent(index: number) {
         setEvents((ev) => ev.filter((_, i) => i !== index));
@@ -583,47 +505,6 @@ export default function Tracker() {
             resetTrackerInfos();
         }
         setTeam2Id(nextTeamId);
-    }
-
-    async function copyLiveViewerUrl() {
-        if (!liveViewerUrl) return;
-        try {
-            await navigator.clipboard.writeText(liveViewerUrl);
-            setLiveMessage("Lien spectateur copié.");
-        } catch {
-            setLiveMessage("Impossible de copier le lien.");
-        }
-    }
-
-    async function closeLivePublic() {
-        if (!liveMatchId || !liveAdminToken) return;
-
-        const confirmed = window.confirm("Fermer la diffusion live pour les spectateurs ?");
-        if (!confirmed) return;
-
-        setLiveBusy(true);
-        try {
-            const response = await fetch(`/api/live-matches/${liveMatchId}/close`, {
-                method: "POST",
-                headers: {
-                    "x-live-admin-token": liveAdminToken,
-                },
-            });
-            const data = await response.json();
-            if (!response.ok || !data?.ok) {
-                setLiveMessage("Impossible de fermer le live.");
-                return;
-            }
-
-            setLiveMatchId(null);
-            setLivePublicSlug(null);
-            setLiveAdminToken(null);
-            setLiveMessage("Live fermé.");
-        } catch {
-            setLiveMessage("Impossible de fermer le live.");
-        } finally {
-            setLiveBusy(false);
-        }
     }
 
     return (
@@ -818,84 +699,24 @@ export default function Tracker() {
                         <p className="text-sm text-gray-500 text-center">
                             Sélectionne et valide deux équipes pour afficher les statistiques.
                         </p>
-                    ) : (() => {
-                        const displayedPenalties = getDisplayedPenalties();
-                        const displayedEnAvant = getDisplayedEnAvant();
-
-                        const teamStats = [
-                            {
-                                label: "Pénalité",
-                                values: displayedPenalties,
-                                onAdjust: adjustPenalties,
-                            },
-                            {
-                                label: "En Avant",
-                                values: displayedEnAvant,
-                                onAdjust: adjustEnAvant,
-                            },
-                            {
-                                label: "Touche Perdue",
-                                values: teamTouchePerdue,
-                                onAdjust: adjustTouchePerdue,
-                            },
-                            {
-                                label: "Mêlée Perdue",
-                                values: teamMeleePerdue,
-                                onAdjust: adjustMeleePerdue,
-                            },
-                            {
-                                label: "Turnover",
-                                values: teamTurnover,
-                                onAdjust: adjustTurnover,
-                            },
-                            {
-                                label: "Jeu au pied",
-                                values: teamJeuAuPied,
-                                onAdjust: adjustJeuAuPied,
-                            },
-                        ];
-
-                        return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {selectedTeams.map((team, teamIdx) => (
-                                    <div key={team.id} className="border border-neutral-700 bg-neutral-900 rounded p-3 space-y-3">
-                                        <h4 className="text-sm sm:text-base font-semibold text-center text-white">
-                                            {getDisplayTeamLabel(team)}
-                                        </h4>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {teamStats.map((stat) => {
-                                                const statValue = stat.values[teamIdx] || 0;
-                                                return (
-                                                    <div key={stat.label} className="rounded p-2 text-center">
-                                                        <div className="flex items-center justify-between gap-1">
-                                                            <button
-                                                                className="h-7 w-7 text-neutral-700"
-                                                                onClick={() => stat.onAdjust(teamIdx, -1)}
-                                                                aria-label={`Diminuer ${stat.label}`}
-                                                            >
-                                                                <FontAwesomeIcon icon={faCaretLeft} />
-                                                            </button>
-                                                            <span className="text-2xl leading-none text-white font-bold min-w-8">{statValue}</span>
-                                                            <button
-                                                                className="h-7 w-7 text-neutral-700"
-                                                                onClick={() => stat.onAdjust(teamIdx, 1)}
-                                                                aria-label={`Augmenter ${stat.label}`}
-                                                            >
-                                                                <FontAwesomeIcon icon={faCaretRight} />
-                                                            </button>
-                                                        </div>
-                                                        <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 font-light">
-                                                            {formatStatLabel(stat.label, statValue)}
-                                                        </p>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })()}
+                    ) : (
+                        <TrackerStatsPanel
+                            selectedTeams={selectedTeams}
+                            getDisplayTeamLabel={getDisplayTeamLabel}
+                            displayedPenalties={getDisplayedPenalties()}
+                            displayedEnAvant={getDisplayedEnAvant()}
+                            teamTouchePerdue={teamTouchePerdue}
+                            teamMeleePerdue={teamMeleePerdue}
+                            teamTurnover={teamTurnover}
+                            teamJeuAuPied={teamJeuAuPied}
+                            adjustPenalties={adjustPenalties}
+                            adjustEnAvant={adjustEnAvant}
+                            adjustTouchePerdue={adjustTouchePerdue}
+                            adjustMeleePerdue={adjustMeleePerdue}
+                            adjustTurnover={adjustTurnover}
+                            adjustJeuAuPied={adjustJeuAuPied}
+                        />
+                    )}
                 </section>
             )}
 
