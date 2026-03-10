@@ -25,7 +25,7 @@ export async function sendNewAccountNotificationEmail(
       from,
       to: [ADMIN_NOTIFICATION_EMAIL],
       subject: "Nouveau compte SidePitcher",
-      text: `Un nouveau compte a ete cree.\n\nNom: ${input.accountName}\nEmail: ${input.accountEmail}`,
+      text: `Un nouveau compte a été créé.\n\nNom: ${input.accountName}\nEmail: ${input.accountEmail}`,
     }),
   });
 
