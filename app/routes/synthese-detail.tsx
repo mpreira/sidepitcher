@@ -343,8 +343,8 @@ export default function SyntheseDetailPage() {
     const [finalScoreLeft, finalScoreRight] = getScoreByTeam(false);
     const [halfScoreLeft, halfScoreRight] = getScoreByTeam(true);
     const scoreLine = orderedTeams.length >= 2
-        ? `Score : ${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name} (${halfScoreLeft} - ${halfScoreRight} à la mi-temps)`
-        : `Score : ${finalScoreLeft} - ${finalScoreRight} (${halfScoreLeft} - ${halfScoreRight} à la mi-temps)`;
+        ? `<h3 class="text-xl text-center font-semibold">${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name} (${halfScoreLeft} - ${halfScoreRight})</h3>`
+        : `<h3 class="text-xl text-center font-semibold">${finalScoreLeft} - ${finalScoreRight} (${halfScoreLeft} - ${halfScoreRight})</h3>`;
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
