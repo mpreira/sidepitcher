@@ -43,7 +43,7 @@ export async function loader({ request, params }: { request: Request; params: { 
 }
 
 export function meta() {
-    return [{ title: "Synthese" }];
+    return [{ title: "Synthèse" }];
 }
 
 function FormattedDateTime({ dateString }: { dateString: string }) {
@@ -342,9 +342,9 @@ export default function SyntheseDetailPage() {
 
     const [finalScoreLeft, finalScoreRight] = getScoreByTeam(false);
     const [halfScoreLeft, halfScoreRight] = getScoreByTeam(true);
-    const scoreLine = orderedTeams.length >= 2
-        ? `<h3 class="text-xl text-center font-semibold">${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name} (${halfScoreLeft} - ${halfScoreRight})</h3>`
-        : `<h3 class="text-xl text-center font-semibold">${finalScoreLeft} - ${finalScoreRight} (${halfScoreLeft} - ${halfScoreRight})</h3>`;
+    const scoreLineText = orderedTeams.length >= 2
+        ? `${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name} (${halfScoreLeft} - ${halfScoreRight})`
+        : `${finalScoreLeft} - ${finalScoreRight} (${halfScoreLeft} - ${halfScoreRight})`;
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
@@ -352,7 +352,7 @@ export default function SyntheseDetailPage() {
             <p className="text-sm text-gray-700">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
-            <p className="text-sm text-gray-700 font-semibold">{scoreLine}</p>
+            <h3 className="text-xl text-center font-semibold">{scoreLineText}</h3>
             <Link to="/syntheses" className="text-white text-base">
                 <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour aux synthèses
@@ -366,7 +366,7 @@ export default function SyntheseDetailPage() {
                         fileName: getTeamsLabel(),
                         layout: {
                             dateLine: `Date: ${new Date(summary.createdAt).toLocaleString("fr-FR")}`,
-                            scoreLine,
+                            scoreLine: scoreLineText,
                             resumeColumns: summaryByTeam
                                 ? [
                                     {
