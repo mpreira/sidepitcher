@@ -420,6 +420,45 @@ export default function Tracker() {
         return base.map((v) => Math.max(0, v));
     }
 
+    function computeTries(): number[] {
+        const tries = selectedTeams.map(() => 0);
+        events.forEach((event) => {
+            if (event.type !== "Essai" && event.type !== "Essai de pénalité") return;
+            if (!event.team?.id) return;
+
+            const idx = getSelectedTeamIndex(event.team.id);
+            if (idx !== -1) {
+                tries[idx] += 1;
+            }
+        });
+        return tries;
+    }
+
+    function computeBonuses(scores: number[]): string[] {
+        if (selectedTeams.length < 2) return selectedTeams.map(() => "");
+
+        const tries = computeTries();
+        const bonuses = ["", ""];
+
+        for (let idx = 0; idx < 2; idx++) {
+            const opponentIdx = idx === 0 ? 1 : 0;
+            const tags: string[] = [];
+
+            if ((tries[idx] || 0) - (tries[opponentIdx] || 0) >= 3) {
+                tags.push("BO");
+            }
+
+            const pointsBehind = (scores[opponentIdx] || 0) - (scores[idx] || 0);
+            if (pointsBehind > 0 && pointsBehind <= 5) {
+                tags.push("BD");
+            }
+
+            bonuses[idx] = tags.join(" ");
+        }
+
+        return bonuses;
+    }
+
     function adjustPenalties(idx: number, delta: number) {
         setManualPenaltyAdjustments((prev) => {
             const copy = [...prev];
@@ -888,10 +927,12 @@ export default function Tracker() {
                 const secondaryTimerText = matchEnded || times.secondaryTime === null
                     ? undefined
                     : formatTime(times.secondaryTime);
+                const scores = computeScores();
                 return (
                     <Scoreboard
                         teams={selectedTeams}
-                        scores={computeScores()}
+                        scores={scores}
+                        bonuses={computeBonuses(scores)}
                         mainTimerText={mainTimerText}
                         secondaryTimerText={secondaryTimerText}
                     />

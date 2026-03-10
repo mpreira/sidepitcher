@@ -14,6 +14,7 @@ export interface Roster {
     name: string;
     nickname?: string;
     color?: string;
+    logo?: string;
     players: Player[]; // effectif global
     category?: 'Top 14' | 'Pro D2';
 }
@@ -23,6 +24,7 @@ export interface Team {
     name: string;
     nickname?: string;
     color?: string;
+    logo?: string;
     rosterId: string;        // which roster this team draws from
     captainPlayerId?: string | null;
     starters: CompositionEntry[]; // numbers 1–15

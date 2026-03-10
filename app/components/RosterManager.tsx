@@ -44,6 +44,7 @@ export default function RosterManager({
     const [newRosterName, setNewRosterName] = useState("");
     const [newRosterNickname, setNewRosterNickname] = useState("");
     const [newRosterColor, setNewRosterColor] = useState("");
+    const [newRosterLogo, setNewRosterLogo] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
@@ -61,6 +62,7 @@ export default function RosterManager({
     const [editingRosterName, setEditingRosterName] = useState("");
     const [editingRosterNickname, setEditingRosterNickname] = useState("");
     const [editingRosterColor, setEditingRosterColor] = useState("");
+    const [editingRosterLogo, setEditingRosterLogo] = useState("");
     const [rosterFormError, setRosterFormError] = useState("");
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
@@ -84,6 +86,10 @@ export default function RosterManager({
         return value.trim().toUpperCase();
     }
 
+    function normalizeLogo(value: string): string {
+        return value.trim();
+    }
+
     function validateColor(value: string): string {
         if (!value) return "";
         return /^#[0-9A-F]{6}$/.test(value)
@@ -95,6 +101,7 @@ export default function RosterManager({
         const trimmedName = newRosterName.trim();
         const nickname = normalizeNickname(newRosterNickname);
         const color = normalizeColor(newRosterColor);
+        const logo = normalizeLogo(newRosterLogo);
         const nicknameError = validateNickname(nickname);
         const colorError = validateColor(color);
         if (!trimmedName) return;
@@ -107,7 +114,7 @@ export default function RosterManager({
             return;
         }
 
-        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined, color || undefined);
+        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined, color || undefined, logo || undefined);
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
         setRosterFeedbackMessage("Effectif créé avec succès.");
@@ -120,6 +127,7 @@ export default function RosterManager({
         setNewRosterName("");
         setNewRosterNickname("");
         setNewRosterColor("");
+        setNewRosterLogo("");
         setNewRosterCategory('Top 14');
         setRosterFormError("");
     }
@@ -129,6 +137,7 @@ export default function RosterManager({
         setEditingRosterName(roster.name);
         setEditingRosterNickname(roster.nickname || "");
         setEditingRosterColor(roster.color || "");
+        setEditingRosterLogo(roster.logo || "");
         setRosterFormError("");
     }
 
@@ -137,6 +146,7 @@ export default function RosterManager({
         setEditingRosterName("");
         setEditingRosterNickname("");
         setEditingRosterColor("");
+        setEditingRosterLogo("");
         setRosterFormError("");
     }
 
@@ -145,6 +155,7 @@ export default function RosterManager({
         const trimmedName = editingRosterName.trim();
         const nickname = normalizeNickname(editingRosterNickname);
         const color = normalizeColor(editingRosterColor);
+        const logo = normalizeLogo(editingRosterLogo);
         const nicknameError = validateNickname(nickname);
         const colorError = validateColor(color);
         if (!trimmedName) return;
@@ -159,12 +170,12 @@ export default function RosterManager({
 
         setRosters((prev) => prev.map((roster) =>
             roster.id === editingRosterId
-                ? { ...roster, name: trimmedName, nickname: nickname || undefined, color: color || undefined }
+                ? { ...roster, name: trimmedName, nickname: nickname || undefined, color: color || undefined, logo: logo || undefined }
                 : roster
         ));
         setTeams((prev) => prev.map((team) =>
             team.rosterId === editingRosterId
-                ? { ...team, nickname: nickname || undefined, color: color || undefined }
+                ? { ...team, nickname: nickname || undefined, color: color || undefined, logo: logo || undefined }
                 : team
         ));
         setRosterFeedbackMessage("Effectif modifié.");
@@ -250,7 +261,7 @@ export default function RosterManager({
     function addTeam() {
         if (!activeRoster) return;
         const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
-        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname, activeRoster.color);
+        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname, activeRoster.color, activeRoster.logo);
         setTeams([...(teams || []), newTeam]);
     }
 
@@ -263,9 +274,10 @@ export default function RosterManager({
                 activeRoster.name,
                 matchDay ? parseInt(matchDay) : undefined,
                 activeRoster.nickname,
-                activeRoster.color
+                activeRoster.color,
+                activeRoster.logo
             );
-            const withNickname = { ...newTeam, nickname: activeRoster.nickname, color: activeRoster.color };
+            const withNickname = { ...newTeam, nickname: activeRoster.nickname, color: activeRoster.color, logo: activeRoster.logo };
             setTeams([...(teams || []), withNickname]);
             setJsonInput("");
         } catch (e) {
@@ -384,6 +396,16 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterLogo">Logo (optionnel)</label>
+                            <input
+                                id="newRosterLogo"
+                                className="sp-input-control"
+                                placeholder="URL du logo"
+                                value={newRosterLogo}
+                                onChange={(e) => setNewRosterLogo(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
                             <select
                                 id="newRosterCategory"
@@ -460,6 +482,16 @@ export default function RosterManager({
                                     setEditingRosterColor(e.target.value);
                                     setRosterFormError("");
                                 }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterLogo">Logo (optionnel)</label>
+                            <input
+                                id="editingRosterLogo"
+                                className="sp-input-control"
+                                placeholder="URL du logo"
+                                value={editingRosterLogo}
+                                onChange={(e) => setEditingRosterLogo(e.target.value)}
                             />
                         </div>
                         <div className="flex items-center justify-center gap-2">
