@@ -7,6 +7,7 @@ interface AdminAccountItem {
   name: string;
   email: string;
   isAdmin: boolean;
+  isApproved: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,6 +60,7 @@ export default function AdminAccountsPage() {
           name: item.name,
           email: item.email,
           isAdmin: item.isAdmin,
+          isApproved: item.isApproved,
           password: passwordDraft[item.id]?.trim() ? passwordDraft[item.id] : undefined,
         }),
       });
@@ -181,6 +183,20 @@ export default function AdminAccountsPage() {
                 }
               />
               Admin
+            </label>
+            <label className="text-sm flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={item.isApproved}
+                onChange={(event) =>
+                  setAccounts((prev) =>
+                    prev.map((entry) =>
+                      entry.id === item.id ? { ...entry, isApproved: event.target.checked } : entry
+                    )
+                  )
+                }
+              />
+              Compte validé
             </label>
             <div className="flex gap-2">
               <button

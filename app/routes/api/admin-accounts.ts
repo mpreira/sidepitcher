@@ -33,6 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
       email?: string;
       password?: string;
       isAdmin?: boolean;
+      isApproved?: boolean;
     };
 
     if (!body.accountId) {
@@ -45,6 +46,7 @@ export const action: ActionFunction = async ({ request }) => {
       email: body.email,
       password: body.password,
       isAdmin: body.isAdmin,
+      isApproved: body.isApproved,
     });
 
     return { ok: true, account };

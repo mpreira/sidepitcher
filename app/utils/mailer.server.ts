@@ -1,4 +1,4 @@
-const ADMIN_NOTIFICATION_EMAIL = "mlpreira@gmail.com";
+const DEFAULT_ADMIN_NOTIFICATION_EMAIL = "mlpreira@gmail.com";
 
 interface NewAccountNotificationInput {
   accountName: string;
@@ -10,6 +10,8 @@ export async function sendNewAccountNotificationEmail(
 ): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL ?? "SidePitcher <onboarding@resend.dev>";
+  const adminNotificationEmail =
+    process.env.ADMIN_NOTIFICATION_EMAIL?.trim() || DEFAULT_ADMIN_NOTIFICATION_EMAIL;
 
   if (!apiKey) {
     return;
@@ -23,7 +25,7 @@ export async function sendNewAccountNotificationEmail(
     },
     body: JSON.stringify({
       from,
-      to: [ADMIN_NOTIFICATION_EMAIL],
+      to: [adminNotificationEmail],
       subject: "Nouveau compte SidePitcher",
       text: `Un nouveau compte a été créé.\n\nNom: ${input.accountName}\nEmail: ${input.accountEmail}`,
     }),

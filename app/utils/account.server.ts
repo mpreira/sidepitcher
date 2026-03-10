@@ -186,13 +186,13 @@ export async function createAndAssignAccount(input: {
   account: Account;
   setCookieHeaders: string[];
 }> {
-  const created = await createAccount(input);
+  const created = await createAccount({
+    ...input,
+    isApproved: false,
+  });
   return {
     account: created.account,
-    setCookieHeaders: [
-      buildAccountCookie(created.account.id),
-      buildAnonymousLogoutCookie(),
-    ],
+    setCookieHeaders: [],
   };
 }
 
@@ -201,16 +201,17 @@ export async function authenticateAndAssignAccount(input: {
   password: string;
 }): Promise<{
   account: Account | null;
+  reason?: "invalid-credentials" | "not-approved";
   setCookieHeaders: string[];
 }> {
-  const account = await authenticateAccountByEmail(input);
-  if (!account) {
-    return { account: null, setCookieHeaders: [] };
+  const auth = await authenticateAccountByEmail(input);
+  if (!auth.account) {
+    return { account: null, reason: auth.reason, setCookieHeaders: [] };
   }
 
   return {
-    account,
-    setCookieHeaders: [buildAccountCookie(account.id), buildAnonymousLogoutCookie()],
+    account: auth.account,
+    setCookieHeaders: [buildAccountCookie(auth.account.id), buildAnonymousLogoutCookie()],
   };
 }
 
@@ -228,6 +229,7 @@ export async function updateManagedAccount(input: {
   email?: string;
   password?: string;
   isAdmin?: boolean;
+  isApproved?: boolean;
 }): Promise<Account> {
   return updateAccountByAdmin(input);
 }

@@ -79,6 +79,9 @@ export const action: ActionFunction = async ({ request }) => {
       password: body.password,
     });
     if (!logged.account) {
+      if (logged.reason === "not-approved") {
+        return Response.json({ ok: false, error: "account-not-approved" }, { status: 403 });
+      }
       return Response.json({ ok: false, error: "invalid-credentials" }, { status: 401 });
     }
 
