@@ -314,12 +314,51 @@ export default function SyntheseDetailPage() {
     const summaryByTeam = getSummaryByTeam();
     const factEvents = summary.events.filter((event) => !(event.type === "Récapitulatif" || event.summaryTable || event.summary));
 
+    const scorePointsByType: Record<string, number> = {
+        "Essai": 5,
+        "Essai de pénalité": 7,
+        "Transformation": 2,
+        "Pénalité réussie": 3,
+        "Drop": 3,
+    };
+
+    const getScoreByTeam = (onlyFirstHalf: boolean) => {
+        if (orderedTeams.length < 2) return [0, 0] as const;
+
+        const scores = [0, 0];
+        summary.events.forEach((event) => {
+            const points = scorePointsByType[event.type] || 0;
+            if (!points || !event.team?.id) return;
+
+            const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+            if (teamIndex === -1) return;
+
+            if (onlyFirstHalf) {
+                const isFirstHalf =
+                    event.timelineHalf === 1 ||
+                    (event.timelineHalf == null && event.time < 40 * 60);
+                if (!isFirstHalf) return;
+            }
+
+            scores[teamIndex] += points;
+        });
+
+        return [scores[0], scores[1]] as const;
+    };
+
+    const [finalScoreLeft, finalScoreRight] = getScoreByTeam(false);
+    const [halfScoreLeft, halfScoreRight] = getScoreByTeam(true);
+    const scoreLine = orderedTeams.length >= 2
+        ? `Score : ${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name} (${halfScoreLeft} - ${halfScoreRight} à la mi-temps)`
+        : `Score : ${finalScoreLeft} - ${finalScoreRight} (${halfScoreLeft} - ${halfScoreRight} à la mi-temps)`;
+
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
             <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
             <p className="text-sm text-gray-700">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
+            <p className="text-sm text-gray-700 font-semibold">{scoreLine}</p>
             <Link to="/syntheses" className="text-white text-base">
                 <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
                 Retour aux synthèses
@@ -333,6 +372,7 @@ export default function SyntheseDetailPage() {
                         fileName: getTeamsLabel(),
                         layout: {
                             dateLine: `Date: ${new Date(summary.createdAt).toLocaleString("fr-FR")}`,
+                            scoreLine,
                             resumeColumns: summaryByTeam
                                 ? [
                                     {

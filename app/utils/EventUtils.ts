@@ -9,6 +9,7 @@ interface PdfColumnData {
 
 interface PdfSynthesisLayout {
     dateLine?: string;
+    scoreLine?: string;
     resumeColumns?: [PdfColumnData, PdfColumnData];
     statsColumns?: [PdfColumnData, PdfColumnData];
     factsTitle?: string;
@@ -273,6 +274,11 @@ export function exportSummaryToPdf(
     if (options?.layout) {
         if (options.layout.dateLine) {
             drawWrappedText(options.layout.dateLine, { fontSize: 9, lineHeight: 4.5, color: [82, 82, 91] });
+            y += 1;
+        }
+
+        if (options.layout.scoreLine) {
+            drawWrappedText(options.layout.scoreLine, { fontSize: 9, lineHeight: 4.5, bold: true, color: [55, 65, 81] });
             y += 2;
         }
 
