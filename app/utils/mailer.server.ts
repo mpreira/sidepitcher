@@ -14,6 +14,11 @@ export async function sendNewAccountNotificationEmail(
     process.env.ADMIN_NOTIFICATION_EMAIL?.trim() || DEFAULT_ADMIN_NOTIFICATION_EMAIL;
 
   if (!apiKey) {
+    console.warn("[mailer] RESEND_API_KEY missing: skipping account notification email", {
+      to: adminNotificationEmail,
+      from,
+      accountEmail: input.accountEmail,
+    });
     return;
   }
 
@@ -35,4 +40,10 @@ export async function sendNewAccountNotificationEmail(
     const details = await response.text();
     throw new Error(`Unable to send account notification email (status ${response.status}): ${details}`);
   }
+
+  console.info("[mailer] account notification email sent", {
+    to: adminNotificationEmail,
+    from,
+    accountEmail: input.accountEmail,
+  });
 }
