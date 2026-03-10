@@ -256,13 +256,15 @@ export default function AdminAccountsPage() {
               Admin
             </label>
             <div className="flex gap-2">
-              <button
-                onClick={() => updateAccount(item)}
-                disabled={busy}
-                className="flex-1 px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-500"
-              >
-                Mettre a jour
-              </button>
+              {item.isApproved && (
+                <button
+                  onClick={() => updateAccount(item)}
+                  disabled={busy}
+                  className="flex-1 px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-500"
+                >
+                  Mettre a jour
+                </button>
+              )}
               {!item.isApproved && (
                 <button
                   onClick={() => approveAccount(item)}
