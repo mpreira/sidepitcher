@@ -349,7 +349,7 @@ export default function SyntheseDetailPage() {
 
     return (
         <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-            <p className="text-sm text-gray-700 text-center mb-4">
+            <p className="text-sm text-gray-700 mb-4">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
             <Link to="/syntheses" className="text-white text-base">
@@ -357,12 +357,6 @@ export default function SyntheseDetailPage() {
                 Retour aux synthèses
             </Link>
             <br /><br /> 
-            <h1 className="text-2xl text-center font-bold">{getTeamsLabel()}</h1>
-            <h3 className="text-xl text-center font-semibold">
-                <span className="block">{finalScoreText}</span>
-                <span className="block text-base font-medium text-gray-300">{halfTimeScoreText}</span>
-            </h3>
-            
             <button
                 className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
                 onClick={() =>
@@ -435,7 +429,12 @@ export default function SyntheseDetailPage() {
                 <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF
             </button>
-
+            <h1 className="text-2xl text-center font-bold">{getTeamsLabel()}</h1>
+            <h3 className="text-xl text-center font-semibold">
+                <span className="block">{finalScoreText}</span>
+                <span className="block text-base font-medium text-gray-300">{halfTimeScoreText}</span>
+            </h3>
+        
             <section className="space-y-2">
                 <h2 className="font-semibold">Résumé</h2>
                 {!summaryByTeam ? (
@@ -443,7 +442,7 @@ export default function SyntheseDetailPage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{summaryByTeam.leftTeam.teamName}</h3>
+                            <h3 className="font-semibold text-center mb-2">{summaryByTeam.leftTeam.teamName}</h3>
                             {summaryByTeam.leftTeam.values.size === 0 ? (
                                 <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
                             ) : (
@@ -483,7 +482,7 @@ export default function SyntheseDetailPage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{recapStats.leftTeam.teamName}</h3>
+                            <h3 className="font-semibold text-center mb-2">{recapStats.leftTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
                                 {recapStats.leftTeam.stats.map(([label, values], idx) => (
                                     <li key={`left-${idx}`}>
@@ -494,7 +493,7 @@ export default function SyntheseDetailPage() {
                             </ul>
                         </div>
                         <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
-                            <h3 className="font-semibold mb-2">{recapStats.rightTeam.teamName}</h3>
+                            <h3 className="font-semibold text-center mb-2">{recapStats.rightTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
                                 {recapStats.rightTeam.stats.map(([label, values], idx) => (
                                     <li key={`right-${idx}`}>
