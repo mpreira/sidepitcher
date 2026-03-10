@@ -429,9 +429,8 @@ export default function SyntheseDetailPage() {
                 <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF
             </button>
-            <h1 className="text-2xl text-center font-bold">{getTeamsLabel()}</h1>
+            <h1 className="text-2xl text-center font-bold">{finalScoreText}</h1>
             <h3 className="text-xl text-center font-semibold">
-                <span className="block">{finalScoreText}</span>
                 <span className="block text-base font-medium text-gray-300">{halfTimeScoreText}</span>
             </h3>
         
