@@ -218,7 +218,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+    <main className="sp-page space-y-6">
       <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">
         Reglages du compte
       </h1>
@@ -243,7 +243,7 @@ export default function SettingsPage() {
       )}
 
       {connected && (
-        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-2">
+        <section className="sp-panel space-y-2">
           <h2 className="font-semibold">Compte actif</h2>
           {loading ? (
             <p className="text-sm text-neutral-300">Chargement du compte...</p>
@@ -255,7 +255,7 @@ export default function SettingsPage() {
               <p className="text-xs text-neutral-400 break-all">ID: {account.id}</p>
               <button
                 onClick={disconnect}
-                className="mt-2 px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800"
+                className="sp-button sp-button-sm sp-button-red mt-2"
               >
                 Deconnexion
               </button>
@@ -267,7 +267,7 @@ export default function SettingsPage() {
       )}
 
       {connected && (
-        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section className="sp-panel space-y-3">
           <h2 className="font-semibold">Profil (email et mot de passe)</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="profileEmailInput">Adresse email</label>
@@ -308,7 +308,7 @@ export default function SettingsPage() {
           <button
             onClick={updateProfile}
             disabled={busy || !connected}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-indigo"
           >
             {busy ? "Mise a jour..." : "Mettre a jour le profil"}
           </button>
@@ -316,7 +316,7 @@ export default function SettingsPage() {
       )}
 
       {connected && (
-        <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section id="rename-account" className="sp-panel space-y-3">
           <h2 className="font-semibold">Renommer le compte actif</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="renameNameInput">Nom du compte</label>
@@ -332,7 +332,7 @@ export default function SettingsPage() {
           <button
             onClick={renameAccount}
             disabled={busy || loading || !connected || !account}
-            className="w-full px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-amber"
           >
             {busy ? "Mise a jour..." : "Mettre a jour le nom"}
           </button>
@@ -340,7 +340,7 @@ export default function SettingsPage() {
       )}
 
       {!connected && authMode === "create" && (
-        <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section id="create-account" className="sp-panel space-y-3">
           <h2 className="font-semibold">Creer un compte</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="newNameInput">Nom d'utilisateur</label>
@@ -378,7 +378,7 @@ export default function SettingsPage() {
           <button
             onClick={createNewAccount}
             disabled={busy}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-green"
           >
             {busy ? "Creation..." : "Creer et utiliser ce compte"}
           </button>
@@ -386,7 +386,7 @@ export default function SettingsPage() {
       )}
 
       {!connected && authMode === "login" && (
-        <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section id="switch-account" className="sp-panel space-y-3">
           <h2 className="font-semibold">Se connecter</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="loginEmailInput">Adresse email</label>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
           <button
             onClick={loginAccount}
             disabled={busy}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-blue"
           >
             {busy ? "Connexion..." : "Se connecter"}
           </button>
@@ -421,12 +421,12 @@ export default function SettingsPage() {
       )}
 
       {connected && account?.isAdmin && (
-        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section className="sp-panel space-y-3">
           <h2 className="font-semibold">Administration</h2>
           <p className="text-sm text-neutral-300">Le compte admin peut gerer tous les comptes via la page dediee.</p>
           <Link
             to="/admin"
-            className="inline-block px-4 py-2 rounded bg-amber-600 text-white hover:bg-amber-700"
+            className="sp-button sp-button-md sp-button-amber"
           >
             Ouvrir la page admin
           </Link>

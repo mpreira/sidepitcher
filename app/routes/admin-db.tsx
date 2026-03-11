@@ -60,7 +60,7 @@ export default function AdminDbPage() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
+    <main className="sp-page space-y-4">
       <h1 className="text-2xl font-bold">Diagnostic base de donnees</h1>
       <p className="text-sm text-gray-300">
         Page de lecture seule pour verifier les donnees PostgreSQL (Render).

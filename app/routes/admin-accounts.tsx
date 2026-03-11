@@ -149,7 +149,7 @@ export default function AdminAccountsPage() {
   }
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
+    <main className="sp-page space-y-4">
       <h1 className="text-2xl font-bold">Administration des comptes</h1>
       <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecte.</p>
 
@@ -180,7 +180,7 @@ export default function AdminAccountsPage() {
 
       <ul className="space-y-3">
         {visibleAccounts.map((item) => (
-          <li key={item.id} className="rounded border border-neutral-700 p-3 space-y-2 bg-neutral-900">
+          <li key={item.id} className="sp-panel-compact space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-xs text-neutral-400">ID: {item.id}</p>
               <span
@@ -260,7 +260,7 @@ export default function AdminAccountsPage() {
                 <button
                   onClick={() => updateAccount(item)}
                   disabled={busy}
-                  className="flex-1 px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-500"
+                  className="sp-button sp-button-sm sp-button-amber flex-1"
                 >
                   Mettre a jour
                 </button>
@@ -269,7 +269,7 @@ export default function AdminAccountsPage() {
                 <button
                   onClick={() => approveAccount(item)}
                   disabled={busy}
-                  className="flex-1 px-3 py-1 rounded bg-emerald-700 text-white hover:bg-emerald-800 disabled:bg-gray-500"
+                  className="sp-button sp-button-sm sp-button-emerald flex-1"
                 >
                   Valider le compte
                 </button>
@@ -277,7 +277,7 @@ export default function AdminAccountsPage() {
               <button
                 onClick={() => deleteAccount(item.id)}
                 disabled={busy || item.id === data.adminId}
-                className="flex-1 px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800 disabled:bg-gray-500"
+                className="sp-button sp-button-sm sp-button-red flex-1"
               >
                 Supprimer
               </button>
@@ -295,7 +295,7 @@ export default function AdminAccountsPage() {
       {message && <p className="text-sm text-green-400">{message}</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <Link to="/account" className="text-sm underline text-neutral-300">
+      <Link to="/account" className="sp-link-muted">
         Retour reglages
       </Link>
     </main>

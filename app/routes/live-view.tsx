@@ -164,7 +164,7 @@ export default function LiveViewPage() {
 
   if (!snapshot && isLoading) {
     return (
-      <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4">
+      <main className="sp-page space-y-4">
         <h1 className="text-3xl font-bold">Feuille de match en direct</h1>
         <p className="text-sm text-neutral-400">Chargement du direct...</p>
       </main>
@@ -173,7 +173,7 @@ export default function LiveViewPage() {
 
   if (!snapshot && availability === "expired") {
     return (
-      <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4">
+      <main className="sp-page space-y-4">
         <h1 className="text-3xl font-bold">Feuille de match en direct</h1>
         <StatusBadge availability={availability} />
         <p className="text-sm text-neutral-300">Cette session de diffusion n'est plus disponible.</p>
@@ -183,7 +183,7 @@ export default function LiveViewPage() {
 
   if (!snapshot) {
     return (
-      <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4">
+      <main className="sp-page space-y-4">
         <h1 className="text-3xl font-bold">Feuille de match en direct</h1>
         <StatusBadge availability={availability} />
         <p className="text-sm text-neutral-300">Le live n'est pas accessible pour le moment.</p>
@@ -211,7 +211,7 @@ export default function LiveViewPage() {
   ];
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+    <main className="sp-page space-y-6">
       <h1 className="text-3xl font-bold text-center">Feuille de match en direct</h1>
       <div className="text-center">
         <StatusBadge availability={availability} />
@@ -263,7 +263,7 @@ export default function LiveViewPage() {
       
       <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {teams.slice(0, 2).map((team, teamIdx) => (
-          <div key={team.id} className="border border-neutral-700 rounded p-3 bg-neutral-900 space-y-3">
+          <div key={team.id} className="sp-panel-compact space-y-3">
             <h3 className="text-sm sm:text-base font-semibold text-center text-white">
               {team.nickname || team.name.replace(/\s+J\d+$/, "")}
             </h3>

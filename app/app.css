@@ -41,6 +41,63 @@ body {
 }
 
 @layer components {
+  .sp-page {
+    @apply w-full max-w-screen-md mx-auto px-4 py-6 overflow-x-hidden;
+  }
+
+  .sp-panel {
+    @apply rounded border border-neutral-700 bg-neutral-900 p-4;
+  }
+
+  .sp-panel-compact {
+    @apply rounded border border-neutral-700 bg-neutral-900 p-3;
+  }
+
+  .sp-button {
+    @apply inline-flex items-center justify-center rounded text-white transition-colors duration-150;
+    @apply disabled:cursor-not-allowed disabled:bg-gray-500;
+  }
+
+  .sp-button-sm {
+    @apply px-3 py-1 text-sm;
+  }
+
+  .sp-button-md {
+    @apply px-4 py-2;
+  }
+
+  .sp-button-full {
+    @apply w-full;
+  }
+
+  .sp-button-amber {
+    @apply bg-amber-600 hover:bg-amber-700;
+  }
+
+  .sp-button-blue {
+    @apply bg-blue-600 hover:bg-blue-700;
+  }
+
+  .sp-button-emerald {
+    @apply bg-emerald-700 hover:bg-emerald-800;
+  }
+
+  .sp-button-green {
+    @apply bg-green-600 hover:bg-green-700;
+  }
+
+  .sp-button-indigo {
+    @apply bg-indigo-600 hover:bg-indigo-700;
+  }
+
+  .sp-button-red {
+    @apply bg-red-700 hover:bg-red-800;
+  }
+
+  .sp-link-muted {
+    @apply text-sm underline text-neutral-300;
+  }
+
   .sp-input-shell {
     @apply relative rounded-md border border-transparent border-l-4 border-l-transparent bg-neutral-700/40 px-3 pt-5 pb-2;
     @apply transition-colors duration-150;
