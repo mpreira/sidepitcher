@@ -317,7 +317,7 @@ export default function RosterManager({
 
     return (
         <section className="space-y-4 max-w-screen-md mx-auto px-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-end gap-1 border-b border-neutral-700">
                 <button
                     className={`sp-tab px-3 py-2 ${
                         activeCategoryTab === 'Top 14'

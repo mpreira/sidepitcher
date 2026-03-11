@@ -539,7 +539,7 @@ export default function Tracker() {
             />
 
             <section className="space-y-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-end gap-1 border-b border-neutral-700">
                     <button
                         className={`sp-tab px-3 py-2 ${
                             actionTab === "events"

@@ -153,7 +153,7 @@ export default function AdminAccountsPage() {
       <h1 className="text-2xl font-bold">Administration des comptes</h1>
       <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecté.</p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-end gap-1 border-b border-neutral-700">
         <button
           type="button"
           onClick={() => setActiveTab("pending")}

@@ -224,7 +224,7 @@ export default function SettingsPage() {
       </h1>
 
       {!connected && (
-        <section className="border border-neutral-700 rounded p-2 bg-neutral-900 grid grid-cols-2 gap-2">
+        <section className="flex items-end gap-1 border-b border-neutral-700">
           <button
             type="button"
             onClick={() => setAuthMode("create")}
