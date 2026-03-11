@@ -759,7 +759,7 @@ export default function RosterDetailPage() {
                         ) : (
                             <ul className="space-y-4">
                                 {sortedRosterPlayers.map((player) => (
-                                    <li key={player.id} className="bg-neutral-700 border border-neutral-600 text-base font-semibold w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
+                                    <li key={player.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
                                         <div className="flex items-center justify-between gap-2">
                                             <span>{player.name}</span>
                                             <div className="flex items-center gap-2">
