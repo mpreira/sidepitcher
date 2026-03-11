@@ -195,7 +195,7 @@ function ScrollPageControls() {
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 bg-neutral-900/95 text-white shadow-md"
+        className="sp-button sp-button-neutral sp-button-icon-lg border-gray-700"
         aria-label="Aller en haut"
         title="Aller en haut"
       >
@@ -206,7 +206,7 @@ function ScrollPageControls() {
         onClick={() =>
           window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })
         }
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 bg-neutral-900/95 text-white shadow-md"
+        className="sp-button sp-button-neutral sp-button-icon-lg border-gray-700"
         aria-label="Aller en bas"
         title="Aller en bas"
       >

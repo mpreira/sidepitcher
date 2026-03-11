@@ -40,7 +40,7 @@ export function Welcome() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded bg-red-700 px-3 py-1 text-xs text-white hover:bg-red-800"
+              className="sp-button sp-button-xs sp-button-red"
             >
               Deconnexion
             </button>
@@ -49,13 +49,13 @@ export function Welcome() {
           <>
             <Link
               to="/account#switch-account"
-              className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
+              className="sp-button sp-button-xs sp-button-blue"
             >
               Se connecter
             </Link>
             <Link
               to="/account#create-account"
-              className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
+              className="sp-button sp-button-xs sp-button-green"
             >
               <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
               Creer un compte
@@ -126,7 +126,7 @@ export function Welcome() {
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="sp-button sp-button-md sp-button-full sp-button-green"
             >
               Valider
             </button>

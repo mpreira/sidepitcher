@@ -228,14 +228,14 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => setAuthMode("create")}
-            className={`px-3 py-2 rounded text-sm ${authMode === "create" ? "bg-green-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`sp-tab px-3 py-2 ${authMode === "create" ? "sp-tab-green-active" : "sp-tab-idle"}`}
           >
             Creer un compte
           </button>
           <button
             type="button"
             onClick={() => setAuthMode("login")}
-            className={`px-3 py-2 rounded text-sm ${authMode === "login" ? "bg-blue-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`sp-tab px-3 py-2 ${authMode === "login" ? "sp-tab-blue-active" : "sp-tab-idle"}`}
           >
             Se connecter
           </button>

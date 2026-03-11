@@ -396,7 +396,7 @@ export default function RosterDetailPage() {
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">Ajouter des joueurs - {compositionEditTeam.name}</h3>
                                 <button
-                                    className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
+                                    className="sp-button sp-button-neutral sp-button-icon"
                                     onClick={closeCompositionEditor}
                                 >
                                     <FontAwesomeIcon icon={faCircleXmark} />
@@ -474,7 +474,7 @@ export default function RosterDetailPage() {
                             })()}
 
                             <button
-                                className="px-3 py-2 bg-green-600 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-green"
                                 onClick={() => addPlayersToComposition(compositionEditTeam)}
                             >
                                 <FontAwesomeIcon icon={faPlus} className="mr-1" />
@@ -509,7 +509,7 @@ export default function RosterDetailPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
-                                            className="px-2 py-1 bg-blue-500 text-white text-sm rounded"
+                                            className="sp-button sp-button-xs sp-button-blue"
                                             onClick={() =>
                                                 compositionEditTeamId === team.id
                                                     ? closeCompositionEditor()
@@ -519,7 +519,7 @@ export default function RosterDetailPage() {
                                             <FontAwesomeIcon icon={faPlus} /> <FontAwesomeIcon icon={faUser} />
                                         </button>
                                         <button
-                                            className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
+                                            className="sp-button sp-button-red sp-button-icon"
                                             onClick={() => deleteTeam(team)}
                                         >
                                             <FontAwesomeIcon icon={faTrashCan} />
@@ -548,7 +548,7 @@ export default function RosterDetailPage() {
                                                                         )}
                                                                     </span>
                                                                     <button
-                                                                        className="text-neutral-400 text-xs px-2 py-1"
+                                                                        className="sp-button sp-button-xs sp-button-neutral"
                                                                         onClick={() => removePlayerFromComposition(team, entry.player.id)}
                                                                     >
                                                                         <FontAwesomeIcon icon={faTrashCan} />
@@ -572,7 +572,7 @@ export default function RosterDetailPage() {
                                                                         )}
                                                                     </span>
                                                                     <button
-                                                                        className="text-neutral-400 text-xs px-2 py-1"
+                                                                        className="sp-button sp-button-xs sp-button-neutral"
                                                                         onClick={() => removePlayerFromComposition(team, entry.player.id)}
                                                                     >
                                                                         <FontAwesomeIcon icon={faTrashCan} />
@@ -594,7 +594,7 @@ export default function RosterDetailPage() {
                 )}
                 {!hasCompositionForDay && (
                     <button
-                        className="px-3 py-1 bg-blue-500 text-white rounded"
+                        className="sp-button sp-button-sm sp-button-blue"
                         onClick={addTeam}
                         disabled={!matchDay}
                     >
@@ -666,14 +666,14 @@ export default function RosterDetailPage() {
                             )}
                             <div className="flex items-center justify-center gap-2">
                                 <button
-                                    className="px-3 py-2 bg-blue-500 text-white rounded"
+                                    className="sp-button sp-button-sm sp-button-blue"
                                     onClick={addPlayerToRoster}
                                     disabled={!newPlayerFirst && !newPlayerLast}
                                 >
                                     Valider
                                 </button>
                                 <button
-                                    className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                    className="sp-button sp-button-sm sp-button-light"
                                     onClick={closeAddPlayerForm}
                                 >
                                     Annuler
@@ -694,7 +694,7 @@ export default function RosterDetailPage() {
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">Modifier {editingPlayer.name}</h3>
                                 <button
-                                    className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
+                                    className="sp-button sp-button-neutral sp-button-icon"
                                     onClick={cancelEditPlayer}
                                 >
                                     <FontAwesomeIcon icon={faCircleXmark} />
@@ -736,14 +736,14 @@ export default function RosterDetailPage() {
                             )}
                             <div className="flex items-center justify-center gap-2">
                                 <button
-                                    className="px-3 py-2 bg-blue-500 text-white rounded"
+                                    className="sp-button sp-button-sm sp-button-blue"
                                     onClick={saveEditPlayer}
                                     disabled={!editingPlayerFirst && !editingPlayerLast}
                                 >
                                     Valider
                                 </button>
                                 <button
-                                    className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                    className="sp-button sp-button-sm sp-button-light"
                                     onClick={cancelEditPlayer}
                                 >
                                     Annuler
@@ -764,13 +764,13 @@ export default function RosterDetailPage() {
                                             <span>{player.name}</span>
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                                    className="sp-button sp-button-yellow sp-button-icon"
                                                     onClick={() => startEditPlayer(player)}
                                                 >
                                                     <FontAwesomeIcon icon={faPenToSquare} />
                                                 </button>
                                                 <button
-                                                    className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
+                                                    className="sp-button sp-button-red sp-button-icon"
                                                     onClick={() => deletePlayer(player.id, player.name)}
                                                 >
                                                     <FontAwesomeIcon icon={faTrashCan} />
@@ -784,7 +784,7 @@ export default function RosterDetailPage() {
                     </>
                 )}
                 <button
-                    className="px-3 py-1 bg-green-500 text-white rounded mt-2"
+                    className="sp-button sp-button-sm sp-button-green mt-2"
                     onClick={() => setShowAddPlayerForm((value) => !value)}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />

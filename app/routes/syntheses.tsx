@@ -146,7 +146,7 @@ export default function SynthesesPage() {
                                 )
                             </Link>
                             <button
-                                className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                className="sp-button sp-button-xs sp-button-red"
                                 onClick={() => deleteSummary(summary.id)}
                             >
                                 <FontAwesomeIcon icon={faTrashCan} className="mr-1" />

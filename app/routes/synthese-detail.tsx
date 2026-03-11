@@ -300,7 +300,7 @@ export default function SyntheseDetailPage() {
             </Link>
             <br /><br /> 
             <button
-                className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
+                className="sp-button sp-button-md sp-button-neutral w-full sm:w-auto"
                 onClick={() =>
                     exportSummaryToPdf(summary.events, summary.currentTime, summary.summary, {
                         title: `Synthèse - ${getTeamsLabel()}`,

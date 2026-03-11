@@ -108,7 +108,7 @@ export default function EventsList({ events, remove }: Props) {
             )}
           </span>
           <button
-            className="text-red-600 text-sm px-2 py-1"
+            className="sp-button sp-button-xs sp-button-red"
             onClick={() => remove(idx)}
           >
             <FontAwesomeIcon icon={faTrashCan} className="mr-1" />

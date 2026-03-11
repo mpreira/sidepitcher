@@ -319,20 +319,20 @@ export default function RosterManager({
         <section className="space-y-4 max-w-screen-md mx-auto px-4">
             <div className="flex items-center gap-2">
                 <button
-                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                    className={`sp-tab px-3 py-2 ${
                         activeCategoryTab === 'Top 14'
-                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                            ? 'sp-tab-blue-active'
+                            : 'sp-tab-idle'
                     }`}
                     onClick={() => setActiveCategoryTab('Top 14')}
                 >
                     Top 14
                 </button>
                 <button
-                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                    className={`sp-tab px-3 py-2 ${
                         activeCategoryTab === 'Pro D2'
-                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                            ? 'sp-tab-blue-active'
+                            : 'sp-tab-idle'
                     }`}
                     onClick={() => setActiveCategoryTab('Pro D2')}
                 >
@@ -340,7 +340,7 @@ export default function RosterManager({
                 </button>
             </div>
             <button
-                className="px-3 py-2 bg-sky-500/20 text-sky-300 rounded border hover:bg-sky-600 flex items-center font-medium"
+                className="sp-button sp-button-sm sp-button-sky"
                 onClick={() => {
                     setShowCreateRosterForm((value) => !value);
                     setRosterFeedbackMessage("");
@@ -422,13 +422,13 @@ export default function RosterManager({
                         </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-blue"
                                 onClick={createRoster}
                             >
                                 Valider
                             </button>
                             <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                className="sp-button sp-button-sm sp-button-light"
                                 onClick={closeCreateRosterForm}
                             >
                                 Annuler
@@ -496,13 +496,13 @@ export default function RosterManager({
                         </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-blue"
                                 onClick={saveEditedRoster}
                             >
                                 Valider
                             </button>
                             <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                className="sp-button sp-button-sm sp-button-light"
                                 onClick={closeEditRosterForm}
                             >
                                 Annuler
@@ -532,7 +532,7 @@ export default function RosterManager({
                                 {r.nickname && <span className="block text-xs text-sky-300">{r.nickname}</span>}
                             </button>
                             <button
-                                className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                className="sp-button sp-button-yellow sp-button-icon"
                                 onClick={() => openEditRosterForm(r)}
                                 aria-label={`Modifier ${r.name}`}
                             >

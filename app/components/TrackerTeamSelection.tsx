@@ -68,7 +68,7 @@ export default function TrackerTeamSelection({
           )}
 
           <button
-            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+            className="sp-button sp-button-md sp-button-full sp-button-green"
             onClick={onSave}
             disabled={!team1Id || !team2Id || team1Id === team2Id}
           >
