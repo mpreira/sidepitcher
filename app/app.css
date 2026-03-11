@@ -13,7 +13,7 @@ body {
   overflow-x: hidden;
 
   h1{
-    @apply leading-[0.95] font-bold tracking-[-0.03em] text-xl md:text-2xl;
+    @apply leading-[0.95] font-black tracking-[-0.03em] text-white text-xl md:text-2xl;
   }
 
   @media (prefers-color-scheme: dark) {
