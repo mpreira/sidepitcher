@@ -757,7 +757,7 @@ export default function RosterDetailPage() {
                         {sortedRosterPlayers.length === 0 ? (
                             <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
                         ) : (
-                            <ul className="space-y-4">
+                            <ul className="space-y-4 mt-6">
                                 {sortedRosterPlayers.map((player) => (
                                     <li key={player.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
                                         <div className="flex items-center justify-between gap-2">
@@ -784,7 +784,7 @@ export default function RosterDetailPage() {
                     </>
                 )}
                 <button
-                    className="sp-button sp-button-sm sp-button-green mt-2"
+                    className="sp-button sp-button-sm sp-button-green mt-6"
                     onClick={() => setShowAddPlayerForm((value) => !value)}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
