@@ -237,7 +237,7 @@ export default function RosterDetailPage() {
         for (const player of selectedPlayers) {
             const number = playerNumbers[player.id];
             if (number === undefined) {
-                setCompositionEditMessage("Renseigne un numero pour chaque joueur selectionne.");
+                setCompositionEditMessage("Renseigne un numéro pour chaque joueur sélectionné.");
                 return;
             }
             if (number < 1 || number > 23) {
@@ -354,7 +354,7 @@ export default function RosterDetailPage() {
     if (!roster) {
         return (
             <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-                <p className="text-sm text-gray-700">Roster introuvable.</p>
+                <p className="text-sm text-gray-700">Effectif introuvable.</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white">
                     <FontAwesomeIcon icon={faCircleArrowLeft} />
                     Retour aux effectifs
@@ -378,7 +378,7 @@ export default function RosterDetailPage() {
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
                     <FontAwesomeIcon icon={faCircleArrowLeft} />
-                    Retour aux rosters
+                    Retour aux effectifs
                 </Link>
             </div>
 
@@ -423,7 +423,7 @@ export default function RosterDetailPage() {
                                         <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
                                             <span>Joueur</span>
                                             <span className="text-center">Capitaine</span>
-                                            <span className="text-right">Numero</span>
+                                            <span className="text-right">Numéro</span>
                                         </div>
                                         <ul className="space-y-2">
                                         {availablePlayers.map((player) => (
@@ -491,7 +491,7 @@ export default function RosterDetailPage() {
                     </div>
                 )}
                 {rosterTeams.length === 0 ? (
-                    <p className="text-sm text-gray-600">aucune composition disponible</p>
+                    <p className="text-sm text-gray-600">Aucune composition disponible</p>
                 ) : (
                     <ul className="space-y-1">
                         {rosterTeams.map((team: Team) => (
@@ -759,7 +759,7 @@ export default function RosterDetailPage() {
                         ) : (
                             <ul className="space-y-4">
                                 {sortedRosterPlayers.map((player) => (
-                                    <li key={player.id} className="border-b w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
+                                    <li key={player.id} className="sp-button sp-button-md sp-button-full sp-button-neutral text-base font-semibold w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
                                         <div className="flex items-center justify-between gap-2">
                                             <span>{player.name}</span>
                                             <div className="flex items-center gap-2">
