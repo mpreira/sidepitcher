@@ -34,7 +34,7 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export function meta() {
-    return [{ title: "Syntheses" }];
+    return [{ title: "Synthèses" }];
 }
 
 function FormattedDate({ dateString }: { dateString: string }) {
@@ -108,7 +108,7 @@ export default function SynthesesPage() {
     }
 
     async function deleteSummary(id: string) {
-        const confirmed = window.confirm("Supprimer cette synthese ?");
+        const confirmed = window.confirm("Supprimer cette synthèse ?");
         if (!confirmed) return;
         try {
             await fetch("/api/summaries", {

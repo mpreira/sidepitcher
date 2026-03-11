@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { useAccount } from "~/context/AccountContext";
 
 export function meta() {
-  return [{ title: "Reglages" }];
+  return [{ title: "Réglages" }];
 }
 
 export default function SettingsPage() {
@@ -70,17 +70,17 @@ export default function SettingsPage() {
       const data = (await response.json()) as { ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setError("Impossible de creer le compte.");
+        setError("Impossible de créer le compte.");
         return;
       }
 
       await refreshAccount();
-      setMessage("Compte cree. En attente de validation par un admin.");
+      setMessage("Compte créé. En attente de validation par un admin.");
       setNewName("");
       setNewEmail("");
       setNewPassword("");
     } catch {
-      setError("Impossible de creer le compte.");
+      setError("Impossible de créer le compte.");
     } finally {
       setBusy(false);
     }
@@ -118,7 +118,7 @@ export default function SettingsPage() {
       }
 
       await refreshAccount();
-      setMessage("Connexion reussie.");
+      setMessage("Connexion réussie.");
       setLoginEmail("");
       setLoginPassword("");
       navigate("/", { replace: true });
@@ -153,7 +153,7 @@ export default function SettingsPage() {
       }
 
       await refreshAccount();
-      setMessage("Nom du compte mis a jour.");
+      setMessage("Nom du compte mis à jour.");
     } catch {
       setError("Impossible de renommer le compte.");
     } finally {
@@ -164,15 +164,15 @@ export default function SettingsPage() {
   async function disconnect() {
     try {
       await logout();
-      setMessage("Deconnexion effectuee.");
+      setMessage("Déconnexion effectuée.");
     } catch {
-      setError("Impossible de se deconnecter.");
+      setError("Impossible de se déconnecter.");
     }
   }
 
   async function updateProfile() {
     if (!connected || !account) {
-      setError("Tu dois etre connecte.");
+      setError("Tu dois être connecté.");
       return;
     }
     if (!profileEmail.trim()) {
@@ -180,7 +180,7 @@ export default function SettingsPage() {
       return;
     }
     if (profilePassword.trim() && !profileCurrentPassword) {
-      setError("Entre ton mot de passe actuel pour definir un nouveau mot de passe.");
+      setError("Entre ton mot de passe actuel pour définir un nouveau mot de passe.");
       return;
     }
 
@@ -202,16 +202,16 @@ export default function SettingsPage() {
 
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) {
-        setError("Impossible de mettre a jour le profil (email deja utilise ou mot de passe invalide).");
+        setError("Impossible de mettre à jour le profil (email déjà utilisé ou mot de passe invalide).");
         return;
       }
 
       await refreshAccount();
       setProfileCurrentPassword("");
       setProfilePassword("");
-      setMessage("Profil mis a jour.");
+      setMessage("Profil mis à jour.");
     } catch {
-      setError("Impossible de mettre a jour le profil.");
+      setError("Impossible de mettre à jour le profil.");
     } finally {
       setBusy(false);
     }
@@ -220,7 +220,7 @@ export default function SettingsPage() {
   return (
     <main className="sp-page space-y-6">
       <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">
-        Reglages du compte
+        Réglages du compte
       </h1>
 
       {!connected && (
@@ -230,7 +230,7 @@ export default function SettingsPage() {
             onClick={() => setAuthMode("create")}
             className={`sp-tab px-3 py-2 ${authMode === "create" ? "sp-tab-green-active" : "sp-tab-idle"}`}
           >
-            Creer un compte
+            Créer un compte
           </button>
           <button
             type="button"
@@ -257,11 +257,11 @@ export default function SettingsPage() {
                 onClick={disconnect}
                 className="sp-button sp-button-sm sp-button-red mt-2"
               >
-                Deconnexion
+                Déconnexion
               </button>
             </>
           ) : (
-            <p className="text-sm text-neutral-300">Aucun compte connecte (mode invite).</p>
+            <p className="text-sm text-neutral-300">Aucun compte connecté (mode invité).</p>
           )}
         </section>
       )}
@@ -310,7 +310,7 @@ export default function SettingsPage() {
             disabled={busy || !connected}
             className="sp-button sp-button-md sp-button-full sp-button-indigo"
           >
-            {busy ? "Mise a jour..." : "Mettre a jour le profil"}
+            {busy ? "Mise à jour..." : "Mettre à jour le profil"}
           </button>
         </section>
       )}
@@ -334,14 +334,14 @@ export default function SettingsPage() {
             disabled={busy || loading || !connected || !account}
             className="sp-button sp-button-md sp-button-full sp-button-amber"
           >
-            {busy ? "Mise a jour..." : "Mettre a jour le nom"}
+            {busy ? "Mise à jour..." : "Mettre à jour le nom"}
           </button>
         </section>
       )}
 
       {!connected && authMode === "create" && (
         <section id="create-account" className="sp-panel space-y-3">
-          <h2 className="font-semibold">Creer un compte</h2>
+          <h2 className="font-semibold">Créer un compte</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="newNameInput">Nom d'utilisateur</label>
             <input
@@ -380,7 +380,7 @@ export default function SettingsPage() {
             disabled={busy}
             className="sp-button sp-button-md sp-button-full sp-button-green"
           >
-            {busy ? "Creation..." : "Creer et utiliser ce compte"}
+            {busy ? "Création..." : "Créer et utiliser ce compte"}
           </button>
         </section>
       )}
@@ -423,7 +423,7 @@ export default function SettingsPage() {
       {connected && account?.isAdmin && (
         <section className="sp-panel space-y-3">
           <h2 className="font-semibold">Administration</h2>
-          <p className="text-sm text-neutral-300">Le compte admin peut gerer tous les comptes via la page dediee.</p>
+          <p className="text-sm text-neutral-300">Le compte admin peut gérer tous les comptes via la page dédiée.</p>
           <Link
             to="/admin"
             className="sp-button sp-button-md sp-button-amber"

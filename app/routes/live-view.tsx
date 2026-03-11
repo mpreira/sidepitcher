@@ -93,11 +93,11 @@ type LiveAvailability = "active" | "closed" | "expired";
 
 function StatusBadge({ availability }: { availability: LiveAvailability }) {
   if (availability === "closed") {
-    return <span className="sp-badge sp-badge-amber">Live termine</span>;
+    return <span className="sp-badge sp-badge-amber">Live terminé</span>;
   }
 
   if (availability === "expired") {
-    return <span className="sp-badge sp-badge-neutral">Session expiree</span>;
+    return <span className="sp-badge sp-badge-neutral">Session expirée</span>;
   }
 
   return <span className="sp-badge sp-badge-emerald">Live actif</span>;
@@ -191,7 +191,7 @@ export default function LiveViewPage() {
     );
   }
 
-  const mainTimerText = snapshot.matchEnded ? "Match termine" : formatTime(snapshot.currentTime);
+  const mainTimerText = snapshot.matchEnded ? "Match terminé" : formatTime(snapshot.currentTime);
   const teams: Team[] = snapshot.teams.map((team) => ({
     id: team.id,
     name: team.name,
@@ -216,7 +216,7 @@ export default function LiveViewPage() {
       <div className="text-center">
         <StatusBadge availability={availability} />
       </div>
-      {updatedAt && <p className="text-center text-sm text-neutral-400">Mise a jour: {new Date(updatedAt).toLocaleTimeString("fr-FR")}</p>}
+      {updatedAt && <p className="text-center text-sm text-neutral-400">Mise à jour: {new Date(updatedAt).toLocaleTimeString("fr-FR")}</p>}
 
       <Scoreboard teams={teams} scores={snapshot.scores} mainTimerText={mainTimerText} />
 

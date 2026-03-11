@@ -23,9 +23,9 @@ export function Welcome() {
   async function handleLogout() {
     try {
       await logout();
-      setAccountMessage("Deconnexion effectuee.");
+      setAccountMessage("Déconnexion effectuée.");
     } catch {
-      setAccountMessage("Impossible de se deconnecter.");
+      setAccountMessage("Impossible de se déconnecter.");
     }
   }
 
@@ -42,7 +42,7 @@ export function Welcome() {
               onClick={handleLogout}
               className="sp-button sp-button-xs sp-button-red"
             >
-              Deconnexion
+              Déconnexion
             </button>
           </>
         ) : (
@@ -58,14 +58,14 @@ export function Welcome() {
               className="sp-button sp-button-xs sp-button-green"
             >
               <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
-              Creer un compte
+              Créer un compte
             </Link>
           </>
         )}
       </div>
       {!connected && (
         <p className="absolute left-4 top-4 z-20 rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
-          Mode invite: les donnees sont conservees 24h.
+          Mode invité: les données sont conservées 24h.
         </p>
       )}
       <div className="flex w-full flex-1 flex-col items-center gap-16 min-h-0">

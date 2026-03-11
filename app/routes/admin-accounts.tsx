@@ -71,15 +71,15 @@ export default function AdminAccountsPage() {
       });
       const payload = (await response.json()) as { ok?: boolean };
       if (!response.ok || !payload.ok) {
-        setError("Impossible de mettre a jour ce compte.");
+        setError("Impossible de mettre à jour ce compte.");
         return;
       }
 
       await refreshAccounts();
       setPasswordDraft((prev) => ({ ...prev, [item.id]: "" }));
-      setMessage("Compte mis a jour.");
+      setMessage("Compte mis à jour.");
     } catch {
-      setError("Impossible de mettre a jour ce compte.");
+      setError("Impossible de mettre à jour ce compte.");
     } finally {
       setBusy(false);
     }
@@ -111,7 +111,7 @@ export default function AdminAccountsPage() {
       }
 
       await refreshAccounts();
-      setMessage("Compte supprime.");
+      setMessage("Compte supprimé.");
     } catch {
       setError("Impossible de supprimer ce compte.");
     } finally {
@@ -140,7 +140,7 @@ export default function AdminAccountsPage() {
       }
 
       await refreshAccounts();
-      setMessage("Compte valide avec succes.");
+      setMessage("Compte validé avec succès.");
     } catch {
       setError("Impossible de valider ce compte.");
     } finally {
@@ -151,7 +151,7 @@ export default function AdminAccountsPage() {
   return (
     <main className="sp-page space-y-4">
       <h1 className="text-2xl font-bold">Administration des comptes</h1>
-      <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecte.</p>
+      <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecté.</p>
 
       <div className="flex items-center gap-2">
         <button
@@ -163,7 +163,7 @@ export default function AdminAccountsPage() {
               : "sp-tab-idle"
           }`}
         >
-          A valider ({pendingAccounts.length})
+          À valider ({pendingAccounts.length})
         </button>
         <button
           type="button"
@@ -190,7 +190,7 @@ export default function AdminAccountsPage() {
                     : "bg-amber-900/50 text-amber-300 border-amber-700"
                 }`}
               >
-                {item.isApproved ? "Valide" : "En attente"}
+                {item.isApproved ? "Validé" : "En attente"}
               </span>
             </div>
             <div className="sp-input-shell">
@@ -262,7 +262,7 @@ export default function AdminAccountsPage() {
                   disabled={busy}
                   className="sp-button sp-button-sm sp-button-amber flex-1"
                 >
-                  Mettre a jour
+                  Mettre à jour
                 </button>
               )}
               {!item.isApproved && (
@@ -296,7 +296,7 @@ export default function AdminAccountsPage() {
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <Link to="/account" className="sp-link-muted">
-        Retour reglages
+        Retour réglages
       </Link>
     </main>
   );

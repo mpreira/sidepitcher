@@ -35,9 +35,9 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                 }),
             });
             onSaved?.();
-            alert("Synthese sauvegardee.");
+            alert("Synthèse sauvegardée.");
         } catch (e) {
-            alert("Impossible de sauvegarder la synthese.");
+            alert("Impossible de sauvegarder la synthèse.");
         }
     }
 
@@ -49,7 +49,7 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                     onClick={saveSummary}
                 >
                     <FontAwesomeIcon icon={faFloppyDisk} className="mr-2" />
-                    Sauvegarder la synthese
+                    Sauvegarder la synthèse
                 </button>
                 <button
                     className="sp-button sp-button-md sp-button-indigo w-full sm:w-auto"
