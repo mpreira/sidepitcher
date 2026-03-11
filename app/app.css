@@ -50,7 +50,7 @@ body {
 
 @layer components {
   .sp-page {
-    @apply w-full max-w-screen-md mx-auto px-4 py-6 overflow-x-hidden;
+    @apply w-full max-w-screen-md mx-auto px-8 py-6 overflow-x-hidden;
   }
 
   .sp-panel {

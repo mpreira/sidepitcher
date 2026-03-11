@@ -518,7 +518,7 @@ export default function RosterManager({
             ) : filteredRosters.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucun effectif dans {activeCategoryTab}</p>
             ) : (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2 mt-6 md:grid-cols-3">
                     {filteredRosters.map((r) => (
                         <div key={r.id} className="flex items-center justify-between gap-2 rounded bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 py-2 px-4">
                             <button
@@ -544,7 +544,7 @@ export default function RosterManager({
             )}
 
             {rosterFeedbackMessage && (
-                <p className="flex items-center gap-2 text-sm text-green-400">
+                <p className="flex items-center gap-2 text-sm text-green-400 mt-6">
                     <FontAwesomeIcon icon={faCircleCheck} />
                     {rosterFeedbackMessage}
                 </p>

@@ -736,7 +736,7 @@ export default function RosterDetailPage() {
                             )}
                             <div className="flex items-center justify-center gap-2">
                                 <button
-                                    className="sp-button sp-button-sm sp-button-blue"
+                                    className="sp-button sp-button-sm sp-button-blue h-36px"
                                     onClick={saveEditPlayer}
                                     disabled={!editingPlayerFirst && !editingPlayerLast}
                                 >
