@@ -61,38 +61,38 @@ export default function AdminDbPage() {
 
   return (
     <main className="sp-page space-y-4">
-      <h1 className="text-2xl font-bold">Diagnostic base de donnees</h1>
+      <h1 className="text-2xl font-bold">Diagnostic base de données</h1>
       <p className="text-sm text-gray-300">
-        Page de lecture seule pour verifier les donnees PostgreSQL (Render).
+        Page de lecture seule pour vérifier les données PostgreSQL (Render).
       </p>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Scope de donnees</h2>
+        <h2 className="font-semibold">Scope des données</h2>
         <ul className="text-sm space-y-1">
-          <li>Libelle: {data.scopeLabel}</li>
+          <li>Libellé : {data.scopeLabel}</li>
           <li className="break-all">ID: {data.scopeId}</li>
         </ul>
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Etat effectifs</h2>
+        <h2 className="font-semibold">État des effectifs</h2>
         <ul className="text-sm space-y-1">
-          <li>Effectifs: {data.rostersCount}</li>
-          <li>Equipes composees: {data.teamsCount}</li>
-          <li>Effectif actif: {data.activeRosterId || "(aucun)"}</li>
-          <li>Journee: {data.matchDay || "(vide)"}</li>
+          <li>Effectifs : {data.rostersCount}</li>
+          <li>Équipes composées : {data.teamsCount}</li>
+          <li>Effectif actif : {data.activeRosterId || "(aucun)"}</li>
+          <li>Journée : {data.matchDay || "(vide)"}</li>
           <li>Sport: {data.sport}</li>
           <li>Championnat: {data.championship}</li>
         </ul>
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Selections match sauvegardees ({data.selectionsCount})</h2>
+        <h2 className="font-semibold">Sélections match sauvegardées ({data.selectionsCount})</h2>
         <JsonBlock value={data.selectionsPreview} />
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Syntheses sauvegardees ({data.summariesCount})</h2>
+        <h2 className="font-semibold">Synthèses sauvegardées ({data.summariesCount})</h2>
         <JsonBlock value={data.summariesPreview} />
       </section>
 

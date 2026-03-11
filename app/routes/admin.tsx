@@ -25,7 +25,7 @@ export default function AdminPage() {
 
       <section className="sp-panel space-y-2">
         <h2 className="font-semibold">Comptes</h2>
-        <p className="text-sm text-neutral-300">Gerer les comptes utilisateurs et les droits admin.</p>
+        <p className="text-sm text-neutral-300">Gérer les comptes utilisateurs et les droits admin.</p>
         <Link
           to="/admin/accounts"
           className="sp-button sp-button-md sp-button-amber"

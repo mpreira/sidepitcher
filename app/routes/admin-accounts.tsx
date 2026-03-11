@@ -174,7 +174,7 @@ export default function AdminAccountsPage() {
               : "sp-tab-idle"
           }`}
         >
-          Valides ({approvedAccounts.length})
+          Validés ({approvedAccounts.length})
         </button>
       </div>
 
@@ -288,7 +288,7 @@ export default function AdminAccountsPage() {
 
       {visibleAccounts.length === 0 && (
         <p className="text-sm text-neutral-400">
-          {activeTab === "pending" ? "Aucun compte en attente de validation." : "Aucun compte valide."}
+          {activeTab === "pending" ? "Aucun compte en attente de validation." : "Aucun compte validé."}
         </p>
       )}
 
