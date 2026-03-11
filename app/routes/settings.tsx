@@ -224,18 +224,18 @@ export default function SettingsPage() {
       </h1>
 
       {!connected && (
-        <section className="flex items-end gap-1 border-b border-neutral-700">
+        <section className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setAuthMode("create")}
-            className={`sp-tab px-3 py-2 ${authMode === "create" ? "sp-tab-green-active" : "sp-tab-idle"}`}
+            className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${authMode === "create" ? "border-green-500 bg-green-500/20 text-green-300" : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"}`}
           >
             Créer un compte
           </button>
           <button
             type="button"
             onClick={() => setAuthMode("login")}
-            className={`sp-tab px-3 py-2 ${authMode === "login" ? "sp-tab-blue-active" : "sp-tab-idle"}`}
+            className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${authMode === "login" ? "border-blue-500 bg-blue-500/20 text-blue-300" : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"}`}
           >
             Se connecter
           </button>

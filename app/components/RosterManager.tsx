@@ -317,22 +317,22 @@ export default function RosterManager({
 
     return (
         <section className="space-y-4 max-w-screen-md mx-auto px-4">
-            <div className="flex items-end gap-1 border-b border-neutral-700">
+            <div className="flex items-center gap-2">
                 <button
-                    className={`sp-tab px-3 py-2 ${
+                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
                         activeCategoryTab === 'Top 14'
-                            ? 'sp-tab-blue-active'
-                            : 'sp-tab-idle'
+                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
                     }`}
                     onClick={() => setActiveCategoryTab('Top 14')}
                 >
                     Top 14
                 </button>
                 <button
-                    className={`sp-tab px-3 py-2 ${
+                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
                         activeCategoryTab === 'Pro D2'
-                            ? 'sp-tab-blue-active'
-                            : 'sp-tab-idle'
+                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
                     }`}
                     onClick={() => setActiveCategoryTab('Pro D2')}
                 >

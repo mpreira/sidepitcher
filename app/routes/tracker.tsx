@@ -539,22 +539,22 @@ export default function Tracker() {
             />
 
             <section className="space-y-2">
-                <div className="flex items-end gap-1 border-b border-neutral-700">
+                <div className="flex items-center gap-2">
                     <button
-                        className={`sp-tab px-3 py-2 ${
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
                             actionTab === "events"
-                                ? "sp-tab-blue-active"
-                                : "sp-tab-idle"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
                         }`}
                         onClick={() => setActionTab("events")}
                     >
                         Événements
                     </button>
                     <button
-                        className={`sp-tab px-3 py-2 ${
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
                             actionTab === "stats"
-                                ? "sp-tab-blue-active"
-                                : "sp-tab-idle"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
                         }`}
                         onClick={() => {
                             setActionTab("stats");

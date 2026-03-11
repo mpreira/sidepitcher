@@ -153,14 +153,14 @@ export default function AdminAccountsPage() {
       <h1 className="text-2xl font-bold">Administration des comptes</h1>
       <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecté.</p>
 
-      <div className="flex items-end gap-1 border-b border-neutral-700">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setActiveTab("pending")}
-          className={`sp-tab ${
+          className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
             activeTab === "pending"
-              ? "sp-tab-amber-active"
-              : "sp-tab-idle"
+              ? "border-amber-500 bg-amber-500/20 text-amber-300"
+              : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
           }`}
         >
           À valider ({pendingAccounts.length})
@@ -168,10 +168,10 @@ export default function AdminAccountsPage() {
         <button
           type="button"
           onClick={() => setActiveTab("approved")}
-          className={`sp-tab ${
+          className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
             activeTab === "approved"
-              ? "sp-tab-emerald-active"
-              : "sp-tab-idle"
+              ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
+              : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
           }`}
         >
           Validés ({approvedAccounts.length})

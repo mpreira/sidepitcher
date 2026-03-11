@@ -128,30 +128,6 @@ body {
     @apply h-10 w-10 rounded-full p-0;
   }
 
-  .sp-tab {
-    @apply px-3 py-1.5 text-sm font-medium border-b-2 transition-colors duration-150;
-  }
-
-  .sp-tab-idle {
-    @apply border-transparent text-neutral-400 hover:text-neutral-100 hover:border-neutral-500;
-  }
-
-  .sp-tab-amber-active {
-    @apply border-amber-400 text-amber-300;
-  }
-
-  .sp-tab-blue-active {
-    @apply border-blue-400 text-blue-300;
-  }
-
-  .sp-tab-emerald-active {
-    @apply border-emerald-400 text-emerald-300;
-  }
-
-  .sp-tab-green-active {
-    @apply border-green-400 text-green-300;
-  }
-
   .sp-badge {
     @apply inline-block rounded px-2 py-1 text-xs font-semibold text-white;
   }
