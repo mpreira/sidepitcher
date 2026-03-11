@@ -290,7 +290,7 @@ export default function SyntheseDetailPage() {
     const halfTimeScoreText = `${halfScoreLeft} - ${halfScoreRight}`;
 
     return (
-        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
+        <main className="sp-page space-y-4">
             <p className="text-sm text-gray-700 mb-2">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>

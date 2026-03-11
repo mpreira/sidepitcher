@@ -93,14 +93,14 @@ type LiveAvailability = "active" | "closed" | "expired";
 
 function StatusBadge({ availability }: { availability: LiveAvailability }) {
   if (availability === "closed") {
-    return <span className="inline-block rounded bg-amber-700 px-2 py-1 text-xs font-semibold text-white">Live termine</span>;
+    return <span className="sp-badge sp-badge-amber">Live termine</span>;
   }
 
   if (availability === "expired") {
-    return <span className="inline-block rounded bg-neutral-700 px-2 py-1 text-xs font-semibold text-white">Session expiree</span>;
+    return <span className="sp-badge sp-badge-neutral">Session expiree</span>;
   }
 
-  return <span className="inline-block rounded bg-green-700 px-2 py-1 text-xs font-semibold text-white">Live actif</span>;
+  return <span className="sp-badge sp-badge-emerald">Live actif</span>;
 }
 
 export default function LiveViewPage() {

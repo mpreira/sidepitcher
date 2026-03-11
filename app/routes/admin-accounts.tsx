@@ -157,10 +157,10 @@ export default function AdminAccountsPage() {
         <button
           type="button"
           onClick={() => setActiveTab("pending")}
-          className={`px-3 py-1 rounded text-sm border ${
+          className={`sp-tab ${
             activeTab === "pending"
-              ? "bg-amber-600 text-white border-amber-500"
-              : "bg-neutral-800 text-neutral-300 border-neutral-700"
+              ? "sp-tab-amber-active"
+              : "sp-tab-idle"
           }`}
         >
           A valider ({pendingAccounts.length})
@@ -168,10 +168,10 @@ export default function AdminAccountsPage() {
         <button
           type="button"
           onClick={() => setActiveTab("approved")}
-          className={`px-3 py-1 rounded text-sm border ${
+          className={`sp-tab ${
             activeTab === "approved"
-              ? "bg-emerald-700 text-white border-emerald-600"
-              : "bg-neutral-800 text-neutral-300 border-neutral-700"
+              ? "sp-tab-emerald-active"
+              : "sp-tab-idle"
           }`}
         >
           Valides ({approvedAccounts.length})
