@@ -1,6 +1,6 @@
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
-import logoSP from "~/assets/images/banner_mr_transparent.png";
+import logoSP from "~/assets/images/logo match reporter.png";
 import { useState } from "react";
 import { Link } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
