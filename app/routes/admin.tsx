@@ -1,5 +1,7 @@
 import { Link } from "react-router";
 import { getConnectedAccountFromRequest } from "~/utils/account.server";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 
 export function meta() {
   return [{ title: "Administration" }];
@@ -35,6 +37,7 @@ export default function AdminPage() {
       </section>
 
       <Link to="/account" className="sp-link-muted">
+        <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
         Retour compte
       </Link>
     </main>

@@ -19,6 +19,7 @@ import {
   faArrowUp,
   faArrowDown,
   faCircleUser,
+  faChevronLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
@@ -259,6 +260,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         </pre>
       )}
       <a href="/" className="sp-link-muted">
+        <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
         Retour à l'accueil
       </a>
     </main>

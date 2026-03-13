@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import { getConnectedAccountFromRequest, listAdminAccounts } from "~/utils/account.server";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 
 interface AdminAccountItem {
   id: string;
@@ -296,6 +298,7 @@ export default function AdminAccountsPage() {
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <Link to="/account" className="sp-link-muted">
+        <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
         Retour réglages
       </Link>
     </main>
