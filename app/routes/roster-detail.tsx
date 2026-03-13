@@ -377,7 +377,7 @@ export default function RosterDetailPage() {
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
-                    <FontAwesomeIcon icon={faCircleArrowLeft} />
+                    <FontAwesomeIcon icon={faChevronLeft} />
                     Retour aux effectifs
                 </Link>
             </div>
@@ -509,7 +509,7 @@ export default function RosterDetailPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
-                                            className="sp-button sp-button-xs sp-button-blue"
+                                            className="sp-button sp-button-xs sp-button-blue h-8"
                                             onClick={() =>
                                                 compositionEditTeamId === team.id
                                                     ? closeCompositionEditor()
