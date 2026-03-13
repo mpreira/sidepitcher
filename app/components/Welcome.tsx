@@ -126,7 +126,7 @@ export function Welcome() {
             </div>
             <button
               type="submit"
-              className="sp-button sp-button-md sp-button-full sp-button-green"
+              className="sp-button sp-button-md sp-button-full sp-button-blue"
             >
               Valider
             </button>

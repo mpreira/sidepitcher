@@ -474,7 +474,7 @@ export default function RosterDetailPage() {
                             })()}
 
                             <button
-                                className="sp-button sp-button-sm sp-button-green"
+                                className="sp-button sp-button-sm sp-button-indigo"
                                 onClick={() => addPlayersToComposition(compositionEditTeam)}
                             >
                                 <FontAwesomeIcon icon={faPlus} className="mr-1" />
@@ -784,7 +784,7 @@ export default function RosterDetailPage() {
                     </>
                 )}
                 <button
-                    className="sp-button sp-button-sm sp-button-green mt-6"
+                    className="sp-button sp-button-sm sp-button-indigo mt-6"
                     onClick={() => setShowAddPlayerForm((value) => !value)}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
