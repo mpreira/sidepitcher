@@ -43,9 +43,9 @@ export default function RosterRedirectPage() {
     if (rosters.length === 0) {
         return (
             <main className="sp-page space-y-4">
-                <p className="text-sm text-gray-700">Chargement des rosters...</p>
-                <Link to="/roster" className="underline text-blue-600">
-                    Retour aux rosters
+                <p className="text-sm text-neutral-400">Chargement de l'effectif...</p>
+                <Link to="/roster" className="sp-link-muted">
+                    Retour aux effectifs
                 </Link>
             </main>
         );
@@ -54,9 +54,10 @@ export default function RosterRedirectPage() {
     if (!roster) {
         return (
             <main className="sp-page space-y-4">
-                <p className="text-sm text-gray-700">Roster introuvable.</p>
-                <Link to="/roster" className="underline text-blue-600">
-                    Retour aux rosters
+                <h1 className="text-xl font-bold">Effectif introuvable</h1>
+                <p className="text-sm text-neutral-300">Cet effectif n'existe pas ou a été supprimé.</p>
+                <Link to="/roster" className="sp-link-muted">
+                    Retour aux effectifs
                 </Link>
             </main>
         );
@@ -64,7 +65,7 @@ export default function RosterRedirectPage() {
 
     return (
         <main className="sp-page space-y-4">
-            <p className="text-sm text-gray-700">Redirection en cours...</p>
+            <p className="text-sm text-neutral-400">Redirection en cours...</p>
         </main>
     );
 }

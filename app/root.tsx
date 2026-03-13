@@ -217,30 +217,50 @@ function ScrollPageControls() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let code: number | null = null;
+  let title = "Une erreur est survenue";
+  let detail = "Une erreur inattendue s'est produite.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+    code = error.status;
+    if (error.status === 404) {
+      title = "Page introuvable";
+      detail = "La page que tu cherches n'existe pas ou a été déplacée.";
+    } else if (error.status === 401) {
+      title = "Non autorisé";
+      detail = "Tu dois être connecté pour accéder à cette page.";
+    } else if (error.status === 403) {
+      title = "Accès refusé";
+      detail = "Tu n'as pas les droits pour accéder à cette page.";
+    } else if (error.status === 410) {
+      title = "Session expirée";
+      detail = "Cette session n'est plus disponible.";
+    } else {
+      title = `Erreur ${error.status}`;
+      detail = error.statusText || detail;
+    }
   } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
+    title = "Erreur de développement";
+    detail = error.message;
     stack = error.stack;
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto w-5/6">
-      <h1>{message}</h1>
-      <p>{details}</p>
+    <main className="sp-page flex flex-col gap-4 pt-16">
+      <p className="font-mono text-xs uppercase tracking-widest text-neutral-500">
+        {code ? `Code ${code}` : "Erreur"}
+      </p>
+      <h1 className="text-2xl font-bold">{title}</h1>
+      <p className="text-sm text-neutral-300">{detail}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full overflow-x-auto rounded border border-neutral-700 bg-neutral-900 p-4 text-xs text-neutral-400">
           <code>{stack}</code>
         </pre>
       )}
+      <a href="/" className="sp-link-muted">
+        Retour à l'accueil
+      </a>
     </main>
   );
 }
