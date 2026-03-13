@@ -16,8 +16,8 @@ import {
   faUsers,
   faFileLines,
   faUserShield,
-  faArrowUp,
-  faArrowDown,
+  faChevronUp,
+  faChevronDown,
   faCircleUser,
   faChevronLeft,
 } from "@fortawesome/free-solid-svg-icons";
@@ -200,7 +200,7 @@ function ScrollPageControls() {
         aria-label="Aller en haut"
         title="Aller en haut"
       >
-        <FontAwesomeIcon icon={faArrowUp} />
+        <FontAwesomeIcon icon={faChevronUp} />
       </button>
       <button
         type="button"
@@ -211,7 +211,7 @@ function ScrollPageControls() {
         aria-label="Aller en bas"
         title="Aller en bas"
       >
-        <FontAwesomeIcon icon={faArrowDown} />
+        <FontAwesomeIcon icon={faChevronDown} />
       </button>
     </div>
   );
