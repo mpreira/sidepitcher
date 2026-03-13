@@ -113,11 +113,12 @@ LIVE_TOKEN_PEPPER=change-me
 LIVE_SESSION_TTL_HOURS=12
 ```
 
-Optional (email notification when a new account is created):
+Optional (emails sent when a new account is created):
 
 ```bash
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL="SidePitcher <onboarding@resend.dev>"
+ADMIN_NOTIFICATION_EMAIL=admin@your-domain.com
 ```
 
 Admin seed at first startup:
@@ -128,7 +129,8 @@ Admin seed at first startup:
 Important:
 
 - Connect once with this admin account, then immediately change the password from the app.
-- If `RESEND_API_KEY` is missing, account creation still works but no notification email is sent.
+- If `RESEND_API_KEY` is missing, account creation still works but no emails are sent.
+- With `RESEND_API_KEY` configured, two emails are sent on signup: one to the admin, one to the new user (pending validation notice).
 
 ## Styling
 

@@ -8,7 +8,10 @@ import {
   renameCurrentAccount,
   updateCurrentAccountProfile,
 } from "~/utils/account.server";
-import { sendNewAccountNotificationEmail } from "~/utils/mailer.server";
+import {
+  sendAccountPendingValidationEmail,
+  sendNewAccountNotificationEmail,
+} from "~/utils/mailer.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const connectedAccount = await getConnectedAccountFromRequest(request);
@@ -53,6 +56,22 @@ export const action: ActionFunction = async ({ request }) => {
         accountId: created.account.id,
         accountEmail: created.account.email,
         to: process.env.ADMIN_NOTIFICATION_EMAIL ?? "mlpreira@gmail.com",
+        from: process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Notification failures should not block account creation.
+    }
+
+    try {
+      await sendAccountPendingValidationEmail({
+        accountName: created.account.name,
+        accountEmail: created.account.email,
+      });
+    } catch (error) {
+      console.error("[account:create] pending validation email failed", {
+        accountId: created.account.id,
+        accountEmail: created.account.email,
+        to: created.account.email,
         from: process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>",
         error: error instanceof Error ? error.message : String(error),
       });

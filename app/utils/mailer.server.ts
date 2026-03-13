@@ -5,6 +5,11 @@ interface NewAccountNotificationInput {
   accountEmail: string;
 }
 
+interface AccountPendingValidationEmailInput {
+  accountName: string;
+  accountEmail: string;
+}
+
 function sanitizeEnvSecret(value: string | undefined): string {
   if (!value) {
     return "";
@@ -63,6 +68,54 @@ export async function sendNewAccountNotificationEmail(
 
   console.info("[mailer] account notification email sent", {
     to: adminNotificationEmail,
+    from,
+    accountEmail: input.accountEmail,
+  });
+}
+
+export async function sendAccountPendingValidationEmail(
+  input: AccountPendingValidationEmailInput
+): Promise<void> {
+  const apiKey = sanitizeEnvSecret(process.env.RESEND_API_KEY);
+  const from = process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>";
+
+  if (!apiKey) {
+    console.warn("[mailer] RESEND_API_KEY missing: skipping pending validation email", {
+      to: input.accountEmail,
+      from,
+      accountEmail: input.accountEmail,
+    });
+    return;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [input.accountEmail],
+      subject: "Ton compte SidePitcher est en cours de validation",
+      text:
+        `Bonjour ${input.accountName},\n\n` +
+        "Ton compte a bien été créé. Il est actuellement en attente de validation par un administrateur.\n\n" +
+        "Tu recevras un nouvel email dès que ton compte sera activé.\n\n" +
+        "Merci pour ta patience.",
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    const keyFingerprint = apiKey.length >= 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : "too-short";
+    throw new Error(
+      `Unable to send pending validation email (status ${response.status}, key ${keyFingerprint}): ${details}`
+    );
+  }
+
+  console.info("[mailer] pending validation email sent", {
+    to: input.accountEmail,
     from,
     accountEmail: input.accountEmail,
   });
