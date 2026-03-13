@@ -299,7 +299,7 @@ export default function AdminAccountsPage() {
 
       <Link to="/account" className="sp-link-muted">
         <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-        Retour réglages
+        Retour aux réglages
       </Link>
     </main>
   );

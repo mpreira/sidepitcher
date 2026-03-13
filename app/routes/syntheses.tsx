@@ -3,7 +3,7 @@ import { useState, useLayoutEffect } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft, faTrashCan, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faArrowCircleLeft, faChevronLeft, faTrashCan, faUser } from "@fortawesome/free-solid-svg-icons";
 import { listSummaries } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
@@ -128,7 +128,7 @@ export default function SynthesesPage() {
             <h1 className="text-2xl font-bold">Anciennes synthèses</h1>
             {account?.name && <p className="text-xs text-neutral-400"><FontAwesomeIcon icon={faUser} className="mr-1" />{account.name}</p>}
             <Link to="/tracker" className="text-white text-base font-medium">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                <FontAwesomeIcon icon={faChevronLeft} className="mr-1" />
                 Retour au suivi
             </Link>
             {summaries.length === 0 ? (

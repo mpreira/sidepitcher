@@ -5,6 +5,8 @@ import {
   listSummaries,
 } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 
 export function meta() {
   return [{ title: "Diagnostic DB" }];
@@ -97,7 +99,8 @@ export default function AdminDbPage() {
       </section>
 
       <Link to="/" className="text-white text-base underline">
-        Retour accueil
+        <FontAwesomeIcon icon={faChevronLeft} className="text-xs mr-1" />
+        Retour à l'accueil
       </Link>
     </main>
   );

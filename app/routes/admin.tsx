@@ -38,7 +38,7 @@ export default function AdminPage() {
 
       <Link to="/account" className="sp-link-muted">
         <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-        Retour compte
+        Retour au compte
       </Link>
     </main>
   );

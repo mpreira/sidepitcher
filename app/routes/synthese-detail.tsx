@@ -4,7 +4,7 @@ import type { Event } from "~/types/tracker";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faArrowCircleLeft, faChevronLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
 import {
@@ -295,7 +295,7 @@ export default function SyntheseDetailPage() {
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
             <Link to="/syntheses" className="text-white text-base">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                <FontAwesomeIcon icon={faChevronLeft} className="mr-1" />
                 Retour aux synthèses
             </Link>
             <br /><br /> 

@@ -15,7 +15,7 @@ import {
     updateTeamInList,
     parsePlayerName,
 } from "~/utils/RosterUtils";
-import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -356,7 +356,7 @@ export default function RosterDetailPage() {
             <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
                 <p className="text-sm text-gray-700">Effectif introuvable.</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white">
-                    <FontAwesomeIcon icon={faCircleArrowLeft} />
+                    <FontAwesomeIcon icon={faChevronLeft} />
                     Retour aux effectifs
                 </Link>
             </main>
