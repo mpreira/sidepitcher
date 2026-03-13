@@ -26,7 +26,7 @@ export async function sendNewAccountNotificationEmail(
   input: NewAccountNotificationInput
 ): Promise<void> {
   const apiKey = sanitizeEnvSecret(process.env.RESEND_API_KEY);
-  const from = process.env.RESEND_FROM_EMAIL ?? "SidePitcher <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>";
   const adminNotificationEmail =
     process.env.ADMIN_NOTIFICATION_EMAIL?.trim() || DEFAULT_ADMIN_NOTIFICATION_EMAIL;
 
@@ -48,7 +48,7 @@ export async function sendNewAccountNotificationEmail(
     body: JSON.stringify({
       from,
       to: [adminNotificationEmail],
-      subject: "Nouveau compte créé surSidePitcher",
+      subject: "Nouveau compte créé sur Match Reporter",
       text: `Un nouveau compte a été créé.\n\nNom: ${input.accountName}\nEmail: ${input.accountEmail}`,
     }),
   });

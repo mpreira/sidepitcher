@@ -20,7 +20,7 @@ import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
 
 export function meta({}: Route.MetaArgs) {
-    return [{ title: "Side Pitcher" }];
+    return [{ title: "Match Reporter" }];
 }
 
 const COMMAND_TYPES = [
