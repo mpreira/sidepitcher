@@ -340,7 +340,7 @@ export default function RosterManager({
                 </button>
             </div>
             <button
-                className="sp-button sp-button-sm sp-button-sky"
+                className="sp-button sp-button-sm sp-button-indigo"
                 onClick={() => {
                     setShowCreateRosterForm((value) => !value);
                     setRosterFeedbackMessage("");
