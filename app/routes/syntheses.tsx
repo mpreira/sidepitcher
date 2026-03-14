@@ -134,23 +134,25 @@ export default function SynthesesPage() {
             {summaries.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucune synthèse disponible.</p>
             ) : (
-                <ul className="space-y-2">
+                <ul className="space-y-4 mt-6">
                     {summaries.map((summary) => (
-                        <li key={summary.id} className="border-b border-neutral-700 w-full rounded p-3 flex items-center justify-between gap-2">
+                        <li key={summary.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
+                            <div className="flex items-center justify-between gap-2">
                             <Link
                                 to={`/syntheses/${summary.id}`}
-                                className="text-white text-lg font-semibold min-w-0 break-words pr-2"
+                                className="text-white font-semibold min-w-0 break-words pr-2 flex-1"
                             >
                                 {getTeamsLabel(summary.teams, summary.events, summary.matchDay) || "Match"} (
                                 <FormattedDate dateString={summary.createdAt} />
                                 )
                             </Link>
                             <button
-                                className="sp-button sp-button-xs sp-button-red"
+                                className="sp-button sp-button-red sp-button-icon"
                                 onClick={() => deleteSummary(summary.id)}
                             >
-                                <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
+                                <FontAwesomeIcon icon={faTrashCan} />
                             </button>
+                            </div>
                         </li>
                     ))}
                 </ul>
