@@ -505,7 +505,7 @@ export default function RosterDetailPage() {
                                         >
                                             {expandedTeams.has(team.id) ? <FontAwesomeIcon icon={faAngleDown} /> : <FontAwesomeIcon icon={faAngleRight} />}
                                         </button>
-                                        <span>{team.name}</span>
+                                        <span className="text-white font-semibold">{team.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
@@ -761,7 +761,7 @@ export default function RosterDetailPage() {
                                 {sortedRosterPlayers.map((player) => (
                                     <li key={player.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span>{player.name}</span>
+                                            <span className="text-white font-semibold">{player.name}</span>
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     className="sp-button sp-button-yellow sp-button-icon"
