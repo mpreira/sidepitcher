@@ -505,7 +505,7 @@ export default function RosterDetailPage() {
                                         >
                                             {expandedTeams.has(team.id) ? <FontAwesomeIcon icon={faAngleDown} /> : <FontAwesomeIcon icon={faAngleRight} />}
                                         </button>
-                                        <span className="text-white font-semibold">{team.name}</span>
+                                        <span className="text-white font-semibold uppercase">{team.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
