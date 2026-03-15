@@ -97,7 +97,7 @@ export async function sendAccountPendingValidationEmail(
     body: JSON.stringify({
       from,
       to: [input.accountEmail],
-      subject: "Ton compte SidePitcher est en cours de validation",
+      subject: "Ton compte Match Reporter est en cours de validation",
       text:
         `Bonjour ${input.accountName},\n\n` +
         "Ton compte a bien été créé. Il est actuellement en attente de validation par un administrateur.\n\n" +

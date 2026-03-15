@@ -31,43 +31,45 @@ export function Welcome() {
 
   return (
     <main className="relative flex h-full min-h-0 w-full items-center justify-center py-4">
-      <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
-        {connected && account ? (
-          <>
-            <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
-              <FontAwesomeIcon icon={faCircleUser} /> {account.name}
-            </span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="sp-button sp-button-xs sp-button-red"
-            >
-              Déconnexion
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              to="/account#switch-account"
-              className="sp-button sp-button-xs sp-button-blue"
-            >
-              Se connecter
-            </Link>
-            <Link
-              to="/account#create-account"
-              className="sp-button sp-button-xs sp-button-green"
-            >
-              <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
-              Créer un compte
-            </Link>
-          </>
+      <div className="absolute inset-x-4 top-4 z-20 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        {!connected && (
+          <p className="order-2 w-fit max-w-full rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200 sm:order-1">
+            Mode invité: les données sont conservées 24h.
+          </p>
         )}
+        <div className="order-1 flex flex-wrap items-center justify-end gap-2 sm:order-2">
+          {connected && account ? (
+            <>
+              <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
+                <FontAwesomeIcon icon={faCircleUser} /> {account.name}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="sp-button sp-button-xs sp-button-red"
+              >
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/account#switch-account"
+                className="sp-button sp-button-xs sp-button-blue"
+              >
+                Se connecter
+              </Link>
+              <Link
+                to="/account#create-account"
+                className="sp-button sp-button-xs sp-button-green"
+              >
+                <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
+                Créer un compte
+              </Link>
+            </>
+          )}
+        </div>
       </div>
-      {!connected && (
-        <p className="absolute left-4 top-4 z-20 rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
-          Mode invité: les données sont conservées 24h.
-        </p>
-      )}
       <div className="flex w-full flex-1 flex-col items-center gap-16 min-h-0">
         <header className="flex w-full flex-col items-center gap-9">
             <div className="mx-auto w-full max-w-[1100px] px-2">

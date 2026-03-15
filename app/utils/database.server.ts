@@ -208,7 +208,7 @@ function generateAccountAccessCode(): string {
 function trimAccountName(name?: string): string {
   const trimmed = (name ?? "").trim();
   if (!trimmed) {
-    return "Compte SidePitcher";
+    return "Compte Match Reporter";
   }
   return trimmed.slice(0, 80);
 }
