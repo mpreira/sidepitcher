@@ -111,8 +111,10 @@ export default function LiveViewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isNewEventHighlighted, setIsNewEventHighlighted] = useState(false);
   const [unseenCount, setUnseenCount] = useState(0);
+  const [recentCount, setRecentCount] = useState(0);
   const prevEventCountRef = useRef(-1);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTabVisibleRef = useRef(typeof document !== "undefined" ? !document.hidden : true);
 
   useEffect(() => {
@@ -164,9 +166,19 @@ export default function LiveViewPage() {
         // Premier message SSE = baseline, pas de highlight
         prevEventCountRef.current = newCount;
       } else if (newCount > prevEventCountRef.current) {
-        if (!isTabVisibleRef.current) {
-          setUnseenCount((c) => c + (newCount - prevEventCountRef.current));
+        const delta = newCount - prevEventCountRef.current;
+        const isVisited = isTabVisibleRef.current && document.hasFocus();
+
+        if (!isVisited) {
+          setUnseenCount((c) => c + delta);
         }
+
+        setRecentCount((c) => c + delta);
+        if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
+        recentTimerRef.current = setTimeout(() => {
+          if (mounted) setRecentCount(0);
+        }, 8000);
+
         setIsNewEventHighlighted(true);
         if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
         highlightTimerRef.current = setTimeout(() => {
@@ -186,6 +198,7 @@ export default function LiveViewPage() {
       mounted = false;
       source.close();
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
     };
   }, [publicSlug]);
 
@@ -194,20 +207,29 @@ export default function LiveViewPage() {
       isTabVisibleRef.current = !document.hidden;
       if (!document.hidden) setUnseenCount(0);
     };
+    const handleFocus = () => {
+      isTabVisibleRef.current = !document.hidden;
+      setUnseenCount(0);
+    };
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   useEffect(() => {
     const base = "Live Match";
-    if (unseenCount > 0) {
-      const label = unseenCount > 1 ? "nouvelles actions" : "nouvelle action";
-      document.title = `(${unseenCount}) ${label} | ${base}`;
+    const badgeCount = unseenCount > 0 ? unseenCount : recentCount;
+    if (badgeCount > 0) {
+      const label = badgeCount > 1 ? "nouvelles actions" : "nouvelle action";
+      document.title = `(${badgeCount}) ${label} | ${base}`;
     } else {
       document.title = base;
     }
     return () => { document.title = base; };
-  }, [unseenCount]);
+  }, [unseenCount, recentCount]);
 
   if (!snapshot && isLoading) {
     return (
