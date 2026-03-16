@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLoaderData } from "react-router";
 import Scoreboard from "~/components/Scoreboard";
 import type { LiveSnapshot, LiveStreamMessage } from "~/types/live";
@@ -109,6 +109,11 @@ export default function LiveViewPage() {
   const [updatedAt, setUpdatedAt] = useState<string>("");
   const [availability, setAvailability] = useState<LiveAvailability>("active");
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewEventHighlighted, setIsNewEventHighlighted] = useState(false);
+  const [unseenCount, setUnseenCount] = useState(0);
+  const prevEventCountRef = useRef(-1);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTabVisibleRef = useRef(typeof document !== "undefined" ? !document.hidden : true);
 
   useEffect(() => {
     let mounted = true;
@@ -129,6 +134,9 @@ export default function LiveViewPage() {
         if (!data.state || !data.updatedAt) return;
         setSnapshot(data.state);
         setUpdatedAt(data.updatedAt);
+        if (prevEventCountRef.current === -1) {
+          prevEventCountRef.current = data.state.events.length;
+        }
       })
       .catch(() => {
         // Keep UI state as-is when initial fetch fails.
@@ -150,6 +158,24 @@ export default function LiveViewPage() {
       }
       setSnapshot(parsed.payload);
       setUpdatedAt(parsed.updatedAt);
+
+      const newCount = parsed.payload.events.length;
+      if (prevEventCountRef.current === -1) {
+        // Premier message SSE = baseline, pas de highlight
+        prevEventCountRef.current = newCount;
+      } else if (newCount > prevEventCountRef.current) {
+        if (!isTabVisibleRef.current) {
+          setUnseenCount((c) => c + (newCount - prevEventCountRef.current));
+        }
+        setIsNewEventHighlighted(true);
+        if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = setTimeout(() => {
+          if (mounted) setIsNewEventHighlighted(false);
+        }, 8000);
+        prevEventCountRef.current = newCount;
+      } else {
+        prevEventCountRef.current = newCount;
+      }
     };
 
     source.onerror = () => {
@@ -159,8 +185,29 @@ export default function LiveViewPage() {
     return () => {
       mounted = false;
       source.close();
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     };
   }, [publicSlug]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      isTabVisibleRef.current = !document.hidden;
+      if (!document.hidden) setUnseenCount(0);
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  useEffect(() => {
+    const base = "Live Match";
+    if (unseenCount > 0) {
+      const label = unseenCount > 1 ? "nouvelles actions" : "nouvelle action";
+      document.title = `(${unseenCount}) ${label} | ${base}`;
+    } else {
+      document.title = base;
+    }
+    return () => { document.title = base; };
+  }, [unseenCount]);
 
   if (!snapshot && isLoading) {
     return (
@@ -229,7 +276,7 @@ export default function LiveViewPage() {
             <ul className="space-y-1">
               {liveEvents.map((event, index) => (
                 <li key={`${event.time}-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
-                  <span className="min-w-0 break-words">
+                  <span className={`min-w-0 break-words${index === 0 && isNewEventHighlighted ? " new-event-flash" : ""}`}>
                     {event.summary ? (
                       renderSummaryEvent(event)
                     ) : (

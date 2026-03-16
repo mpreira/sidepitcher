@@ -192,3 +192,13 @@ body {
     @apply focus:outline-none focus:ring-0 focus:border-0;
   }
 }
+
+@keyframes new-event-flash {
+  0%   { color: #ef4444; font-weight: 700; }
+  65%  { color: #ef4444; font-weight: 700; }
+  100% { color: #ffffff; font-weight: 400; }
+}
+
+.new-event-flash {
+  animation: new-event-flash 8s ease-in-out forwards;
+}
