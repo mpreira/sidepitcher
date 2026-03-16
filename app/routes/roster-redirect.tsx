@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import type { Route } from "./+types/roster-redirect";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Redirection roster" }];
@@ -47,7 +47,7 @@ export default function RosterRedirectPage() {
             <main className="sp-page space-y-4">
                 <p className="text-sm text-neutral-400">Chargement de l'effectif...</p>
                 <Link to="/roster" className="sp-link-muted">
-                    <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+                    <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
                     Retour aux effectifs
                 </Link>
             </main>
@@ -60,7 +60,7 @@ export default function RosterRedirectPage() {
                 <h1 className="text-xl font-bold">Effectif introuvable</h1>
                 <p className="text-sm text-neutral-300">Cet effectif n'existe pas ou a été supprimé.</p>
                 <Link to="/roster" className="sp-link-muted">
-                    <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+                    <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
                     Retour aux effectifs
                 </Link>
             </main>

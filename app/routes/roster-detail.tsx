@@ -15,7 +15,7 @@ import {
     updateTeamInList,
     parsePlayerName,
 } from "~/utils/RosterUtils";
-import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -377,7 +377,7 @@ export default function RosterDetailPage() {
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
-                    <FontAwesomeIcon icon={faChevronLeft} />
+                    <FontAwesomeIcon icon={faArrowLeft} />
                     Retour aux effectifs
                 </Link>
             </div>
