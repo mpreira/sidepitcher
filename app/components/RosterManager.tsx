@@ -90,6 +90,37 @@ export default function RosterManager({
         return value.trim();
     }
 
+    async function readImageAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = typeof reader.result === "string" ? reader.result : "";
+                resolve(result);
+            };
+            reader.onerror = () => reject(new Error("Impossible de lire l'image."));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleRosterLogoUpload(event: React.ChangeEvent<HTMLInputElement>, target: "new" | "edit") {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const dataUrl = await readImageAsDataUrl(file);
+            if (target === "new") {
+                setNewRosterLogo(dataUrl);
+            } else {
+                setEditingRosterLogo(dataUrl);
+            }
+            setRosterFormError("");
+        } catch {
+            setRosterFormError("Impossible de televerser le logo.");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
     function validateColor(value: string): string {
         if (!value) return "";
         return /^#[0-9A-F]{6}$/.test(value)
@@ -245,7 +276,7 @@ export default function RosterManager({
         if (!activeRoster || !editingPlayerId) return;
         if (!editingPlayerFirst && !editingPlayerLast) return;
         const newName = `${editingPlayerFirst} ${editingPlayerLast}`.trim();
-        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, newName);
+        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, { name: newName });
         setRosters(rosters.map(r => r.id === activeRoster.id ? updated : r));
         setEditingPlayerId(null);
         setEditingPlayerFirst("");
@@ -406,6 +437,18 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="newRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "new");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
                             <select
                                 id="newRosterCategory"
@@ -492,6 +535,18 @@ export default function RosterManager({
                                 placeholder="URL du logo"
                                 value={editingRosterLogo}
                                 onChange={(e) => setEditingRosterLogo(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="editingRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "edit");
+                                }}
                             />
                         </div>
                         <div className="flex items-center justify-center gap-2">

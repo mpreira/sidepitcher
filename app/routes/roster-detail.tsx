@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
-import type { Team } from "~/types/tracker";
+import { PLAYER_POSITIONS, type PlayerPosition, type Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
     createPlayerFromNames,
@@ -47,7 +47,7 @@ function getSortableLastName(fullName: string): string {
 }
 
 export default function RosterDetailPage() {
-    const { rosterSlugId } = useParams();
+    const { rosterSlugId, championshipSlug } = useParams();
     const {
         rosters,
         teams,
@@ -60,11 +60,15 @@ export default function RosterDetailPage() {
     const [showAddPlayerForm, setShowAddPlayerForm] = useState(false);
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
+    const [newPlayerPositions, setNewPlayerPositions] = useState<PlayerPosition[]>([]);
+    const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState("");
     const [compositionMessage, setCompositionMessage] = useState("");
     const [playerMessage, setPlayerMessage] = useState("");
     const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
     const [editingPlayerFirst, setEditingPlayerFirst] = useState("");
     const [editingPlayerLast, setEditingPlayerLast] = useState("");
+    const [editingPlayerPositions, setEditingPlayerPositions] = useState<PlayerPosition[]>([]);
+    const [editingPlayerPhotoUrl, setEditingPlayerPhotoUrl] = useState("");
     const [newPlayerFirstError, setNewPlayerFirstError] = useState("");
     const [newPlayerLastError, setNewPlayerLastError] = useState("");
     const [editingPlayerFirstError, setEditingPlayerFirstError] = useState("");
@@ -132,6 +136,59 @@ export default function RosterDetailPage() {
         return valid
             ? ""
             : "Utilise uniquement des lettres (y compris accentuees), un trait d'union, une apostrophe et au maximum un espace.";
+    }
+
+    async function readImageAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = typeof reader.result === "string" ? reader.result : "";
+                resolve(result);
+            };
+            reader.onerror = () => reject(new Error("Impossible de lire l'image."));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function handlePositionsChange(event: ChangeEvent<HTMLSelectElement>, target: "new" | "edit") {
+        const values = Array.from(event.target.selectedOptions)
+            .map((option) => option.value as PlayerPosition)
+            .filter((value): value is PlayerPosition => PLAYER_POSITIONS.includes(value));
+
+        if (target === "new") {
+            setNewPlayerPositions(values);
+            return;
+        }
+        setEditingPlayerPositions(values);
+    }
+
+    async function handlePlayerPhotoUpload(
+        event: ChangeEvent<HTMLInputElement>,
+        target: "new" | "edit"
+    ) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const dataUrl = await readImageAsDataUrl(file);
+            if (target === "new") {
+                setNewPlayerPhotoUrl(dataUrl);
+            } else {
+                setEditingPlayerPhotoUrl(dataUrl);
+            }
+        } catch {
+            setPlayerMessage("Impossible de televerser la photo du joueur.");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
+    function getPlayerProfilePath(playerId: string): string {
+        if (!rosterSlugId) return "/roster";
+        if (championshipSlug) {
+            return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
+        }
+        return `/roster/${rosterSlugId}/player/${playerId}`;
     }
 
     function addTeam() {
@@ -284,7 +341,12 @@ export default function RosterDetailPage() {
         if (firstError || lastError) return;
         if (!newPlayerFirst && !newPlayerLast) return;
 
-        const player = createPlayerFromNames(formattedFirst, formattedLast);
+        const player = createPlayerFromNames(
+            formattedFirst,
+            formattedLast,
+            newPlayerPositions,
+            newPlayerPhotoUrl
+        );
         const updatedRoster = addPlayerToRosterList(roster, player);
 
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
@@ -296,17 +358,21 @@ export default function RosterDetailPage() {
         setShowAddPlayerForm(false);
         setNewPlayerFirst("");
         setNewPlayerLast("");
+        setNewPlayerPositions([]);
+        setNewPlayerPhotoUrl("");
         setNewPlayerFirstError("");
         setNewPlayerLastError("");
     }
 
-    function startEditPlayer(player: { id: string; name: string }) {
+    function startEditPlayer(player: { id: string; name: string; positions?: PlayerPosition[]; photoUrl?: string }) {
         const { first, last } = parsePlayerName(player.name);
         const formattedFirst = formatName(first);
         const formattedLast = formatName(last);
         setEditingPlayerId(player.id);
         setEditingPlayerFirst(formattedFirst);
         setEditingPlayerLast(formattedLast);
+        setEditingPlayerPositions(player.positions ?? []);
+        setEditingPlayerPhotoUrl(player.photoUrl ?? "");
         setEditingPlayerFirstError(validateName(formattedFirst));
         setEditingPlayerLastError(validateName(formattedLast));
         setPlayerMessage("");
@@ -316,6 +382,8 @@ export default function RosterDetailPage() {
         setEditingPlayerId(null);
         setEditingPlayerFirst("");
         setEditingPlayerLast("");
+        setEditingPlayerPositions([]);
+        setEditingPlayerPhotoUrl("");
         setEditingPlayerFirstError("");
         setEditingPlayerLastError("");
     }
@@ -331,7 +399,11 @@ export default function RosterDetailPage() {
         if (firstError || lastError) return;
         if (!editingPlayerFirst && !editingPlayerLast) return;
         const newName = `${formattedFirst} ${formattedLast}`.trim();
-        const updatedRoster = updatePlayerInRoster(roster, editingPlayerId, newName);
+        const updatedRoster = updatePlayerInRoster(roster, editingPlayerId, {
+            name: newName,
+            positions: editingPlayerPositions,
+            photoUrl: editingPlayerPhotoUrl,
+        });
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
         cancelEditPlayer();
         setPlayerMessage("Joueur modifié.");
@@ -664,6 +736,44 @@ export default function RosterDetailPage() {
                             {newPlayerLastError && (
                                 <p className="text-sm text-red-400">{newPlayerLastError}</p>
                             )}
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerPositions">Postes (facultatif)</label>
+                                <select
+                                    id="newPlayerPositions"
+                                    className="sp-input-control min-h-[120px]"
+                                    multiple
+                                    value={newPlayerPositions}
+                                    onChange={(event) => handlePositionsChange(event, "new")}
+                                >
+                                    {PLAYER_POSITIONS.map((position) => (
+                                        <option key={position} value={position}>
+                                            {position}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerPhotoUrl">Photo (URL ou upload)</label>
+                                <input
+                                    id="newPlayerPhotoUrl"
+                                    className="sp-input-control"
+                                    placeholder="https://..."
+                                    value={newPlayerPhotoUrl}
+                                    onChange={(event) => setNewPlayerPhotoUrl(event.target.value)}
+                                />
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerPhotoFile">Televerser une photo</label>
+                                <input
+                                    id="newPlayerPhotoFile"
+                                    type="file"
+                                    accept="image/*"
+                                    className="sp-input-control"
+                                    onChange={(event) => {
+                                        void handlePlayerPhotoUpload(event, "new");
+                                    }}
+                                />
+                            </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
                                     className="sp-button sp-button-sm sp-button-blue"
@@ -734,6 +844,44 @@ export default function RosterDetailPage() {
                             {editingPlayerLastError && (
                                 <p className="text-sm text-red-400">{editingPlayerLastError}</p>
                             )}
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerPositions">Postes (facultatif)</label>
+                                <select
+                                    id="editingPlayerPositions"
+                                    className="sp-input-control min-h-[120px]"
+                                    multiple
+                                    value={editingPlayerPositions}
+                                    onChange={(event) => handlePositionsChange(event, "edit")}
+                                >
+                                    {PLAYER_POSITIONS.map((position) => (
+                                        <option key={position} value={position}>
+                                            {position}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerPhotoUrl">Photo (URL ou upload)</label>
+                                <input
+                                    id="editingPlayerPhotoUrl"
+                                    className="sp-input-control"
+                                    placeholder="https://..."
+                                    value={editingPlayerPhotoUrl}
+                                    onChange={(event) => setEditingPlayerPhotoUrl(event.target.value)}
+                                />
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerPhotoFile">Televerser une photo</label>
+                                <input
+                                    id="editingPlayerPhotoFile"
+                                    type="file"
+                                    accept="image/*"
+                                    className="sp-input-control"
+                                    onChange={(event) => {
+                                        void handlePlayerPhotoUpload(event, "edit");
+                                    }}
+                                />
+                            </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
                                     className="sp-button sp-button-sm sp-button-blue h-36px"
@@ -761,7 +909,16 @@ export default function RosterDetailPage() {
                                 {sortedRosterPlayers.map((player) => (
                                     <li key={player.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="text-white font-semibold">{player.name}</span>
+                                            <div className="min-w-0">
+                                                <Link to={getPlayerProfilePath(player.id)} className="text-white font-semibold hover:underline">
+                                                    {player.name}
+                                                </Link>
+                                                {player.positions && player.positions.length > 0 && (
+                                                    <p className="text-xs text-neutral-400 font-normal mt-1">
+                                                        {player.positions.join(" / ")}
+                                                    </p>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     className="sp-button sp-button-yellow sp-button-icon"

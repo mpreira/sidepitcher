@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { Team, Player, CompositionEntry, Roster } from "~/types/tracker";
+import type { Team, Player, CompositionEntry, Roster, PlayerPosition } from "~/types/tracker";
 
 function sortEntriesByNumber(entries: CompositionEntry[]): CompositionEntry[] {
     return [...entries].sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number);
@@ -41,18 +41,32 @@ export function deletePlayerFromRoster(roster: Roster, playerId: string): Roster
     };
 }
 
-export function updatePlayerInRoster(roster: Roster, playerId: string, newName: string): Roster {
+export function updatePlayerInRoster(
+    roster: Roster,
+    playerId: string,
+    updates: { name: string; positions?: PlayerPosition[]; photoUrl?: string }
+): Roster {
     return {
         ...roster,
         players: (roster.players || []).map(p =>
-            p.id === playerId ? { ...p, name: newName } : p
+            p.id === playerId ? { ...p, ...updates } : p
         ),
     };
 }
 
-export function createPlayerFromNames(first: string, last: string): Player {
+export function createPlayerFromNames(
+    first: string,
+    last: string,
+    positions?: PlayerPosition[],
+    photoUrl?: string
+): Player {
     const name = `${first} ${last}`.trim();
-    return { id: uuidv4(), name };
+    return {
+        id: uuidv4(),
+        name,
+        positions: positions && positions.length > 0 ? positions : undefined,
+        photoUrl: photoUrl?.trim() ? photoUrl.trim() : undefined,
+    };
 }
 
 export function parsePlayerName(name: string): { first: string; last: string } {
