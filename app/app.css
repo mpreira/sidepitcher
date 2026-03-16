@@ -71,7 +71,7 @@ body {
   }
 
   .sp-button:has(svg) {
-    justify-content: space-evenly;
+    justify-content: center;
     padding-left: 12px;
     padding-right: 12px;
   }

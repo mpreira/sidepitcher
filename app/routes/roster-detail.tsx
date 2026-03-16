@@ -466,11 +466,11 @@ export default function RosterDetailPage() {
                 <h2 className="font-semibold">Compositions</h2>
                 {compositionEditTeamId && compositionEditTeam && roster && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={closeCompositionEditor}
                     >
                         <div
-                            className="w-full max-w-2xl space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3"
+                            className="w-full max-w-2xl max-h-[calc(100dvh-8rem)] overflow-y-auto space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className="flex items-center justify-between">
@@ -703,11 +703,11 @@ export default function RosterDetailPage() {
                 </div>
                 {showAddPlayerForm && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={closeAddPlayerForm}
                     >
                         <div
-                            className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                            className="w-full max-w-lg max-h-[calc(100dvh-8rem)] overflow-y-auto flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className="sp-input-shell">
@@ -818,11 +818,11 @@ export default function RosterDetailPage() {
                 )}
                 {editingPlayerId && editingPlayer && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={cancelEditPlayer}
                     >
                         <div
-                            className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                            className="w-full max-w-lg max-h-[calc(100dvh-8rem)] overflow-y-auto flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className="flex items-center justify-between">

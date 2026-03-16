@@ -2,6 +2,8 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/player-profile";
 import { useMemo } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 export function meta({ params }: Route.MetaArgs) {
   const playerId = params.playerId;
@@ -64,6 +66,7 @@ export default function PlayerProfilePage() {
       <main className="sp-page space-y-4">
         <h1 className="text-2xl font-bold">Profil joueur introuvable</h1>
         <Link to={backPath} className="sp-link-muted">
+        <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
           Retour a l'effectif
         </Link>
       </main>
@@ -76,6 +79,7 @@ export default function PlayerProfilePage() {
         <h1 className="text-2xl font-bold">{player.name}</h1>
         <p className="text-sm text-neutral-400">Effectif: {roster.name}</p>
         <Link to={backPath} className="sp-link-muted">
+        <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
           Retour a l'effectif
         </Link>
       </div>
