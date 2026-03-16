@@ -126,7 +126,6 @@ export default function SynthesesPage() {
     return (
         <main className="sp-page space-y-4">
             <h1 className="text-2xl font-bold">Anciennes synthèses</h1>
-            {account?.name && <p className="text-xs text-neutral-400"><FontAwesomeIcon icon={faUser} className="mr-1" />{account.name}</p>}
             <Link to="/tracker" className="text-white text-base font-medium">
                 <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
                 Retour au suivi

@@ -39,10 +39,6 @@ export function Welcome() {
         )}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {connected && account ? (
-            <>
-              <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
-                <FontAwesomeIcon icon={faCircleUser} /> {account.name}
-              </span>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -50,7 +46,6 @@ export function Welcome() {
               >
                 Déconnexion
               </button>
-            </>
           ) : (
             <>
               <Link
