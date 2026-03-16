@@ -1,6 +1,6 @@
 {
-  "name": "sidepitcher",
-  "version": "3.1.0",
+  "name": "match-reporter",
+  "version": "4.1.0",
   "private": true,
   "type": "module",
   "scripts": {

@@ -4,7 +4,7 @@ import type { Event } from "~/types/tracker";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
 import {
@@ -290,17 +290,17 @@ export default function SyntheseDetailPage() {
     const halfTimeScoreText = `${halfScoreLeft} - ${halfScoreRight}`;
 
     return (
-        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
+        <main className="sp-page space-y-4">
             <p className="text-sm text-gray-700 mb-2">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
             <Link to="/syntheses" className="text-white text-base">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
                 Retour aux synthèses
             </Link>
             <br /><br /> 
             <button
-                className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
+                className="sp-button sp-button-md sp-button-neutral w-full sm:w-auto"
                 onClick={() =>
                     exportSummaryToPdf(summary.events, summary.currentTime, summary.summary, {
                         title: `Synthèse - ${getTeamsLabel()}`,

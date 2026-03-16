@@ -20,7 +20,7 @@ import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
 
 export function meta({}: Route.MetaArgs) {
-    return [{ title: "Side Pitcher" }];
+    return [{ title: "Match Reporter" }];
 }
 
 const COMMAND_TYPES = [
@@ -430,11 +430,8 @@ export default function Tracker() {
     }
 
     return (
-        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+        <main className="sp-page space-y-6">
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
-            {account?.name && (
-                <p className="text-xs text-neutral-400 text-center mt-1">Compte: {account.name}</p>
-            )}
             <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
                 {matchDay && <>Journée : {matchDay} — </>}
                 Championnat : {championship}
@@ -456,11 +453,11 @@ export default function Tracker() {
                 saveMessage={saveMessage}
             />
 
-            <section className="space-y-2 border border-neutral-700 rounded p-3 bg-neutral-900">
+            <section className="sp-panel-compact space-y-2">
                 <p className="text-sm text-neutral-300">Diffusion externe en lecture seule</p>
                 {!livePublicSlug ? (
                     <button
-                        className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+                        className="sp-button sp-button-md sp-button-full sp-button-indigo"
                         onClick={activateLivePublic}
                         disabled={!canPublishLive || liveBusy}
                     >
@@ -470,13 +467,13 @@ export default function Tracker() {
                     <>
                         <p className="text-xs break-all text-neutral-200">{liveViewerUrl}</p>
                         <button
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="sp-button sp-button-md sp-button-full sp-button-blue"
                             onClick={copyLiveViewerUrl}
                         >
                             Copier le lien spectateur
                         </button>
                         <button
-                            className="w-full px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800 disabled:bg-gray-500"
+                            className="sp-button sp-button-md sp-button-full sp-button-red"
                             onClick={closeLivePublic}
                             disabled={liveBusy}
                         >

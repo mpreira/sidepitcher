@@ -1,16 +1,19 @@
 import crypto from "crypto";
 import {
   authenticateAccountByEmail,
+  createPasswordResetTokenForEmail,
   createAccount,
   getAccountById,
   listAccountsForAdmin,
   renameAccount,
+  resetPasswordWithToken,
   updateAccountByAdmin,
   updateAccountCredentials,
   deleteAccountByAdmin,
   type AccountListItem,
   type Account,
 } from "~/utils/database.server";
+import { sendAccountApprovedEmail, sendPasswordResetEmail } from "~/utils/mailer.server";
 
 const ACCOUNT_COOKIE_NAME = "sp_account_id";
 const ANONYMOUS_COOKIE_NAME = "sp_anon_session";
@@ -231,7 +234,25 @@ export async function updateManagedAccount(input: {
   isAdmin?: boolean;
   isApproved?: boolean;
 }): Promise<Account> {
-  return updateAccountByAdmin(input);
+  const before = await getAccountById(input.accountId);
+  const updated = await updateAccountByAdmin(input);
+
+  if (before && !before.isApproved && updated.isApproved) {
+    try {
+      await sendAccountApprovedEmail({
+        accountName: updated.name,
+        accountEmail: updated.email,
+      });
+    } catch (error) {
+      console.error("[account:approve] approved email failed", {
+        accountId: updated.id,
+        accountEmail: updated.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return updated;
 }
 
 export async function updateCurrentAccountProfile(input: {
@@ -245,4 +266,24 @@ export async function updateCurrentAccountProfile(input: {
 
 export async function deleteManagedAccount(accountId: string): Promise<void> {
   return deleteAccountByAdmin(accountId);
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const created = await createPasswordResetTokenForEmail(email);
+  if (!created.account || !created.token) {
+    return;
+  }
+
+  const appBaseUrl = process.env.APP_BASE_URL?.trim() || process.env.PUBLIC_APP_URL?.trim() || "http://localhost:5173";
+  const resetUrl = `${appBaseUrl.replace(/\/$/, "")}/account?resetToken=${encodeURIComponent(created.token)}#reset-password`;
+
+  await sendPasswordResetEmail({
+    accountName: created.account.name,
+    accountEmail: created.account.email,
+    resetUrl,
+  });
+}
+
+export async function resetPasswordFromToken(input: { token: string; password: string }): Promise<boolean> {
+  return resetPasswordWithToken(input);
 }

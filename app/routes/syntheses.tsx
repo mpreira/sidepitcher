@@ -3,7 +3,7 @@ import { useState, useLayoutEffect } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft, faTrashCan, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faTrashCan, faUser } from "@fortawesome/free-solid-svg-icons";
 import { listSummaries } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
@@ -34,7 +34,7 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export function meta() {
-    return [{ title: "Syntheses" }];
+    return [{ title: "Synthèses" }];
 }
 
 function FormattedDate({ dateString }: { dateString: string }) {
@@ -108,7 +108,7 @@ export default function SynthesesPage() {
     }
 
     async function deleteSummary(id: string) {
-        const confirmed = window.confirm("Supprimer cette synthese ?");
+        const confirmed = window.confirm("Supprimer cette synthèse ?");
         if (!confirmed) return;
         try {
             await fetch("/api/summaries", {
@@ -124,33 +124,34 @@ export default function SynthesesPage() {
     }
 
     return (
-        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
+        <main className="sp-page space-y-4">
             <h1 className="text-2xl font-bold">Anciennes synthèses</h1>
-            {account?.name && <p className="text-xs text-neutral-400"><FontAwesomeIcon icon={faUser} className="mr-1" />{account.name}</p>}
             <Link to="/tracker" className="text-white text-base font-medium">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
+                <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
                 Retour au suivi
             </Link>
             {summaries.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucune synthèse disponible.</p>
             ) : (
-                <ul className="space-y-2">
+                <ul className="space-y-4 mt-6">
                     {summaries.map((summary) => (
-                        <li key={summary.id} className="border-b border-neutral-700 w-full rounded p-3 flex items-center justify-between gap-2">
+                        <li key={summary.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
+                            <div className="flex items-center justify-between gap-2">
                             <Link
                                 to={`/syntheses/${summary.id}`}
-                                className="text-white text-lg font-semibold min-w-0 break-words pr-2"
+                                className="text-white font-semibold min-w-0 break-words pr-2 flex-1"
                             >
                                 {getTeamsLabel(summary.teams, summary.events, summary.matchDay) || "Match"} (
                                 <FormattedDate dateString={summary.createdAt} />
                                 )
                             </Link>
                             <button
-                                className="px-2 py-1 bg-red-500 text-white text-sm rounded"
+                                className="sp-button sp-button-red sp-button-icon"
                                 onClick={() => deleteSummary(summary.id)}
                             >
-                                <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
+                                <FontAwesomeIcon icon={faTrashCan} />
                             </button>
+                            </div>
                         </li>
                     ))}
                 </ul>

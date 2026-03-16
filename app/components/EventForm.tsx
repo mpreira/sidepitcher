@@ -335,13 +335,13 @@ export default function EventForm({
             )}
             <div className="flex flex-col justify-center sm:flex-row gap-2 mt-4 w-full">
             <button
-                className="px-3 py-1 bg-green-500 text-white rounded sm:w-1/2 md:w-1/3 inline-flex items-center justify-center gap-2"
+                className="sp-button sp-button-sm sp-button-green sm:w-1/2 md:w-1/3"
                 onClick={handleSubmit}
             >
                 Valider
             </button>
             <button
-                className="px-3 py-1 bg-gray-300 rounded sm:w-1/2 md:w-1/3 inline-flex items-center justify-center gap-2"
+                className="sp-button sp-button-sm sp-button-light sm:w-1/2 md:w-1/3"
                 onClick={onCancel}
             >
                 Annuler

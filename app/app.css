@@ -12,8 +12,16 @@ body {
   max-width: 100%;
   overflow-x: hidden;
 
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-white;
+  }
+
   h1{
-    @apply leading-[0.95] font-bold tracking-[-0.03em] text-xl md:text-2xl;
+    @apply leading-[0.95] font-black tracking-[-0.03em] text-white text-xl md:text-3xl;
+  }
+
+  h2 {
+    @apply text-lg  font-bold md:text-xl;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -41,6 +49,134 @@ body {
 }
 
 @layer components {
+  .sp-page {
+    @apply w-full max-w-screen-md mx-auto px-8 py-6 overflow-x-hidden;
+  }
+
+  .sp-panel {
+    @apply rounded border border-neutral-700 bg-neutral-900 p-4;
+  }
+
+  .sp-panel-compact {
+    @apply rounded border border-neutral-700 bg-neutral-900 p-3;
+  }
+
+  .sp-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-md font-semibold text-white transition-all duration-150;
+    @apply shadow-sm shadow-black/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none;
+    min-height: 32px;
+    font-size: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .sp-button:has(svg) {
+    justify-content: center;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sp-button-sm {
+  }
+
+  .sp-button-md {
+  }
+
+  .sp-button-full {
+    @apply w-full;
+  }
+
+  .sp-button-amber {
+    @apply bg-gradient-to-br from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500;
+  }
+
+  .sp-button-blue {
+    @apply bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600;
+  }
+
+  .sp-button-emerald {
+    @apply bg-gradient-to-br from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600;
+  }
+
+  .sp-button-green {
+    @apply bg-gradient-to-br from-green-400 to-green-600 hover:from-green-300 hover:to-green-500;
+  }
+
+  .sp-button-indigo {
+    @apply bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600;
+  }
+
+  .sp-button-orange {
+    @apply bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-400 hover:to-orange-600;
+  }
+
+  .sp-button-red {
+    @apply bg-gradient-to-br from-red-500 to-red-600 hover:from-red-400 hover:to-red-500;
+  }
+
+  .sp-button-neutral {
+    @apply border border-neutral-700 bg-gradient-to-br from-neutral-800 to-neutral-950 text-neutral-200;
+    @apply hover:from-neutral-700 hover:to-neutral-900;
+  }
+
+  .sp-button-light {
+    @apply bg-gradient-to-br from-zinc-100 to-zinc-300 text-zinc-900 hover:from-zinc-50 hover:to-zinc-200;
+  }
+
+  .sp-button-sky {
+    @apply border border-sky-500/40 bg-gradient-to-br from-sky-500/30 to-cyan-500/20 text-sky-100;
+    @apply hover:from-sky-500/40 hover:to-cyan-500/30;
+  }
+
+  .sp-button-yellow {
+    @apply bg-gradient-to-br from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400;
+  }
+
+  .sp-button-xs {
+  }
+
+  @media (min-width: 640px) {
+    .sp-button {
+      min-height: 40px;
+      font-size: 14px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .sp-button {
+      min-height: 52px;
+      font-size: 16px;
+    }
+  }
+
+  .sp-button-icon {
+    @apply h-8 w-8 p-0;
+  }
+
+  .sp-button-icon-lg {
+    @apply h-10 w-10 rounded-full p-0;
+  }
+
+  .sp-badge {
+    @apply inline-block rounded px-2 py-1 text-xs font-semibold text-white;
+  }
+
+  .sp-badge-amber {
+    @apply bg-amber-700;
+  }
+
+  .sp-badge-emerald {
+    @apply bg-green-700;
+  }
+
+  .sp-badge-neutral {
+    @apply bg-neutral-700;
+  }
+
+  .sp-link-muted {
+    @apply inline-flex items-center gap-1.5 text-sm text-neutral-300 hover:text-white transition-colors;
+  }
+
   .sp-input-shell {
     @apply relative rounded-md border border-transparent border-l-4 border-l-transparent bg-neutral-700/40 px-3 pt-5 pb-2;
     @apply transition-colors duration-150;
@@ -55,4 +191,14 @@ body {
     @apply h-auto w-full min-w-0 border-0 bg-transparent p-0 text-sm leading-5 text-neutral-200 shadow-none;
     @apply focus:outline-none focus:ring-0 focus:border-0;
   }
+}
+
+@keyframes new-event-flash {
+  0%   { color: #ef4444; font-weight: 700; }
+  65%  { color: #ef4444; font-weight: 700; }
+  100% { color: #ffffff; font-weight: 400; }
+}
+
+.new-event-flash {
+  animation: new-event-flash 8s ease-in-out forwards;
 }

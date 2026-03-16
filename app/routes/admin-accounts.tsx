@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import { getConnectedAccountFromRequest, listAdminAccounts } from "~/utils/account.server";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft, faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 
 interface AdminAccountItem {
   id: string;
@@ -71,15 +73,15 @@ export default function AdminAccountsPage() {
       });
       const payload = (await response.json()) as { ok?: boolean };
       if (!response.ok || !payload.ok) {
-        setError("Impossible de mettre a jour ce compte.");
+        setError("Impossible de mettre à jour ce compte.");
         return;
       }
 
       await refreshAccounts();
       setPasswordDraft((prev) => ({ ...prev, [item.id]: "" }));
-      setMessage("Compte mis a jour.");
+      setMessage("Compte mis à jour.");
     } catch {
-      setError("Impossible de mettre a jour ce compte.");
+      setError("Impossible de mettre à jour ce compte.");
     } finally {
       setBusy(false);
     }
@@ -111,7 +113,7 @@ export default function AdminAccountsPage() {
       }
 
       await refreshAccounts();
-      setMessage("Compte supprime.");
+      setMessage("Compte supprimé.");
     } catch {
       setError("Impossible de supprimer ce compte.");
     } finally {
@@ -140,7 +142,7 @@ export default function AdminAccountsPage() {
       }
 
       await refreshAccounts();
-      setMessage("Compte valide avec succes.");
+      setMessage("Compte validé avec succès.");
     } catch {
       setError("Impossible de valider ce compte.");
     } finally {
@@ -149,38 +151,38 @@ export default function AdminAccountsPage() {
   }
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
+    <main className="sp-page space-y-4">
       <h1 className="text-2xl font-bold">Administration des comptes</h1>
-      <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecte.</p>
+      <p className="text-sm text-neutral-300">Visible uniquement pour le compte admin connecté.</p>
 
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setActiveTab("pending")}
-          className={`px-3 py-1 rounded text-sm border ${
+          className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
             activeTab === "pending"
-              ? "bg-amber-600 text-white border-amber-500"
-              : "bg-neutral-800 text-neutral-300 border-neutral-700"
+              ? "border-amber-500 bg-amber-500/20 text-amber-300"
+              : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
           }`}
         >
-          A valider ({pendingAccounts.length})
+          À valider ({pendingAccounts.length})
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("approved")}
-          className={`px-3 py-1 rounded text-sm border ${
+          className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
             activeTab === "approved"
-              ? "bg-emerald-700 text-white border-emerald-600"
-              : "bg-neutral-800 text-neutral-300 border-neutral-700"
+              ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
+              : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
           }`}
         >
-          Valides ({approvedAccounts.length})
+          Validés ({approvedAccounts.length})
         </button>
       </div>
 
       <ul className="space-y-3">
         {visibleAccounts.map((item) => (
-          <li key={item.id} className="rounded border border-neutral-700 p-3 space-y-2 bg-neutral-900">
+          <li key={item.id} className="sp-panel-compact space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-xs text-neutral-400">ID: {item.id}</p>
               <span
@@ -190,7 +192,7 @@ export default function AdminAccountsPage() {
                     : "bg-amber-900/50 text-amber-300 border-amber-700"
                 }`}
               >
-                {item.isApproved ? "Valide" : "En attente"}
+                {item.isApproved ? "Validé" : "En attente"}
               </span>
             </div>
             <div className="sp-input-shell">
@@ -260,16 +262,16 @@ export default function AdminAccountsPage() {
                 <button
                   onClick={() => updateAccount(item)}
                   disabled={busy}
-                  className="flex-1 px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 disabled:bg-gray-500"
+                  className="sp-button sp-button-sm sp-button-amber flex-1"
                 >
-                  Mettre a jour
+                  Mettre à jour
                 </button>
               )}
               {!item.isApproved && (
                 <button
                   onClick={() => approveAccount(item)}
                   disabled={busy}
-                  className="flex-1 px-3 py-1 rounded bg-emerald-700 text-white hover:bg-emerald-800 disabled:bg-gray-500"
+                  className="sp-button sp-button-sm sp-button-emerald flex-1"
                 >
                   Valider le compte
                 </button>
@@ -277,7 +279,7 @@ export default function AdminAccountsPage() {
               <button
                 onClick={() => deleteAccount(item.id)}
                 disabled={busy || item.id === data.adminId}
-                className="flex-1 px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800 disabled:bg-gray-500"
+                className="sp-button sp-button-sm sp-button-red flex-1"
               >
                 Supprimer
               </button>
@@ -288,15 +290,16 @@ export default function AdminAccountsPage() {
 
       {visibleAccounts.length === 0 && (
         <p className="text-sm text-neutral-400">
-          {activeTab === "pending" ? "Aucun compte en attente de validation." : "Aucun compte valide."}
+          {activeTab === "pending" ? "Aucun compte en attente de validation." : "Aucun compte validé."}
         </p>
       )}
 
       {message && <p className="text-sm text-green-400">{message}</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <Link to="/account" className="text-sm underline text-neutral-300">
-        Retour reglages
+      <Link to="/account" className="sp-link-muted">
+        <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
+        Retour aux réglages
       </Link>
     </main>
   );

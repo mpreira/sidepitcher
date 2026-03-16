@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLoaderData } from "react-router";
 import Scoreboard from "~/components/Scoreboard";
 import type { LiveSnapshot, LiveStreamMessage } from "~/types/live";
@@ -93,14 +93,14 @@ type LiveAvailability = "active" | "closed" | "expired";
 
 function StatusBadge({ availability }: { availability: LiveAvailability }) {
   if (availability === "closed") {
-    return <span className="inline-block rounded bg-amber-700 px-2 py-1 text-xs font-semibold text-white">Live termine</span>;
+    return <span className="sp-badge sp-badge-amber">Live terminé</span>;
   }
 
   if (availability === "expired") {
-    return <span className="inline-block rounded bg-neutral-700 px-2 py-1 text-xs font-semibold text-white">Session expiree</span>;
+    return <span className="sp-badge sp-badge-neutral">Session expirée</span>;
   }
 
-  return <span className="inline-block rounded bg-green-700 px-2 py-1 text-xs font-semibold text-white">Live actif</span>;
+  return <span className="sp-badge sp-badge-emerald">Live actif</span>;
 }
 
 export default function LiveViewPage() {
@@ -109,6 +109,13 @@ export default function LiveViewPage() {
   const [updatedAt, setUpdatedAt] = useState<string>("");
   const [availability, setAvailability] = useState<LiveAvailability>("active");
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewEventHighlighted, setIsNewEventHighlighted] = useState(false);
+  const [unseenCount, setUnseenCount] = useState(0);
+  const [recentCount, setRecentCount] = useState(0);
+  const prevEventCountRef = useRef(-1);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTabVisibleRef = useRef(typeof document !== "undefined" ? !document.hidden : true);
 
   useEffect(() => {
     let mounted = true;
@@ -129,6 +136,9 @@ export default function LiveViewPage() {
         if (!data.state || !data.updatedAt) return;
         setSnapshot(data.state);
         setUpdatedAt(data.updatedAt);
+        if (prevEventCountRef.current === -1) {
+          prevEventCountRef.current = data.state.events.length;
+        }
       })
       .catch(() => {
         // Keep UI state as-is when initial fetch fails.
@@ -150,6 +160,34 @@ export default function LiveViewPage() {
       }
       setSnapshot(parsed.payload);
       setUpdatedAt(parsed.updatedAt);
+
+      const newCount = parsed.payload.events.length;
+      if (prevEventCountRef.current === -1) {
+        // Premier message SSE = baseline, pas de highlight
+        prevEventCountRef.current = newCount;
+      } else if (newCount > prevEventCountRef.current) {
+        const delta = newCount - prevEventCountRef.current;
+        const isVisited = isTabVisibleRef.current && document.hasFocus();
+
+        if (!isVisited) {
+          setUnseenCount((c) => c + delta);
+        }
+
+        setRecentCount((c) => c + delta);
+        if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
+        recentTimerRef.current = setTimeout(() => {
+          if (mounted) setRecentCount(0);
+        }, 8000);
+
+        setIsNewEventHighlighted(true);
+        if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = setTimeout(() => {
+          if (mounted) setIsNewEventHighlighted(false);
+        }, 8000);
+        prevEventCountRef.current = newCount;
+      } else {
+        prevEventCountRef.current = newCount;
+      }
     };
 
     source.onerror = () => {
@@ -159,12 +197,43 @@ export default function LiveViewPage() {
     return () => {
       mounted = false;
       source.close();
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
     };
   }, [publicSlug]);
 
+  useEffect(() => {
+    const handleVisibility = () => {
+      isTabVisibleRef.current = !document.hidden;
+      if (!document.hidden) setUnseenCount(0);
+    };
+    const handleFocus = () => {
+      isTabVisibleRef.current = !document.hidden;
+      setUnseenCount(0);
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    const base = "Live Match";
+    const badgeCount = unseenCount > 0 ? unseenCount : recentCount;
+    if (badgeCount > 0) {
+      const label = badgeCount > 1 ? "nouvelles actions" : "nouvelle action";
+      document.title = `(${badgeCount}) ${label} | ${base}`;
+    } else {
+      document.title = base;
+    }
+    return () => { document.title = base; };
+  }, [unseenCount, recentCount]);
+
   if (!snapshot && isLoading) {
     return (
-      <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4">
+      <main className="sp-page space-y-4">
         <h1 className="text-3xl font-bold">Feuille de match en direct</h1>
         <p className="text-sm text-neutral-400">Chargement du direct...</p>
       </main>
@@ -173,7 +242,7 @@ export default function LiveViewPage() {
 
   if (!snapshot && availability === "expired") {
     return (
-      <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4">
+      <main className="sp-page space-y-4">
         <h1 className="text-3xl font-bold">Feuille de match en direct</h1>
         <StatusBadge availability={availability} />
         <p className="text-sm text-neutral-300">Cette session de diffusion n'est plus disponible.</p>
@@ -183,7 +252,7 @@ export default function LiveViewPage() {
 
   if (!snapshot) {
     return (
-      <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4">
+      <main className="sp-page space-y-4">
         <h1 className="text-3xl font-bold">Feuille de match en direct</h1>
         <StatusBadge availability={availability} />
         <p className="text-sm text-neutral-300">Le live n'est pas accessible pour le moment.</p>
@@ -191,7 +260,7 @@ export default function LiveViewPage() {
     );
   }
 
-  const mainTimerText = snapshot.matchEnded ? "Match termine" : formatTime(snapshot.currentTime);
+  const mainTimerText = snapshot.matchEnded ? "Match terminé" : formatTime(snapshot.currentTime);
   const teams: Team[] = snapshot.teams.map((team) => ({
     id: team.id,
     name: team.name,
@@ -211,12 +280,12 @@ export default function LiveViewPage() {
   ];
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+    <main className="sp-page space-y-6">
       <h1 className="text-3xl font-bold text-center">Feuille de match en direct</h1>
       <div className="text-center">
         <StatusBadge availability={availability} />
       </div>
-      {updatedAt && <p className="text-center text-sm text-neutral-400">Mise a jour: {new Date(updatedAt).toLocaleTimeString("fr-FR")}</p>}
+      {updatedAt && <p className="text-center text-sm text-neutral-400">Mise à jour: {new Date(updatedAt).toLocaleTimeString("fr-FR")}</p>}
 
       <Scoreboard teams={teams} scores={snapshot.scores} mainTimerText={mainTimerText} />
 
@@ -229,7 +298,7 @@ export default function LiveViewPage() {
             <ul className="space-y-1">
               {liveEvents.map((event, index) => (
                 <li key={`${event.time}-${index}`} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
-                  <span className="min-w-0 break-words">
+                  <span className={`min-w-0 break-words${index === 0 && isNewEventHighlighted ? " new-event-flash" : ""}`}>
                     {event.summary ? (
                       renderSummaryEvent(event)
                     ) : (
@@ -263,7 +332,7 @@ export default function LiveViewPage() {
       
       <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {teams.slice(0, 2).map((team, teamIdx) => (
-          <div key={team.id} className="border border-neutral-700 rounded p-3 bg-neutral-900 space-y-3">
+          <div key={team.id} className="sp-panel-compact space-y-3">
             <h3 className="text-sm sm:text-base font-semibold text-center text-white">
               {team.nickname || team.name.replace(/\s+J\d+$/, "")}
             </h3>

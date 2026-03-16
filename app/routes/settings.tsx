@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { useAccount } from "~/context/AccountContext";
 
 export function meta() {
-  return [{ title: "Reglages" }];
+  return [{ title: "Réglages" }];
 }
 
 export default function SettingsPage() {
@@ -20,9 +20,12 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const resetToken = new URLSearchParams(location.search).get("resetToken")?.trim() ?? "";
 
   useEffect(() => {
     setRenameName(account?.name ?? "");
@@ -32,6 +35,10 @@ export default function SettingsPage() {
     if (connected) return;
     if (location.hash === "#create-account") {
       setAuthMode("create");
+      return;
+    }
+    if (location.hash === "#reset-password") {
+      setAuthMode("login");
       return;
     }
     if (location.hash === "#switch-account") {
@@ -70,17 +77,17 @@ export default function SettingsPage() {
       const data = (await response.json()) as { ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setError("Impossible de creer le compte.");
+        setError("Impossible de créer le compte.");
         return;
       }
 
       await refreshAccount();
-      setMessage("Compte cree. En attente de validation par un admin.");
+      setMessage("Compte créé. En attente de validation par un admin.");
       setNewName("");
       setNewEmail("");
       setNewPassword("");
     } catch {
-      setError("Impossible de creer le compte.");
+      setError("Impossible de créer le compte.");
     } finally {
       setBusy(false);
     }
@@ -118,12 +125,78 @@ export default function SettingsPage() {
       }
 
       await refreshAccount();
-      setMessage("Connexion reussie.");
+      setMessage("Connexion réussie.");
       setLoginEmail("");
       setLoginPassword("");
       navigate("/", { replace: true });
     } catch {
       setError("Impossible de se connecter.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function requestPasswordResetEmail() {
+    if (!loginEmail.trim()) {
+      setError("Entre ton email pour recevoir le lien de reinitialisation.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "forgot-password", email: loginEmail }),
+      });
+
+      setMessage("Si un compte existe pour cet email, un lien de reinitialisation a ete envoye.");
+    } catch {
+      setMessage("Si un compte existe pour cet email, un lien de reinitialisation a ete envoye.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resetPasswordFromToken() {
+    if (!resetToken) {
+      setError("Lien invalide. Redemande un nouveau lien de reinitialisation.");
+      return;
+    }
+    if (!resetPassword) {
+      setError("Entre un nouveau mot de passe.");
+      return;
+    }
+    if (resetPassword !== resetPasswordConfirm) {
+      setError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "reset-password", token: resetToken, password: resetPassword }),
+      });
+      const data = (await response.json()) as { ok?: boolean };
+      if (!response.ok || !data.ok) {
+        setError("Lien invalide ou expire. Redemande un nouveau lien.");
+        return;
+      }
+
+      setResetPassword("");
+      setResetPasswordConfirm("");
+      setMessage("Mot de passe reinitialise. Tu peux te connecter.");
+      navigate("/account#switch-account", { replace: true });
+    } catch {
+      setError("Impossible de reinitialiser le mot de passe.");
     } finally {
       setBusy(false);
     }
@@ -153,7 +226,7 @@ export default function SettingsPage() {
       }
 
       await refreshAccount();
-      setMessage("Nom du compte mis a jour.");
+      setMessage("Nom du compte mis à jour.");
     } catch {
       setError("Impossible de renommer le compte.");
     } finally {
@@ -164,15 +237,15 @@ export default function SettingsPage() {
   async function disconnect() {
     try {
       await logout();
-      setMessage("Deconnexion effectuee.");
+      setMessage("Déconnexion effectuée.");
     } catch {
-      setError("Impossible de se deconnecter.");
+      setError("Impossible de se déconnecter.");
     }
   }
 
   async function updateProfile() {
     if (!connected || !account) {
-      setError("Tu dois etre connecte.");
+      setError("Tu dois être connecté.");
       return;
     }
     if (!profileEmail.trim()) {
@@ -180,7 +253,7 @@ export default function SettingsPage() {
       return;
     }
     if (profilePassword.trim() && !profileCurrentPassword) {
-      setError("Entre ton mot de passe actuel pour definir un nouveau mot de passe.");
+      setError("Entre ton mot de passe actuel pour définir un nouveau mot de passe.");
       return;
     }
 
@@ -202,40 +275,40 @@ export default function SettingsPage() {
 
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) {
-        setError("Impossible de mettre a jour le profil (email deja utilise ou mot de passe invalide).");
+        setError("Impossible de mettre à jour le profil (email déjà utilisé ou mot de passe invalide).");
         return;
       }
 
       await refreshAccount();
       setProfileCurrentPassword("");
       setProfilePassword("");
-      setMessage("Profil mis a jour.");
+      setMessage("Profil mis à jour.");
     } catch {
-      setError("Impossible de mettre a jour le profil.");
+      setError("Impossible de mettre à jour le profil.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+    <main className="sp-page space-y-6">
       <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">
-        Reglages du compte
+        Réglages du compte
       </h1>
 
       {!connected && (
-        <section className="border border-neutral-700 rounded p-2 bg-neutral-900 grid grid-cols-2 gap-2">
+        <section className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setAuthMode("create")}
-            className={`px-3 py-2 rounded text-sm ${authMode === "create" ? "bg-green-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${authMode === "create" ? "border-green-500 bg-green-500/20 text-green-300" : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"}`}
           >
-            Creer un compte
+            Créer un compte
           </button>
           <button
             type="button"
             onClick={() => setAuthMode("login")}
-            className={`px-3 py-2 rounded text-sm ${authMode === "login" ? "bg-blue-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${authMode === "login" ? "border-blue-500 bg-blue-500/20 text-blue-300" : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"}`}
           >
             Se connecter
           </button>
@@ -243,7 +316,7 @@ export default function SettingsPage() {
       )}
 
       {connected && (
-        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-2">
+        <section className="sp-panel space-y-2">
           <h2 className="font-semibold">Compte actif</h2>
           {loading ? (
             <p className="text-sm text-neutral-300">Chargement du compte...</p>
@@ -255,19 +328,19 @@ export default function SettingsPage() {
               <p className="text-xs text-neutral-400 break-all">ID: {account.id}</p>
               <button
                 onClick={disconnect}
-                className="mt-2 px-3 py-1 rounded bg-red-700 text-white hover:bg-red-800"
+                className="sp-button sp-button-sm sp-button-red mt-2"
               >
-                Deconnexion
+                Déconnexion
               </button>
             </>
           ) : (
-            <p className="text-sm text-neutral-300">Aucun compte connecte (mode invite).</p>
+            <p className="text-sm text-neutral-300">Aucun compte connecté (mode invité).</p>
           )}
         </section>
       )}
 
       {connected && (
-        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section className="sp-panel space-y-3">
           <h2 className="font-semibold">Profil (email et mot de passe)</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="profileEmailInput">Adresse email</label>
@@ -308,15 +381,15 @@ export default function SettingsPage() {
           <button
             onClick={updateProfile}
             disabled={busy || !connected}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-indigo"
           >
-            {busy ? "Mise a jour..." : "Mettre a jour le profil"}
+            {busy ? "Mise à jour..." : "Mettre à jour le profil"}
           </button>
         </section>
       )}
 
       {connected && (
-        <section id="rename-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section id="rename-account" className="sp-panel space-y-3">
           <h2 className="font-semibold">Renommer le compte actif</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="renameNameInput">Nom du compte</label>
@@ -332,16 +405,16 @@ export default function SettingsPage() {
           <button
             onClick={renameAccount}
             disabled={busy || loading || !connected || !account}
-            className="w-full px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-amber"
           >
-            {busy ? "Mise a jour..." : "Mettre a jour le nom"}
+            {busy ? "Mise à jour..." : "Mettre à jour le nom"}
           </button>
         </section>
       )}
 
       {!connected && authMode === "create" && (
-        <section id="create-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
-          <h2 className="font-semibold">Creer un compte</h2>
+        <section id="create-account" className="sp-panel space-y-3">
+          <h2 className="font-semibold">Créer un compte</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="newNameInput">Nom d'utilisateur</label>
             <input
@@ -378,15 +451,15 @@ export default function SettingsPage() {
           <button
             onClick={createNewAccount}
             disabled={busy}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-green"
           >
-            {busy ? "Creation..." : "Creer et utiliser ce compte"}
+            {busy ? "Création..." : "Créer et utiliser ce compte"}
           </button>
         </section>
       )}
 
       {!connected && authMode === "login" && (
-        <section id="switch-account" className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section id="switch-account" className="sp-panel space-y-3">
           <h2 className="font-semibold">Se connecter</h2>
           <div className="sp-input-shell">
             <label className="sp-input-label" htmlFor="loginEmailInput">Adresse email</label>
@@ -413,20 +486,64 @@ export default function SettingsPage() {
           <button
             onClick={loginAccount}
             disabled={busy}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-500"
+            className="sp-button sp-button-md sp-button-full sp-button-blue"
           >
             {busy ? "Connexion..." : "Se connecter"}
           </button>
+          <button
+            type="button"
+            onClick={requestPasswordResetEmail}
+            disabled={busy}
+            className="sp-button sp-button-md sp-button-full sp-button-neutral"
+          >
+            {busy ? "Envoi..." : "Mot de passe oublie ?"}
+          </button>
+
+          {resetToken && (
+            <div id="reset-password" className="space-y-3 rounded border border-neutral-700 bg-neutral-950/50 p-3">
+              <h3 className="font-semibold">Reinitialiser le mot de passe</h3>
+              <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="resetPasswordInput">Nouveau mot de passe</label>
+                <input
+                  id="resetPasswordInput"
+                  type="password"
+                  value={resetPassword}
+                  onChange={(event) => setResetPassword(event.target.value)}
+                  className="sp-input-control"
+                  placeholder="Nouveau mot de passe"
+                />
+              </div>
+              <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="resetPasswordConfirmInput">Confirmer le mot de passe</label>
+                <input
+                  id="resetPasswordConfirmInput"
+                  type="password"
+                  value={resetPasswordConfirm}
+                  onChange={(event) => setResetPasswordConfirm(event.target.value)}
+                  className="sp-input-control"
+                  placeholder="Confirme le nouveau mot de passe"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={resetPasswordFromToken}
+                disabled={busy}
+                className="sp-button sp-button-md sp-button-full sp-button-indigo"
+              >
+                {busy ? "Mise a jour..." : "Valider le nouveau mot de passe"}
+              </button>
+            </div>
+          )}
         </section>
       )}
 
       {connected && account?.isAdmin && (
-        <section className="border border-neutral-700 rounded p-4 bg-neutral-900 space-y-3">
+        <section className="sp-panel space-y-3">
           <h2 className="font-semibold">Administration</h2>
-          <p className="text-sm text-neutral-300">Le compte admin peut gerer tous les comptes via la page dediee.</p>
+          <p className="text-sm text-neutral-300">Le compte admin peut gérer tous les comptes via la page dédiée.</p>
           <Link
             to="/admin"
-            className="inline-block px-4 py-2 rounded bg-amber-600 text-white hover:bg-amber-700"
+            className="sp-button sp-button-md sp-button-amber"
           >
             Ouvrir la page admin
           </Link>

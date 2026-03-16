@@ -1,7 +1,23 @@
+export const PLAYER_POSITIONS = [
+    "pilier",
+    "talonneur",
+    "deuxième ligne",
+    "troisième ligne",
+    "demi de mêlée",
+    "demi d'ouverture",
+    "centre",
+    "ailier",
+    "arrière",
+] as const;
+
+export type PlayerPosition = typeof PLAYER_POSITIONS[number];
+
 export interface Player {
     id: string;
     name: string;
     number?: number; // optional jersey number
+    positions?: PlayerPosition[];
+    photoUrl?: string;
 }
 
 export interface CompositionEntry {

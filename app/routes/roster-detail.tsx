@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
-import type { Team } from "~/types/tracker";
+import { PLAYER_POSITIONS, type PlayerPosition, type Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
     createPlayerFromNames,
@@ -15,7 +15,7 @@ import {
     updateTeamInList,
     parsePlayerName,
 } from "~/utils/RosterUtils";
-import { faCircleArrowLeft, faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -47,7 +47,7 @@ function getSortableLastName(fullName: string): string {
 }
 
 export default function RosterDetailPage() {
-    const { rosterSlugId } = useParams();
+    const { rosterSlugId, championshipSlug } = useParams();
     const {
         rosters,
         teams,
@@ -60,11 +60,15 @@ export default function RosterDetailPage() {
     const [showAddPlayerForm, setShowAddPlayerForm] = useState(false);
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
+    const [newPlayerPositions, setNewPlayerPositions] = useState<PlayerPosition[]>([]);
+    const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState("");
     const [compositionMessage, setCompositionMessage] = useState("");
     const [playerMessage, setPlayerMessage] = useState("");
     const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
     const [editingPlayerFirst, setEditingPlayerFirst] = useState("");
     const [editingPlayerLast, setEditingPlayerLast] = useState("");
+    const [editingPlayerPositions, setEditingPlayerPositions] = useState<PlayerPosition[]>([]);
+    const [editingPlayerPhotoUrl, setEditingPlayerPhotoUrl] = useState("");
     const [newPlayerFirstError, setNewPlayerFirstError] = useState("");
     const [newPlayerLastError, setNewPlayerLastError] = useState("");
     const [editingPlayerFirstError, setEditingPlayerFirstError] = useState("");
@@ -132,6 +136,68 @@ export default function RosterDetailPage() {
         return valid
             ? ""
             : "Utilise uniquement des lettres (y compris accentuees), un trait d'union, une apostrophe et au maximum un espace.";
+    }
+
+    async function readImageAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = typeof reader.result === "string" ? reader.result : "";
+                resolve(result);
+            };
+            reader.onerror = () => reject(new Error("Impossible de lire l'image."));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function togglePositionSelection(position: PlayerPosition, target: "new" | "edit") {
+        if (target === "new") {
+            setNewPlayerPositions((prev) =>
+                prev.includes(position) ? prev.filter((item) => item !== position) : [...prev, position]
+            );
+            return;
+        }
+
+        setEditingPlayerPositions((prev) =>
+            prev.includes(position) ? prev.filter((item) => item !== position) : [...prev, position]
+        );
+    }
+
+    function removePosition(position: PlayerPosition, target: "new" | "edit") {
+        if (target === "new") {
+            setNewPlayerPositions((prev) => prev.filter((item) => item !== position));
+            return;
+        }
+        setEditingPlayerPositions((prev) => prev.filter((item) => item !== position));
+    }
+
+    async function handlePlayerPhotoUpload(
+        event: ChangeEvent<HTMLInputElement>,
+        target: "new" | "edit"
+    ) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const dataUrl = await readImageAsDataUrl(file);
+            if (target === "new") {
+                setNewPlayerPhotoUrl(dataUrl);
+            } else {
+                setEditingPlayerPhotoUrl(dataUrl);
+            }
+        } catch {
+            setPlayerMessage("Impossible de televerser la photo du joueur.");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
+    function getPlayerProfilePath(playerId: string): string {
+        if (!rosterSlugId) return "/roster";
+        if (championshipSlug) {
+            return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
+        }
+        return `/roster/${rosterSlugId}/player/${playerId}`;
     }
 
     function addTeam() {
@@ -237,7 +303,7 @@ export default function RosterDetailPage() {
         for (const player of selectedPlayers) {
             const number = playerNumbers[player.id];
             if (number === undefined) {
-                setCompositionEditMessage("Renseigne un numero pour chaque joueur selectionne.");
+                setCompositionEditMessage("Renseigne un numéro pour chaque joueur sélectionné.");
                 return;
             }
             if (number < 1 || number > 23) {
@@ -284,7 +350,12 @@ export default function RosterDetailPage() {
         if (firstError || lastError) return;
         if (!newPlayerFirst && !newPlayerLast) return;
 
-        const player = createPlayerFromNames(formattedFirst, formattedLast);
+        const player = createPlayerFromNames(
+            formattedFirst,
+            formattedLast,
+            newPlayerPositions,
+            newPlayerPhotoUrl
+        );
         const updatedRoster = addPlayerToRosterList(roster, player);
 
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
@@ -296,17 +367,21 @@ export default function RosterDetailPage() {
         setShowAddPlayerForm(false);
         setNewPlayerFirst("");
         setNewPlayerLast("");
+        setNewPlayerPositions([]);
+        setNewPlayerPhotoUrl("");
         setNewPlayerFirstError("");
         setNewPlayerLastError("");
     }
 
-    function startEditPlayer(player: { id: string; name: string }) {
+    function startEditPlayer(player: { id: string; name: string; positions?: PlayerPosition[]; photoUrl?: string }) {
         const { first, last } = parsePlayerName(player.name);
         const formattedFirst = formatName(first);
         const formattedLast = formatName(last);
         setEditingPlayerId(player.id);
         setEditingPlayerFirst(formattedFirst);
         setEditingPlayerLast(formattedLast);
+        setEditingPlayerPositions(player.positions ?? []);
+        setEditingPlayerPhotoUrl(player.photoUrl ?? "");
         setEditingPlayerFirstError(validateName(formattedFirst));
         setEditingPlayerLastError(validateName(formattedLast));
         setPlayerMessage("");
@@ -316,6 +391,8 @@ export default function RosterDetailPage() {
         setEditingPlayerId(null);
         setEditingPlayerFirst("");
         setEditingPlayerLast("");
+        setEditingPlayerPositions([]);
+        setEditingPlayerPhotoUrl("");
         setEditingPlayerFirstError("");
         setEditingPlayerLastError("");
     }
@@ -331,7 +408,11 @@ export default function RosterDetailPage() {
         if (firstError || lastError) return;
         if (!editingPlayerFirst && !editingPlayerLast) return;
         const newName = `${formattedFirst} ${formattedLast}`.trim();
-        const updatedRoster = updatePlayerInRoster(roster, editingPlayerId, newName);
+        const updatedRoster = updatePlayerInRoster(roster, editingPlayerId, {
+            name: newName,
+            positions: editingPlayerPositions,
+            photoUrl: editingPlayerPhotoUrl,
+        });
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
         cancelEditPlayer();
         setPlayerMessage("Joueur modifié.");
@@ -354,9 +435,9 @@ export default function RosterDetailPage() {
     if (!roster) {
         return (
             <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-                <p className="text-sm text-gray-700">Roster introuvable.</p>
+                <p className="text-sm text-gray-700">Effectif introuvable.</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white">
-                    <FontAwesomeIcon icon={faCircleArrowLeft} />
+                    <FontAwesomeIcon icon={faChevronLeft} />
                     Retour aux effectifs
                 </Link>
             </main>
@@ -377,8 +458,8 @@ export default function RosterDetailPage() {
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
-                    <FontAwesomeIcon icon={faCircleArrowLeft} />
-                    Retour aux rosters
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                    Retour aux effectifs
                 </Link>
             </div>
 
@@ -386,17 +467,17 @@ export default function RosterDetailPage() {
                 <h2 className="font-semibold">Compositions</h2>
                 {compositionEditTeamId && compositionEditTeam && roster && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={closeCompositionEditor}
                     >
                         <div
-                            className="w-full max-w-2xl space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3"
+                            className="w-full max-w-2xl max-h-[calc(100dvh-8rem)] overflow-y-auto space-y-3 border-neutral-700 bg-neutral-900 text-neutral-300 rounded p-3"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">Ajouter des joueurs - {compositionEditTeam.name}</h3>
                                 <button
-                                    className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
+                                    className="sp-button sp-button-neutral sp-button-icon"
                                     onClick={closeCompositionEditor}
                                 >
                                     <FontAwesomeIcon icon={faCircleXmark} />
@@ -423,7 +504,7 @@ export default function RosterDetailPage() {
                                         <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
                                             <span>Joueur</span>
                                             <span className="text-center">Capitaine</span>
-                                            <span className="text-right">Numero</span>
+                                            <span className="text-right">Numéro</span>
                                         </div>
                                         <ul className="space-y-2">
                                         {availablePlayers.map((player) => (
@@ -474,7 +555,7 @@ export default function RosterDetailPage() {
                             })()}
 
                             <button
-                                className="px-3 py-2 bg-green-600 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-indigo"
                                 onClick={() => addPlayersToComposition(compositionEditTeam)}
                             >
                                 <FontAwesomeIcon icon={faPlus} className="mr-1" />
@@ -491,7 +572,7 @@ export default function RosterDetailPage() {
                     </div>
                 )}
                 {rosterTeams.length === 0 ? (
-                    <p className="text-sm text-gray-600">aucune composition disponible</p>
+                    <p className="text-sm text-gray-600">Aucune composition disponible</p>
                 ) : (
                     <ul className="space-y-1">
                         {rosterTeams.map((team: Team) => (
@@ -505,11 +586,11 @@ export default function RosterDetailPage() {
                                         >
                                             {expandedTeams.has(team.id) ? <FontAwesomeIcon icon={faAngleDown} /> : <FontAwesomeIcon icon={faAngleRight} />}
                                         </button>
-                                        <span>{team.name}</span>
+                                        <span className="text-white font-semibold uppercase">{team.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
-                                            className="px-2 py-1 bg-blue-500 text-white text-sm rounded"
+                                            className="sp-button sp-button-xs sp-button-blue h-8"
                                             onClick={() =>
                                                 compositionEditTeamId === team.id
                                                     ? closeCompositionEditor()
@@ -519,7 +600,7 @@ export default function RosterDetailPage() {
                                             <FontAwesomeIcon icon={faPlus} /> <FontAwesomeIcon icon={faUser} />
                                         </button>
                                         <button
-                                            className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
+                                            className="sp-button sp-button-red sp-button-icon"
                                             onClick={() => deleteTeam(team)}
                                         >
                                             <FontAwesomeIcon icon={faTrashCan} />
@@ -548,7 +629,7 @@ export default function RosterDetailPage() {
                                                                         )}
                                                                     </span>
                                                                     <button
-                                                                        className="text-neutral-400 text-xs px-2 py-1"
+                                                                        className="sp-button sp-button-xs sp-button-neutral"
                                                                         onClick={() => removePlayerFromComposition(team, entry.player.id)}
                                                                     >
                                                                         <FontAwesomeIcon icon={faTrashCan} />
@@ -572,7 +653,7 @@ export default function RosterDetailPage() {
                                                                         )}
                                                                     </span>
                                                                     <button
-                                                                        className="text-neutral-400 text-xs px-2 py-1"
+                                                                        className="sp-button sp-button-xs sp-button-neutral"
                                                                         onClick={() => removePlayerFromComposition(team, entry.player.id)}
                                                                     >
                                                                         <FontAwesomeIcon icon={faTrashCan} />
@@ -594,7 +675,7 @@ export default function RosterDetailPage() {
                 )}
                 {!hasCompositionForDay && (
                     <button
-                        className="px-3 py-1 bg-blue-500 text-white rounded"
+                        className="sp-button sp-button-sm sp-button-blue"
                         onClick={addTeam}
                         disabled={!matchDay}
                     >
@@ -623,11 +704,11 @@ export default function RosterDetailPage() {
                 </div>
                 {showAddPlayerForm && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={closeAddPlayerForm}
                     >
                         <div
-                            className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                            className="w-full max-w-lg max-h-[calc(100dvh-8rem)] overflow-y-auto flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className="sp-input-shell">
@@ -664,16 +745,72 @@ export default function RosterDetailPage() {
                             {newPlayerLastError && (
                                 <p className="text-sm text-red-400">{newPlayerLastError}</p>
                             )}
+                            <div className="sp-input-shell">
+                                <p className="sp-input-label">Postes (facultatif)</p>
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    {PLAYER_POSITIONS.map((position) => {
+                                        const checked = newPlayerPositions.includes(position);
+                                        return (
+                                            <label key={`new-checkbox-${position}`} className="flex items-center gap-2 text-sm text-neutral-200 font-normal">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => togglePositionSelection(position, "new")}
+                                                    className="h-4 w-4"
+                                                />
+                                                <span>{position}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            {newPlayerPositions.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {newPlayerPositions.map((position) => (
+                                        <button
+                                            key={`new-${position}`}
+                                            type="button"
+                                            className="sp-button sp-button-xs sp-button-neutral"
+                                            onClick={() => removePosition(position, "new")}
+                                            title="Retirer ce poste"
+                                        >
+                                            {position} x
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerPhotoUrl">Photo (URL ou upload)</label>
+                                <input
+                                    id="newPlayerPhotoUrl"
+                                    className="sp-input-control"
+                                    placeholder="https://..."
+                                    value={newPlayerPhotoUrl}
+                                    onChange={(event) => setNewPlayerPhotoUrl(event.target.value)}
+                                />
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerPhotoFile">Televerser une photo</label>
+                                <input
+                                    id="newPlayerPhotoFile"
+                                    type="file"
+                                    accept="image/*"
+                                    className="sp-input-control"
+                                    onChange={(event) => {
+                                        void handlePlayerPhotoUpload(event, "new");
+                                    }}
+                                />
+                            </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
-                                    className="px-3 py-2 bg-blue-500 text-white rounded"
+                                    className="sp-button sp-button-sm sp-button-blue"
                                     onClick={addPlayerToRoster}
                                     disabled={!newPlayerFirst && !newPlayerLast}
                                 >
                                     Valider
                                 </button>
                                 <button
-                                    className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                    className="sp-button sp-button-sm sp-button-light"
                                     onClick={closeAddPlayerForm}
                                 >
                                     Annuler
@@ -684,17 +821,17 @@ export default function RosterDetailPage() {
                 )}
                 {editingPlayerId && editingPlayer && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={cancelEditPlayer}
                     >
                         <div
-                            className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                            className="w-full max-w-lg max-h-[calc(100dvh-8rem)] overflow-y-auto flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">Modifier {editingPlayer.name}</h3>
                                 <button
-                                    className="flex h-8 w-8 items-center justify-center bg-neutral-700 text-white rounded text-sm"
+                                    className="sp-button sp-button-neutral sp-button-icon"
                                     onClick={cancelEditPlayer}
                                 >
                                     <FontAwesomeIcon icon={faCircleXmark} />
@@ -734,16 +871,72 @@ export default function RosterDetailPage() {
                             {editingPlayerLastError && (
                                 <p className="text-sm text-red-400">{editingPlayerLastError}</p>
                             )}
+                            <div className="sp-input-shell">
+                                <p className="sp-input-label">Postes (facultatif)</p>
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    {PLAYER_POSITIONS.map((position) => {
+                                        const checked = editingPlayerPositions.includes(position);
+                                        return (
+                                            <label key={`edit-checkbox-${position}`} className="flex items-center gap-2 text-sm text-neutral-200 font-normal">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => togglePositionSelection(position, "edit")}
+                                                    className="h-4 w-4"
+                                                />
+                                                <span>{position}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            {editingPlayerPositions.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {editingPlayerPositions.map((position) => (
+                                        <button
+                                            key={`edit-${position}`}
+                                            type="button"
+                                            className="sp-button sp-button-xs sp-button-neutral"
+                                            onClick={() => removePosition(position, "edit")}
+                                            title="Retirer ce poste"
+                                        >
+                                            {position} x
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerPhotoUrl">Photo (URL ou upload)</label>
+                                <input
+                                    id="editingPlayerPhotoUrl"
+                                    className="sp-input-control"
+                                    placeholder="https://..."
+                                    value={editingPlayerPhotoUrl}
+                                    onChange={(event) => setEditingPlayerPhotoUrl(event.target.value)}
+                                />
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerPhotoFile">Televerser une photo</label>
+                                <input
+                                    id="editingPlayerPhotoFile"
+                                    type="file"
+                                    accept="image/*"
+                                    className="sp-input-control"
+                                    onChange={(event) => {
+                                        void handlePlayerPhotoUpload(event, "edit");
+                                    }}
+                                />
+                            </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
-                                    className="px-3 py-2 bg-blue-500 text-white rounded"
+                                    className="sp-button sp-button-sm sp-button-blue h-36px"
                                     onClick={saveEditPlayer}
                                     disabled={!editingPlayerFirst && !editingPlayerLast}
                                 >
                                     Valider
                                 </button>
                                 <button
-                                    className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                    className="sp-button sp-button-sm sp-button-light"
                                     onClick={cancelEditPlayer}
                                 >
                                     Annuler
@@ -757,20 +950,29 @@ export default function RosterDetailPage() {
                         {sortedRosterPlayers.length === 0 ? (
                             <p className="text-sm text-gray-600">Aucun joueur dans cet effectif.</p>
                         ) : (
-                            <ul className="space-y-4">
+                            <ul className="space-y-4 mt-6">
                                 {sortedRosterPlayers.map((player) => (
-                                    <li key={player.id} className="border-b w-5/6 mx-auto px-2 space-y-6 mb-6 py-6">
+                                    <li key={player.id} className="bg-neutral-900 border border-neutral-800 text-base font-semibold w-5/6 mx-auto px-4 space-y-6 mb-2 py-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span>{player.name}</span>
+                                            <div className="min-w-0">
+                                                <Link to={getPlayerProfilePath(player.id)} className="text-white font-semibold hover:underline">
+                                                    {player.name}
+                                                </Link>
+                                                {player.positions && player.positions.length > 0 && (
+                                                    <p className="text-xs text-neutral-400 font-normal mt-1">
+                                                        {player.positions.join(" / ")}
+                                                    </p>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                                    className="sp-button sp-button-yellow sp-button-icon"
                                                     onClick={() => startEditPlayer(player)}
                                                 >
                                                     <FontAwesomeIcon icon={faPenToSquare} />
                                                 </button>
                                                 <button
-                                                    className="flex h-8 w-8 items-center justify-center bg-red-500 text-white text-sm rounded"
+                                                    className="sp-button sp-button-red sp-button-icon"
                                                     onClick={() => deletePlayer(player.id, player.name)}
                                                 >
                                                     <FontAwesomeIcon icon={faTrashCan} />
@@ -784,7 +986,7 @@ export default function RosterDetailPage() {
                     </>
                 )}
                 <button
-                    className="px-3 py-1 bg-green-500 text-white rounded mt-2"
+                    className="sp-button sp-button-sm sp-button-indigo mt-6"
                     onClick={() => setShowAddPlayerForm((value) => !value)}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />

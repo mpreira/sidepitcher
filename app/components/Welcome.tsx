@@ -1,6 +1,6 @@
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
-import logoSP from "~/assets/images/logo_800.svg";
+import logoSP from "~/assets/images/logo match reporter.png";
 import { useState } from "react";
 import { Link } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,51 +23,48 @@ export function Welcome() {
   async function handleLogout() {
     try {
       await logout();
-      setAccountMessage("Deconnexion effectuee.");
+      setAccountMessage("Déconnexion effectuée.");
     } catch {
-      setAccountMessage("Impossible de se deconnecter.");
+      setAccountMessage("Impossible de se déconnecter.");
     }
   }
 
   return (
     <main className="relative flex h-full min-h-0 w-full items-center justify-center py-4">
-      <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
-        {connected && account ? (
-          <>
-            <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
-              <FontAwesomeIcon icon={faCircleUser} /> {account.name}
-            </span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded bg-red-700 px-3 py-1 text-xs text-white hover:bg-red-800"
-            >
-              Deconnexion
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              to="/account#switch-account"
-              className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
-            >
-              Se connecter
-            </Link>
-            <Link
-              to="/account#create-account"
-              className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700"
-            >
-              <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
-              Creer un compte
-            </Link>
-          </>
+      <div className="absolute inset-x-4 top-4 z-20 flex flex-row items-start justify-between gap-2">
+        {!connected && (
+          <p className="w-fit max-w-[55%] rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
+            Mode invité: les données sont conservées 24h.
+          </p>
         )}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+          {connected && account ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="sp-button sp-button-xs sp-button-red"
+              >
+                Déconnexion
+              </button>
+          ) : (
+            <>
+              <Link
+                to="/account#switch-account"
+                className="sp-button sp-button-xs sp-button-blue"
+              >
+                Se connecter
+              </Link>
+              <Link
+                to="/account#create-account"
+                className="sp-button sp-button-xs sp-button-green"
+              >
+                <FontAwesomeIcon icon={faCircleUser} className="sm:mr-2" />
+                Créer un compte
+              </Link>
+            </>
+          )}
+        </div>
       </div>
-      {!connected && (
-        <p className="absolute left-4 top-4 z-20 rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
-          Mode invite: les donnees sont conservees 24h.
-        </p>
-      )}
       <div className="flex w-full flex-1 flex-col items-center gap-16 min-h-0">
         <header className="flex w-full flex-col items-center gap-9">
             <div className="mx-auto w-full max-w-[1100px] px-2">
@@ -126,7 +123,7 @@ export function Welcome() {
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="sp-button sp-button-md sp-button-full sp-button-blue"
             >
               Valider
             </button>

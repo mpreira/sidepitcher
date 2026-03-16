@@ -90,6 +90,37 @@ export default function RosterManager({
         return value.trim();
     }
 
+    async function readImageAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = typeof reader.result === "string" ? reader.result : "";
+                resolve(result);
+            };
+            reader.onerror = () => reject(new Error("Impossible de lire l'image."));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleRosterLogoUpload(event: React.ChangeEvent<HTMLInputElement>, target: "new" | "edit") {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const dataUrl = await readImageAsDataUrl(file);
+            if (target === "new") {
+                setNewRosterLogo(dataUrl);
+            } else {
+                setEditingRosterLogo(dataUrl);
+            }
+            setRosterFormError("");
+        } catch {
+            setRosterFormError("Impossible de televerser le logo.");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
     function validateColor(value: string): string {
         if (!value) return "";
         return /^#[0-9A-F]{6}$/.test(value)
@@ -245,7 +276,7 @@ export default function RosterManager({
         if (!activeRoster || !editingPlayerId) return;
         if (!editingPlayerFirst && !editingPlayerLast) return;
         const newName = `${editingPlayerFirst} ${editingPlayerLast}`.trim();
-        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, newName);
+        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, { name: newName });
         setRosters(rosters.map(r => r.id === activeRoster.id ? updated : r));
         setEditingPlayerId(null);
         setEditingPlayerFirst("");
@@ -340,7 +371,7 @@ export default function RosterManager({
                 </button>
             </div>
             <button
-                className="px-3 py-2 bg-sky-500/20 text-sky-300 rounded border hover:bg-sky-600 flex items-center font-medium"
+                className="sp-button sp-button-sm sp-button-indigo"
                 onClick={() => {
                     setShowCreateRosterForm((value) => !value);
                     setRosterFeedbackMessage("");
@@ -406,6 +437,18 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="newRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "new");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
                             <select
                                 id="newRosterCategory"
@@ -422,13 +465,13 @@ export default function RosterManager({
                         </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-blue"
                                 onClick={createRoster}
                             >
                                 Valider
                             </button>
                             <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                className="sp-button sp-button-sm sp-button-light"
                                 onClick={closeCreateRosterForm}
                             >
                                 Annuler
@@ -494,15 +537,27 @@ export default function RosterManager({
                                 onChange={(e) => setEditingRosterLogo(e.target.value)}
                             />
                         </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="editingRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "edit");
+                                }}
+                            />
+                        </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-blue h-[36px]"
                                 onClick={saveEditedRoster}
                             >
                                 Valider
                             </button>
                             <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                className="sp-button sp-button-sm sp-button-light"
                                 onClick={closeEditRosterForm}
                             >
                                 Annuler
@@ -518,7 +573,7 @@ export default function RosterManager({
             ) : filteredRosters.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucun effectif dans {activeCategoryTab}</p>
             ) : (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2 mt-6 md:grid-cols-3">
                     {filteredRosters.map((r) => (
                         <div key={r.id} className="flex items-center justify-between gap-2 rounded bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 py-2 px-4">
                             <button
@@ -532,7 +587,7 @@ export default function RosterManager({
                                 {r.nickname && <span className="block text-xs text-sky-300">{r.nickname}</span>}
                             </button>
                             <button
-                                className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                className="sp-button sp-button-yellow sp-button-icon"
                                 onClick={() => openEditRosterForm(r)}
                                 aria-label={`Modifier ${r.name}`}
                             >
@@ -544,7 +599,7 @@ export default function RosterManager({
             )}
 
             {rosterFeedbackMessage && (
-                <p className="flex items-center gap-2 text-sm text-green-400">
+                <p className="flex items-center gap-2 text-sm text-green-400 mt-6">
                     <FontAwesomeIcon icon={faCircleCheck} />
                     {rosterFeedbackMessage}
                 </p>

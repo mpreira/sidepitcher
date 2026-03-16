@@ -41,14 +41,14 @@ export default function LiveRosterPage() {
   }, [team1Id, team2Id, teams]);
 
   return (
-    <main className="w-full max-w-screen-md mx-auto px-4 py-6 overflow-x-hidden space-y-4">
+    <main className="sp-page space-y-4">
       <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Effectifs</h1>
       {liveTeams.length === 0 ? (
         <p className="text-sm text-neutral-400">Chargement des compositions du match en cours...</p>
       ) : (
         <div className="space-y-4">
           {liveTeams.map((team) => (
-            <article key={team!.id} className="rounded border border-neutral-700 bg-neutral-900 p-4 space-y-3">
+            <article key={team!.id} className="sp-panel space-y-3">
               <h2 className="text-lg font-semibold text-white text-center">
                 {team!.nickname || team!.name.replace(/\s+J\d+$/, "")}
               </h2>

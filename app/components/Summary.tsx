@@ -35,9 +35,9 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                 }),
             });
             onSaved?.();
-            alert("Synthese sauvegardee.");
+            alert("Synthèse sauvegardée.");
         } catch (e) {
-            alert("Impossible de sauvegarder la synthese.");
+            alert("Impossible de sauvegarder la synthèse.");
         }
     }
 
@@ -45,21 +45,21 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
         <section className="space-y-2">
             <div className="mt-2 flex flex-col justify-center sm:flex-row gap-2">
                 <button
-                    className="bg-gradient-to-br from-green-400 to-green-600 px-4 py-2 text-white rounded w-full sm:w-auto"
+                    className="sp-button sp-button-md sp-button-green w-full sm:w-auto"
                     onClick={saveSummary}
                 >
                     <FontAwesomeIcon icon={faFloppyDisk} className="mr-2" />
-                    Sauvegarder la synthese
+                    Sauvegarder la synthèse
                 </button>
                 <button
-                    className="bg-gradient-to-br from-indigo-500 to-indigo-700 px-4 py-2 text-white rounded w-full sm:w-auto"
+                    className="sp-button sp-button-md sp-button-indigo w-full sm:w-auto"
                     onClick={() => exportSummaryToClipboard(events, currentTime, summary)}
                 >
                     <FontAwesomeIcon icon={faCopy} className="mr-2" />
                     Copier la synthèse
                 </button>
                 <button
-                    className="bg-gradient-to-br from-gray-600 to-gray-800 px-4 py-2 text-white rounded w-full sm:w-auto"
+                    className="sp-button sp-button-md sp-button-neutral w-full sm:w-auto"
                     onClick={() =>
                         exportSummaryToPdf(events, currentTime, summary, {
                             title: `Synthèse - ${summaryTitle}`,

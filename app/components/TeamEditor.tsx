@@ -73,7 +73,7 @@ export default function TeamEditor({ team, rosterPlayers, onChange, onClose }: P
                 <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold">Ajouter un joueur</h4>
                     <button
-                        className="px-3 py-2 bg-gray-200 text-gray-800 rounded text-sm"
+                        className="sp-button sp-button-sm sp-button-light"
                         onClick={onClose}
                     >
                         Fermer
@@ -108,7 +108,7 @@ export default function TeamEditor({ team, rosterPlayers, onChange, onClose }: P
                         ))}
                     </select>
                     <button
-                        className="px-3 py-2 bg-blue-500 text-white rounded text-sm w-full sm:w-auto"
+                        className="sp-button sp-button-sm sp-button-blue w-full sm:w-auto"
                         onClick={addPlayer}
                         disabled={availablePlayers.length === 0}
                     >
@@ -139,7 +139,7 @@ export default function TeamEditor({ team, rosterPlayers, onChange, onClose }: P
                                     <span className="font-semibold w-6">{entry.number}</span>
                                     <span className="flex-1">{entry.player.name}</span>
                                     <button
-                                        className="text-red-600 text-sm px-2 py-1"
+                                        className="sp-button sp-button-xs sp-button-red"
                                         onClick={() => removePlayer(entry.player.id)}
                                     >
                                         ✖
@@ -158,7 +158,7 @@ export default function TeamEditor({ team, rosterPlayers, onChange, onClose }: P
                                     <span className="font-semibold w-6">{entry.number}</span>
                                     <span className="flex-1">{entry.player.name}</span>
                                     <button
-                                        className="text-red-600 text-sm px-2 py-1"
+                                        className="sp-button sp-button-xs sp-button-red"
                                         onClick={() => removePlayer(entry.player.id)}
                                     >
                                         ✖
