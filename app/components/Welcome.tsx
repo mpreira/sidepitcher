@@ -31,13 +31,13 @@ export function Welcome() {
 
   return (
     <main className="relative flex h-full min-h-0 w-full items-center justify-center py-4">
-      <div className="absolute inset-x-4 top-4 z-20 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div className="absolute inset-x-4 top-4 z-20 flex flex-row items-start justify-between gap-2">
         {!connected && (
-          <p className="order-2 w-fit max-w-full rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200 sm:order-1">
+          <p className="w-fit max-w-[55%] rounded border border-amber-700/60 bg-amber-900/40 px-3 py-1 text-[11px] text-amber-200">
             Mode invité: les données sont conservées 24h.
           </p>
         )}
-        <div className="order-1 flex flex-wrap items-center justify-end gap-2 sm:order-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {connected && account ? (
             <>
               <span className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs text-neutral-200">
