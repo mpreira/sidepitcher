@@ -150,16 +150,17 @@ export default function RosterDetailPage() {
         });
     }
 
-    function handlePositionsChange(event: ChangeEvent<HTMLSelectElement>, target: "new" | "edit") {
-        const values = Array.from(event.target.selectedOptions)
-            .map((option) => option.value as PlayerPosition)
-            .filter((value): value is PlayerPosition => PLAYER_POSITIONS.includes(value));
-
+    function togglePositionSelection(position: PlayerPosition, target: "new" | "edit") {
         if (target === "new") {
-            setNewPlayerPositions(values);
+            setNewPlayerPositions((prev) =>
+                prev.includes(position) ? prev.filter((item) => item !== position) : [...prev, position]
+            );
             return;
         }
-        setEditingPlayerPositions(values);
+
+        setEditingPlayerPositions((prev) =>
+            prev.includes(position) ? prev.filter((item) => item !== position) : [...prev, position]
+        );
     }
 
     function removePosition(position: PlayerPosition, target: "new" | "edit") {
@@ -745,22 +746,24 @@ export default function RosterDetailPage() {
                                 <p className="text-sm text-red-400">{newPlayerLastError}</p>
                             )}
                             <div className="sp-input-shell">
-                                <label className="sp-input-label" htmlFor="newPlayerPositions">Postes (facultatif)</label>
-                                <select
-                                    id="newPlayerPositions"
-                                    className="sp-input-control min-h-[120px]"
-                                    multiple
-                                    value={newPlayerPositions}
-                                    onChange={(event) => handlePositionsChange(event, "new")}
-                                >
-                                    {PLAYER_POSITIONS.map((position) => (
-                                        <option key={position} value={position}>
-                                            {position}
-                                        </option>
-                                    ))}
-                                </select>
+                                <p className="sp-input-label">Postes (facultatif)</p>
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    {PLAYER_POSITIONS.map((position) => {
+                                        const checked = newPlayerPositions.includes(position);
+                                        return (
+                                            <label key={`new-checkbox-${position}`} className="flex items-center gap-2 text-sm text-neutral-200 font-normal">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => togglePositionSelection(position, "new")}
+                                                    className="h-4 w-4"
+                                                />
+                                                <span>{position}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <p className="text-xs text-neutral-400">Selection multiple: Cmd/Ctrl + clic.</p>
                             {newPlayerPositions.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
                                     {newPlayerPositions.map((position) => (
@@ -869,22 +872,24 @@ export default function RosterDetailPage() {
                                 <p className="text-sm text-red-400">{editingPlayerLastError}</p>
                             )}
                             <div className="sp-input-shell">
-                                <label className="sp-input-label" htmlFor="editingPlayerPositions">Postes (facultatif)</label>
-                                <select
-                                    id="editingPlayerPositions"
-                                    className="sp-input-control min-h-[120px]"
-                                    multiple
-                                    value={editingPlayerPositions}
-                                    onChange={(event) => handlePositionsChange(event, "edit")}
-                                >
-                                    {PLAYER_POSITIONS.map((position) => (
-                                        <option key={position} value={position}>
-                                            {position}
-                                        </option>
-                                    ))}
-                                </select>
+                                <p className="sp-input-label">Postes (facultatif)</p>
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    {PLAYER_POSITIONS.map((position) => {
+                                        const checked = editingPlayerPositions.includes(position);
+                                        return (
+                                            <label key={`edit-checkbox-${position}`} className="flex items-center gap-2 text-sm text-neutral-200 font-normal">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => togglePositionSelection(position, "edit")}
+                                                    className="h-4 w-4"
+                                                />
+                                                <span>{position}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <p className="text-xs text-neutral-400">Selection multiple: Cmd/Ctrl + clic.</p>
                             {editingPlayerPositions.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
                                     {editingPlayerPositions.map((position) => (
