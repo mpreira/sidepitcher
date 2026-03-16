@@ -62,9 +62,10 @@ body {
   }
 
   .sp-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-md font-medium text-white transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-md font-semibold text-white transition-all duration-150;
     @apply shadow-sm shadow-black/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none;
     min-height: 32px;
+    font-size: 12px;
     padding-left: 16px;
     padding-right: 16px;
   }
@@ -76,7 +77,6 @@ body {
   }
 
   .sp-button-sm {
-    @apply text-sm;
   }
 
   .sp-button-md {
@@ -133,18 +133,19 @@ body {
   }
 
   .sp-button-xs {
-    @apply text-xs;
   }
 
   @media (min-width: 640px) {
     .sp-button {
       min-height: 40px;
+      font-size: 14px;
     }
   }
 
   @media (min-width: 1024px) {
     .sp-button {
       min-height: 52px;
+      font-size: 16px;
     }
   }
 
