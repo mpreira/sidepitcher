@@ -67,11 +67,12 @@ body {
   }
 
   .sp-button-sm {
-    @apply px-3 py-1 text-sm;
+    @apply text-sm;
+    padding: 8px 14px;
   }
 
   .sp-button-md {
-    @apply px-4 py-2;
+    padding: 10px 18px;
   }
 
   .sp-button-full {
@@ -125,7 +126,36 @@ body {
   }
 
   .sp-button-xs {
-    @apply px-2 py-1 text-xs;
+    @apply text-xs;
+    padding: 6px 10px;
+  }
+
+  @media (min-width: 640px) {
+    .sp-button-xs {
+      padding: 7px 12px;
+    }
+
+    .sp-button-sm {
+      padding: 9px 16px;
+    }
+
+    .sp-button-md {
+      padding: 11px 20px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .sp-button-xs {
+      padding: 8px 14px;
+    }
+
+    .sp-button-sm {
+      padding: 10px 18px;
+    }
+
+    .sp-button-md {
+      padding: 12px 22px;
+    }
   }
 
   .sp-button-icon {
