@@ -7,7 +7,7 @@ export default [
     route("roster", "routes/roster.tsx"),
     route("roster/:championshipSlug/:rosterSlugId/player/:playerId", "routes/player-profile.tsx"),
     route("roster/:championshipSlug/:rosterSlugId", "routes/roster-detail.tsx"),
-    route("roster/:rosterSlugId/player/:playerId", "routes/player-profile.tsx"),
+    route("roster/:rosterSlugId/player/:playerId", "routes/player-profile-short.tsx"),
     route("roster/:rosterSlugId", "routes/roster-redirect.tsx"),
     route("syntheses", "routes/syntheses.tsx"),
     route("syntheses/:summaryId", "routes/synthese-detail.tsx"),
