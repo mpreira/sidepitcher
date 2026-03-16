@@ -162,6 +162,14 @@ export default function RosterDetailPage() {
         setEditingPlayerPositions(values);
     }
 
+    function removePosition(position: PlayerPosition, target: "new" | "edit") {
+        if (target === "new") {
+            setNewPlayerPositions((prev) => prev.filter((item) => item !== position));
+            return;
+        }
+        setEditingPlayerPositions((prev) => prev.filter((item) => item !== position));
+    }
+
     async function handlePlayerPhotoUpload(
         event: ChangeEvent<HTMLInputElement>,
         target: "new" | "edit"
@@ -752,6 +760,22 @@ export default function RosterDetailPage() {
                                     ))}
                                 </select>
                             </div>
+                            <p className="text-xs text-neutral-400">Selection multiple: Cmd/Ctrl + clic.</p>
+                            {newPlayerPositions.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {newPlayerPositions.map((position) => (
+                                        <button
+                                            key={`new-${position}`}
+                                            type="button"
+                                            className="sp-button sp-button-xs sp-button-neutral"
+                                            onClick={() => removePosition(position, "new")}
+                                            title="Retirer ce poste"
+                                        >
+                                            {position} x
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                             <div className="sp-input-shell">
                                 <label className="sp-input-label" htmlFor="newPlayerPhotoUrl">Photo (URL ou upload)</label>
                                 <input
@@ -860,6 +884,22 @@ export default function RosterDetailPage() {
                                     ))}
                                 </select>
                             </div>
+                            <p className="text-xs text-neutral-400">Selection multiple: Cmd/Ctrl + clic.</p>
+                            {editingPlayerPositions.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {editingPlayerPositions.map((position) => (
+                                        <button
+                                            key={`edit-${position}`}
+                                            type="button"
+                                            className="sp-button sp-button-xs sp-button-neutral"
+                                            onClick={() => removePosition(position, "edit")}
+                                            title="Retirer ce poste"
+                                        >
+                                            {position} x
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                             <div className="sp-input-shell">
                                 <label className="sp-input-label" htmlFor="editingPlayerPhotoUrl">Photo (URL ou upload)</label>
                                 <input
