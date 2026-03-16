@@ -10,6 +10,17 @@ interface AccountPendingValidationEmailInput {
   accountEmail: string;
 }
 
+interface PasswordResetEmailInput {
+  accountName: string;
+  accountEmail: string;
+  resetUrl: string;
+}
+
+interface AccountApprovedEmailInput {
+  accountName: string;
+  accountEmail: string;
+}
+
 function sanitizeEnvSecret(value: string | undefined): string {
   if (!value) {
     return "";
@@ -115,6 +126,98 @@ export async function sendAccountPendingValidationEmail(
   }
 
   console.info("[mailer] pending validation email sent", {
+    to: input.accountEmail,
+    from,
+    accountEmail: input.accountEmail,
+  });
+}
+
+export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Promise<void> {
+  const apiKey = sanitizeEnvSecret(process.env.RESEND_API_KEY);
+  const from = process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>";
+
+  if (!apiKey) {
+    console.warn("[mailer] RESEND_API_KEY missing: skipping password reset email", {
+      to: input.accountEmail,
+      from,
+      accountEmail: input.accountEmail,
+    });
+    return;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [input.accountEmail],
+      subject: "Reinitialisation de ton mot de passe Match Reporter",
+      text:
+        `Bonjour ${input.accountName},\n\n` +
+        "Tu as demande la reinitialisation de ton mot de passe.\n\n" +
+        `Clique sur ce lien pour definir un nouveau mot de passe : ${input.resetUrl}\n\n` +
+        "Ce lien expire dans 30 minutes.\n" +
+        "Si tu n'es pas a l'origine de cette demande, tu peux ignorer cet email.",
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    const keyFingerprint = apiKey.length >= 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : "too-short";
+    throw new Error(
+      `Unable to send password reset email (status ${response.status}, key ${keyFingerprint}): ${details}`
+    );
+  }
+
+  console.info("[mailer] password reset email sent", {
+    to: input.accountEmail,
+    from,
+    accountEmail: input.accountEmail,
+  });
+}
+
+export async function sendAccountApprovedEmail(input: AccountApprovedEmailInput): Promise<void> {
+  const apiKey = sanitizeEnvSecret(process.env.RESEND_API_KEY);
+  const from = process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>";
+
+  if (!apiKey) {
+    console.warn("[mailer] RESEND_API_KEY missing: skipping account approved email", {
+      to: input.accountEmail,
+      from,
+      accountEmail: input.accountEmail,
+    });
+    return;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [input.accountEmail],
+      subject: "Ton compte Match Reporter est active",
+      text:
+        `Bonjour ${input.accountName},\n\n` +
+        "Bonne nouvelle: ton compte Match Reporter vient d'etre active par un administrateur.\n\n" +
+        "Tu peux maintenant te connecter avec ton email et ton mot de passe.",
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    const keyFingerprint = apiKey.length >= 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : "too-short";
+    throw new Error(
+      `Unable to send account approved email (status ${response.status}, key ${keyFingerprint}): ${details}`
+    );
+  }
+
+  console.info("[mailer] account approved email sent", {
     to: input.accountEmail,
     from,
     accountEmail: input.accountEmail,

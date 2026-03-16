@@ -20,9 +20,12 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const resetToken = new URLSearchParams(location.search).get("resetToken")?.trim() ?? "";
 
   useEffect(() => {
     setRenameName(account?.name ?? "");
@@ -32,6 +35,10 @@ export default function SettingsPage() {
     if (connected) return;
     if (location.hash === "#create-account") {
       setAuthMode("create");
+      return;
+    }
+    if (location.hash === "#reset-password") {
+      setAuthMode("login");
       return;
     }
     if (location.hash === "#switch-account") {
@@ -124,6 +131,72 @@ export default function SettingsPage() {
       navigate("/", { replace: true });
     } catch {
       setError("Impossible de se connecter.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function requestPasswordResetEmail() {
+    if (!loginEmail.trim()) {
+      setError("Entre ton email pour recevoir le lien de reinitialisation.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "forgot-password", email: loginEmail }),
+      });
+
+      setMessage("Si un compte existe pour cet email, un lien de reinitialisation a ete envoye.");
+    } catch {
+      setMessage("Si un compte existe pour cet email, un lien de reinitialisation a ete envoye.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resetPasswordFromToken() {
+    if (!resetToken) {
+      setError("Lien invalide. Redemande un nouveau lien de reinitialisation.");
+      return;
+    }
+    if (!resetPassword) {
+      setError("Entre un nouveau mot de passe.");
+      return;
+    }
+    if (resetPassword !== resetPasswordConfirm) {
+      setError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "reset-password", token: resetToken, password: resetPassword }),
+      });
+      const data = (await response.json()) as { ok?: boolean };
+      if (!response.ok || !data.ok) {
+        setError("Lien invalide ou expire. Redemande un nouveau lien.");
+        return;
+      }
+
+      setResetPassword("");
+      setResetPasswordConfirm("");
+      setMessage("Mot de passe reinitialise. Tu peux te connecter.");
+      navigate("/account#switch-account", { replace: true });
+    } catch {
+      setError("Impossible de reinitialiser le mot de passe.");
     } finally {
       setBusy(false);
     }
@@ -417,6 +490,50 @@ export default function SettingsPage() {
           >
             {busy ? "Connexion..." : "Se connecter"}
           </button>
+          <button
+            type="button"
+            onClick={requestPasswordResetEmail}
+            disabled={busy}
+            className="sp-button sp-button-md sp-button-full sp-button-neutral"
+          >
+            {busy ? "Envoi..." : "Mot de passe oublie ?"}
+          </button>
+
+          {resetToken && (
+            <div id="reset-password" className="space-y-3 rounded border border-neutral-700 bg-neutral-950/50 p-3">
+              <h3 className="font-semibold">Reinitialiser le mot de passe</h3>
+              <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="resetPasswordInput">Nouveau mot de passe</label>
+                <input
+                  id="resetPasswordInput"
+                  type="password"
+                  value={resetPassword}
+                  onChange={(event) => setResetPassword(event.target.value)}
+                  className="sp-input-control"
+                  placeholder="Nouveau mot de passe"
+                />
+              </div>
+              <div className="sp-input-shell">
+                <label className="sp-input-label" htmlFor="resetPasswordConfirmInput">Confirmer le mot de passe</label>
+                <input
+                  id="resetPasswordConfirmInput"
+                  type="password"
+                  value={resetPasswordConfirm}
+                  onChange={(event) => setResetPasswordConfirm(event.target.value)}
+                  className="sp-input-control"
+                  placeholder="Confirme le nouveau mot de passe"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={resetPasswordFromToken}
+                disabled={busy}
+                className="sp-button sp-button-md sp-button-full sp-button-indigo"
+              >
+                {busy ? "Mise a jour..." : "Valider le nouveau mot de passe"}
+              </button>
+            </div>
+          )}
         </section>
       )}
 

@@ -6,6 +6,8 @@ import {
   buildAccountLogoutCookie,
   buildAnonymousLogoutCookie,
   renameCurrentAccount,
+  requestPasswordReset,
+  resetPasswordFromToken,
   updateCurrentAccountProfile,
 } from "~/utils/account.server";
 import {
@@ -23,11 +25,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const action: ActionFunction = async ({ request }) => {
   const body = (await request.json()) as {
-    intent?: "create" | "login" | "rename" | "update-profile" | "logout";
+    intent?: "create" | "login" | "rename" | "update-profile" | "forgot-password" | "reset-password" | "logout";
     name?: string;
     email?: string;
     currentPassword?: string;
     password?: string;
+    token?: string;
   };
 
   if (body.intent === "create") {
@@ -162,6 +165,41 @@ export const action: ActionFunction = async ({ request }) => {
       return Response.json({ ok: true, account });
     } catch {
       return Response.json({ ok: false, error: "update-profile-failed" }, { status: 400 });
+    }
+  }
+
+  if (body.intent === "forgot-password") {
+    if (!body.email?.trim()) {
+      return Response.json({ ok: false, error: "missing-email" }, { status: 400 });
+    }
+
+    try {
+      await requestPasswordReset(body.email);
+      // Always return success to avoid account enumeration.
+      return Response.json({ ok: true });
+    } catch {
+      return Response.json({ ok: true });
+    }
+  }
+
+  if (body.intent === "reset-password") {
+    if (!body.token?.trim() || !body.password) {
+      return Response.json({ ok: false, error: "missing-fields" }, { status: 400 });
+    }
+
+    try {
+      const updated = await resetPasswordFromToken({
+        token: body.token,
+        password: body.password,
+      });
+
+      if (!updated) {
+        return Response.json({ ok: false, error: "invalid-or-expired-token" }, { status: 400 });
+      }
+
+      return Response.json({ ok: true });
+    } catch {
+      return Response.json({ ok: false, error: "reset-failed" }, { status: 400 });
     }
   }
 

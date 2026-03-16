@@ -190,6 +190,11 @@ function hashPassword(password: string): string {
   return `${salt}:${derived.toString("hex")}`;
 }
 
+function hashPasswordResetToken(token: string): string {
+  const pepper = process.env.PASSWORD_RESET_TOKEN_PEPPER ?? "";
+  return crypto.createHash("sha256").update(`${pepper}:${token}`).digest("hex");
+}
+
 function verifyPassword(password: string, hash: string): boolean {
   const separatorIndex = hash.indexOf(":");
   if (separatorIndex === -1) return false;
@@ -365,6 +370,14 @@ async function initializeSchema(pool: Pool) {
       payload TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS account_password_resets (
+      token_hash TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL
+    );
+
     ALTER TABLE summaries ADD COLUMN IF NOT EXISTS account_id TEXT;
 
     CREATE TABLE IF NOT EXISTS live_matches (
@@ -388,6 +401,7 @@ async function initializeSchema(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_live_matches_public_slug ON live_matches(public_slug);
     CREATE INDEX IF NOT EXISTS idx_live_matches_expires_at ON live_matches(expires_at);
     CREATE INDEX IF NOT EXISTS idx_summaries_account_created_at ON summaries(account_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_account_password_resets_account_id ON account_password_resets(account_id);
 
     ALTER TABLE match_day_selections ADD COLUMN IF NOT EXISTS account_id TEXT;
   `);
@@ -871,6 +885,112 @@ export async function updateAccountCredentials(input: {
     throw new Error("Account not found");
   }
   return mapAccountRow(row);
+}
+
+export async function createPasswordResetTokenForEmail(email: string): Promise<{
+  account: Account | null;
+  token: string | null;
+}> {
+  await ensureInitialized();
+  const pool = getPool();
+  const normalized = normalizeEmail(email);
+  if (!normalized) {
+    return { account: null, token: null };
+  }
+
+  const accountResult = await pool.query<{
+    id: string;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    is_approved: boolean;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `SELECT id, name, email, is_admin, is_approved, created_at, updated_at
+     FROM accounts
+     WHERE LOWER(email) = $1`,
+    [normalized]
+  );
+
+  const accountRow = accountResult.rows[0];
+  if (!accountRow) {
+    return { account: null, token: null };
+  }
+
+  const account = mapAccountRow(accountRow);
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = hashPasswordResetToken(token);
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+
+  await pool.query(
+    `DELETE FROM account_password_resets
+     WHERE account_id = $1 OR expires_at < NOW() OR used_at IS NOT NULL`,
+    [account.id]
+  );
+
+  await pool.query(
+    `INSERT INTO account_password_resets (token_hash, account_id, expires_at, used_at, created_at)
+     VALUES ($1, $2, $3, NULL, $4)`,
+    [tokenHash, account.id, expiresAt.toISOString(), now.toISOString()]
+  );
+
+  return { account, token };
+}
+
+export async function resetPasswordWithToken(input: {
+  token: string;
+  password: string;
+}): Promise<boolean> {
+  await ensureInitialized();
+  validatePasswordInput(input.password);
+
+  const pool = getPool();
+  const tokenHash = hashPasswordResetToken(input.token.trim());
+
+  const tokenResult = await pool.query<{
+    token_hash: string;
+    account_id: string;
+    expires_at: string;
+    used_at: string | null;
+  }>(
+    `SELECT token_hash, account_id, expires_at, used_at
+     FROM account_password_resets
+     WHERE token_hash = $1`,
+    [tokenHash]
+  );
+
+  const tokenRow = tokenResult.rows[0];
+  if (!tokenRow) return false;
+  if (tokenRow.used_at) return false;
+  if (new Date(tokenRow.expires_at).getTime() < Date.now()) return false;
+
+  const passwordHash = hashPassword(input.password);
+  const nowIso = new Date().toISOString();
+
+  await pool.query(
+    `UPDATE accounts
+     SET password_hash = $2,
+         updated_at = $3
+     WHERE id = $1`,
+    [tokenRow.account_id, passwordHash, nowIso]
+  );
+
+  await pool.query(
+    `UPDATE account_password_resets
+     SET used_at = $2
+     WHERE token_hash = $1`,
+    [tokenHash, nowIso]
+  );
+
+  await pool.query(
+    `DELETE FROM account_password_resets
+     WHERE account_id = $1 AND token_hash <> $2`,
+    [tokenRow.account_id, tokenHash]
+  );
+
+  return true;
 }
 
 export async function deleteAccountByAdmin(accountId: string): Promise<void> {
