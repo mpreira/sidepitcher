@@ -41,9 +41,9 @@ function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
     return rosterSlugId.slice(idx + 1);
 }
 
-function getSortableLastName(fullName: string): string {
+function getSortableFirstName(fullName: string): string {
     const { first, last } = parsePlayerName(fullName.trim());
-    return (last || first).trim();
+    return (first || last).trim();
 }
 
 export default function RosterDetailPage() {
@@ -106,10 +106,10 @@ export default function RosterDetailPage() {
         if (!roster) return [];
 
         return [...roster.players].sort((firstPlayer, secondPlayer) => {
-            const firstLastName = getSortableLastName(firstPlayer.name);
-            const secondLastName = getSortableLastName(secondPlayer.name);
-            const lastNameComparison = firstLastName.localeCompare(secondLastName, "fr", { sensitivity: "base" });
-            if (lastNameComparison !== 0) return lastNameComparison;
+            const firstFirstName = getSortableFirstName(firstPlayer.name);
+            const secondFirstName = getSortableFirstName(secondPlayer.name);
+            const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
+            if (firstNameComparison !== 0) return firstNameComparison;
             return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
         });
     }, [roster]);
