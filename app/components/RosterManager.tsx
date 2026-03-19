@@ -77,9 +77,9 @@ export default function RosterManager({
 
     function validateNickname(value: string): string {
         if (!value) return "";
-        return /^[A-Z]{4}$/.test(value)
+        return /^[A-Z]{3,4}$/.test(value)
             ? ""
-            : "Le surnom doit contenir exactement 4 lettres majuscules (ex: TOUL).";
+            : "Le surnom doit contenir entre 3 et 4 lettres majuscules (ex: TOU ou TOUL).";
     }
 
     function normalizeColor(value: string): string {
