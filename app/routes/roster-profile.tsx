@@ -26,6 +26,18 @@ function getRosterBackPath(rosterSlugId: string | undefined, championshipSlug: s
   return `/roster/${rosterSlugId}`;
 }
 
+function getPlayerProfilePath(
+  rosterSlugId: string | undefined,
+  championshipSlug: string | undefined,
+  playerId: string
+): string {
+  if (!rosterSlugId) return "/roster";
+  if (championshipSlug) {
+    return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
+  }
+  return `/roster/${rosterSlugId}/player/${playerId}`;
+}
+
 function getSortableFirstName(fullName: string): string {
   const { first, last } = parsePlayerName(fullName.trim());
   return (first || last).trim();
@@ -140,7 +152,14 @@ export default function RosterProfilePage() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold truncate">{row.player.name}</p>
+                    <p className="font-semibold truncate">
+                      <Link
+                        to={getPlayerProfilePath(rosterSlugId, championshipSlug, row.player.id)}
+                        className="hover:text-sky-300 underline-offset-2 hover:underline"
+                      >
+                        {row.player.name}
+                      </Link>
+                    </p>
                     <p className="text-xs text-neutral-400">
                       {row.player.positions && row.player.positions.length > 0
                         ? row.player.positions.join(" / ")
