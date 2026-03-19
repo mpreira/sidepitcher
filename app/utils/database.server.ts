@@ -632,7 +632,7 @@ export async function authenticateAccountByEmail(input: {
 }): Promise<{ account: Account | null; reason?: "invalid-credentials" | "not-approved" }> {
   await ensureInitialized();
   const normalized = normalizeEmail(input.email);
-  if (!normalized) return null;
+  if (!normalized) return { account: null, reason: "invalid-credentials" };
 
   const pool = getPool();
   const result = await pool.query<{
