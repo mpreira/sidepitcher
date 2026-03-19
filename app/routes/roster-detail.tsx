@@ -200,12 +200,12 @@ export default function RosterDetailPage() {
         return `/roster/${rosterSlugId}/player/${playerId}`;
     }
 
-    function getTeamProfilePath(teamId: string): string {
+    function getRosterProfilePath(): string {
         if (!rosterSlugId) return "/roster";
         if (championshipSlug) {
-            return `/roster/${championshipSlug}/${rosterSlugId}/team/${teamId}`;
+            return `/roster/${championshipSlug}/${rosterSlugId}/effectif`;
         }
-        return `/roster/${rosterSlugId}/team/${teamId}`;
+        return `/roster/${rosterSlugId}/effectif`;
     }
 
     function addTeam() {
@@ -609,8 +609,8 @@ export default function RosterDetailPage() {
                                         </button>
                                         <Link
                                             className="sp-button sp-button-xs sp-button-blue h-8"
-                                            to={getTeamProfilePath(team.id)}
-                                            aria-label={`Voir la vue effectif de ${team.name}`}
+                                            to={getRosterProfilePath()}
+                                            aria-label={`Voir la vue effectif de ${roster.name}`}
                                         >
                                             <FontAwesomeIcon icon={faEye} />
                                         </Link>

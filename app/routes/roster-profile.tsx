@@ -7,8 +7,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
 
 export function meta({ params }: Route.MetaArgs) {
-  const teamId = params.teamId;
-  return [{ title: teamId ? "Vue effectif" : "Effectif" }];
+  const rosterSlugId = params.rosterSlugId;
+  return [{ title: rosterSlugId ? "Vue effectif" : "Effectif" }];
 }
 
 function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
@@ -44,7 +44,7 @@ function getSortableFirstName(fullName: string): string {
 }
 
 export default function RosterProfilePage() {
-  const { rosterSlugId, championshipSlug, teamId } = useParams();
+  const { rosterSlugId, championshipSlug } = useParams();
   const { rosters, teams } = useTeams();
 
   const rosterId = getRosterIdFromParam(rosterSlugId);
@@ -53,10 +53,10 @@ export default function RosterProfilePage() {
     [rosters, rosterId]
   );
 
-  const team = useMemo(() => {
-    if (!roster || !teamId) return null;
-    return teams.find((item) => item.id === teamId && item.rosterId === roster.id) ?? null;
-  }, [teams, roster, teamId]);
+  const rosterTeams = useMemo(() => {
+    if (!roster) return [];
+    return teams.filter((item) => item.rosterId === roster.id);
+  }, [teams, roster]);
 
   const sortedPlayers = useMemo(() => {
     if (!roster) return [];
@@ -71,27 +71,32 @@ export default function RosterProfilePage() {
   }, [roster]);
 
   const playerRows = useMemo(() => {
-    if (!team) return [];
+    if (!roster) return [];
 
-    const numberByPlayerId = new Map<string, number>();
-    const roleByPlayerId = new Map<string, "Titulaire" | "Remplaçant">();
+    const compositionsByPlayerId = new Map<string, { teamName: string; number: number; role: "Titulaire" | "Remplaçant"; isCaptain: boolean }[]>();
 
-    [...team.starters, ...team.substitutes].forEach((entry) => {
-      numberByPlayerId.set(entry.player.id, entry.number);
-      roleByPlayerId.set(entry.player.id, entry.number <= 15 ? "Titulaire" : "Remplaçant");
+    rosterTeams.forEach((team) => {
+      [...team.starters, ...team.substitutes].forEach((entry) => {
+        const existing = compositionsByPlayerId.get(entry.player.id) ?? [];
+        existing.push({
+          teamName: team.name,
+          number: entry.number,
+          role: entry.number <= 15 ? "Titulaire" : "Remplaçant",
+          isCaptain: team.captainPlayerId === entry.player.id,
+        });
+        compositionsByPlayerId.set(entry.player.id, existing);
+      });
     });
 
     return sortedPlayers.map((player) => ({
       player,
-      number: numberByPlayerId.get(player.id) ?? null,
-      role: roleByPlayerId.get(player.id) ?? null,
-      isCaptain: team.captainPlayerId === player.id,
+      compositions: (compositionsByPlayerId.get(player.id) ?? []).sort((first, second) => first.number - second.number),
     }));
-  }, [sortedPlayers, team]);
+  }, [sortedPlayers, roster, rosterTeams]);
 
   const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
 
-  if (!roster || !team) {
+  if (!roster) {
     return (
       <main className="sp-page space-y-4">
         <h1 className="text-2xl font-bold">Vue effectif introuvable</h1>
@@ -106,8 +111,8 @@ export default function RosterProfilePage() {
   return (
     <main className="sp-page space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{team.name}</h1>
-        <p className="text-sm text-neutral-400">Effectif source: {roster.name}</p>
+        <h1 className="text-2xl font-bold">{roster.name}</h1>
+        <p className="text-sm text-neutral-400">Vue globale de l'effectif</p>
         <Link to={backPath} className="sp-link-muted">
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
           Retour a l'effectif
@@ -120,19 +125,16 @@ export default function RosterProfilePage() {
           <strong>Championnat:</strong> {roster.category || "Non renseigne"}
         </p>
         <p className="text-sm text-neutral-200">
-          <strong>Surnom:</strong> {team.nickname || roster.nickname || "Non renseigne"}
+          <strong>Surnom:</strong> {roster.nickname || "Non renseigne"}
         </p>
         <p className="text-sm text-neutral-200">
-          <strong>Couleur:</strong> {team.color || roster.color || "Non renseignee"}
+          <strong>Couleur:</strong> {roster.color || "Non renseignee"}
         </p>
         <p className="text-sm text-neutral-200">
-          <strong>Titulaires:</strong> {team.starters.length} / 15
+          <strong>Compositions:</strong> {rosterTeams.length}
         </p>
         <p className="text-sm text-neutral-200">
-          <strong>Remplaçants:</strong> {team.substitutes.length} / 8
-        </p>
-        <p className="text-sm text-neutral-200">
-          <strong>Joueurs dans la composition:</strong> {team.starters.length + team.substitutes.length}
+          <strong>Joueurs selectionnables:</strong> {roster.players.length}
         </p>
         <p className="text-sm text-neutral-200">
           <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
@@ -167,16 +169,24 @@ export default function RosterProfilePage() {
                     </p>
                   </div>
                   <div className="text-right text-xs text-neutral-300 shrink-0">
-                    <p>{row.number ? `#${row.number}` : "Hors composition"}</p>
-                    <p>{row.role || "-"}</p>
+                      <p>{row.compositions.length > 0 ? `${row.compositions.length} composition(s)` : "Hors composition"}</p>
                   </div>
                 </div>
-                {row.isCaptain && (
-                  <p className="mt-1 text-xs text-sky-300">
-                    <FontAwesomeIcon icon={faCrown} className="mr-1" />
-                    Capitaine
-                  </p>
-                )}
+                  {row.compositions.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {row.compositions.map((entry) => (
+                        <li key={`${row.player.id}-${entry.teamName}-${entry.number}`} className="text-xs text-neutral-300">
+                          {entry.teamName} - #{entry.number} ({entry.role})
+                          {entry.isCaptain && (
+                            <span className="ml-1 text-sky-300">
+                              <FontAwesomeIcon icon={faCrown} className="mr-1" />
+                              Capitaine
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
               </li>
             ))}
           </ul>
