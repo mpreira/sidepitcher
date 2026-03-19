@@ -15,10 +15,11 @@ import {
   faStopwatch,
   faUsers,
   faFileLines,
-  faGear,
   faUserShield,
-  faArrowUp,
-  faArrowDown,
+  faChevronUp,
+  faChevronDown,
+  faCircleUser,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
@@ -37,7 +38,7 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "icon",
     type: "image/png",
-    href: "/fav_36.png",
+    href: "/favicon_mr.png",
   }
 ];
 
@@ -77,17 +78,31 @@ function AppContent() {
   const { connected, account } = useAccount();
   const { pathname } = useLocation();
   const isHome = pathname === "/";
+  const isLiveRoute = pathname.startsWith("/live/");
+  const liveSlug = isLiveRoute ? pathname.split("/")[2] || "" : "";
+  const liveBasePath = isLiveRoute && liveSlug ? `/live/${liveSlug}` : "";
 
-  const navigationItems = [
+  const defaultNavigationItems = [
     { href: "/", label: "Accueil", icon: faHouse, active: true },
     { href: "/roster", label: "Effectifs", icon: faUsers, active: true },
     { href: "/tracker", label: "Match", icon: faStopwatch, active: true },
     { href: "/syntheses", label: "Synthèses", icon: faFileLines, active: true },
-    { href: "/settings", label: "Réglages", icon: faGear, active: true },
+    ...(connected && account
+      ? [{ href: "/account", label: account.name, icon: faCircleUser, active: true }]
+      : []),
     ...(connected && account?.isAdmin
-      ? [{ href: "/admin/accounts", label: "Admin", icon: faUserShield, active: true }]
+      ? [{ href: "/admin", label: "Admin", icon: faUserShield, active: true }]
       : []),
   ] as const;
+
+  const liveNavigationItems = liveSlug
+    ? [
+        { href: `/live/${liveSlug}`, label: "Live", icon: faStopwatch, active: true },
+        { href: `/live/${liveSlug}/roster`, label: "Effectifs", icon: faUsers, active: true },
+      ]
+    : [];
+
+  const navigationItems = isLiveRoute ? liveNavigationItems : defaultNavigationItems;
 
   return (
     <>
@@ -101,11 +116,14 @@ function AppContent() {
         <div className="mx-auto max-w-screen-md">
           <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
             {navigationItems.map((item) => {
+              const itemPathname = item.href.split("?")[0];
               const isSelected =
                 item.active &&
-                (item.href === "/"
+                (itemPathname === "/"
                   ? pathname === "/"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`));
+                  : itemPathname === liveBasePath
+                    ? pathname === itemPathname
+                  : pathname === itemPathname || pathname.startsWith(`${itemPathname}/`));
 
               return (
                 <a
@@ -178,52 +196,73 @@ function ScrollPageControls() {
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 bg-neutral-900/95 text-white shadow-md"
+        className="sp-button sp-button-neutral sp-button-icon-lg border-gray-700"
         aria-label="Aller en haut"
         title="Aller en haut"
       >
-        <FontAwesomeIcon icon={faArrowUp} />
+        <FontAwesomeIcon icon={faChevronUp} />
       </button>
       <button
         type="button"
         onClick={() =>
           window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })
         }
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 bg-neutral-900/95 text-white shadow-md"
+        className="sp-button sp-button-neutral sp-button-icon-lg border-gray-700"
         aria-label="Aller en bas"
         title="Aller en bas"
       >
-        <FontAwesomeIcon icon={faArrowDown} />
+        <FontAwesomeIcon icon={faChevronDown} />
       </button>
     </div>
   );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let code: number | null = null;
+  let title = "Une erreur est survenue";
+  let detail = "Une erreur inattendue s'est produite.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+    code = error.status;
+    if (error.status === 404) {
+      title = "Page introuvable";
+      detail = "La page que tu cherches n'existe pas ou a été déplacée.";
+    } else if (error.status === 401) {
+      title = "Non autorisé";
+      detail = "Tu dois être connecté pour accéder à cette page.";
+    } else if (error.status === 403) {
+      title = "Accès refusé";
+      detail = "Tu n'as pas les droits pour accéder à cette page.";
+    } else if (error.status === 410) {
+      title = "Session expirée";
+      detail = "Cette session n'est plus disponible.";
+    } else {
+      title = `Erreur ${error.status}`;
+      detail = error.statusText || detail;
+    }
   } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
+    title = "Erreur de développement";
+    detail = error.message;
     stack = error.stack;
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto w-5/6">
-      <h1>{message}</h1>
-      <p>{details}</p>
+    <main className="sp-page flex flex-col gap-4 pt-16">
+      <p className="font-mono text-xs uppercase tracking-widest text-neutral-500">
+        {code ? `Code ${code}` : "Erreur"}
+      </p>
+      <h1 className="text-2xl font-bold">{title}</h1>
+      <p className="text-sm text-neutral-300">{detail}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full overflow-x-auto rounded border border-neutral-700 bg-neutral-900 p-4 text-xs text-neutral-400">
           <code>{stack}</code>
         </pre>
       )}
+      <a href="/" className="sp-link-muted">
+        <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
+        Retour à l'accueil
+      </a>
     </main>
   );
 }

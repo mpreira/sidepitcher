@@ -1,6 +1,5 @@
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRotateLeft, faCheck, faHourglassEnd, faHourglassStart, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
 
 interface Props {
   time: number;
@@ -38,53 +37,63 @@ export default function TimerControls({
     <section className="space-y-2 w-full max-w-full">
       <div className="flex flex-wrap items-center gap-2 justify-center">
         <button
-          className={`px-4 py-2 text-white rounded shrink-0 ${running ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}`}
+          className={`sp-button sp-button-md shrink-0 ${running ? "sp-button-orange" : "sp-button-green"}`}
           onClick={onStartStop}
         >
-          {running ? "Pause" : "Départ"}
+          {running ? (
+            <>
+              <FontAwesomeIcon icon={faPause} className="sm:mr-2" />
+              <span className="hidden sm:inline">Pause</span>
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faPlay} className="sm:mr-2" />
+              <span className="hidden sm:inline">Départ</span>
+            </>
+          )}
         </button>
         <button
           id="halfSelect"
-          className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 1 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
+          className={`sp-button sp-button-md shrink-0 ${
+            currentHalf === 1 ? "sp-button-blue" : "sp-button-neutral"
           }`}
           onClick={onSetFirstHalf}
         >
-          1ère
+          <FontAwesomeIcon icon={faHourglassStart} className="sm:mr-2" />
+          <span className="hidden sm:inline">1ère</span>
         </button>
         <button
-          className={`px-4 py-2 rounded shrink-0 ${
-            currentHalf === 2 ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-700"
+          className={`sp-button sp-button-md shrink-0 ${
+            currentHalf === 2 ? "sp-button-blue" : "sp-button-neutral"
           }`}
           onClick={onSetSecondHalf}
           disabled={currentHalf === 2 || matchEnded}
         >
-          2ème
+          <FontAwesomeIcon icon={faHourglassEnd} className="sm:mr-2" />
+          <span className="hidden sm:inline">2ème</span>
         </button>
         <button
-          className={`px-4 py-2 rounded shrink-0 ${
-            matchEnded ? "bg-gray-300 text-gray-700": "bg-red-600 text-white" 
+          className={`sp-button sp-button-md shrink-0 ${
+            matchEnded ? "sp-button-light" : "sp-button-red"
           }`}
           onClick={onEndMatch}
           disabled={matchEnded || currentHalf === 1}
         >
-          <span className="sm:hidden">Fin</span>
+          <FontAwesomeIcon icon={faStop} className="sm:mr-2" />
           <span className="hidden sm:inline">Fin de match</span>
         </button>
-      </div>
-
-      <div className="flex justify-center gap-4">
         <button
-          className="px-4 py-2 bg-blue-500/20 text-blue-500 rounded"
+          className="sp-button sp-button-md sp-button-neutral shrink-0"
           onClick={onReset}
         >
-          Reset
+          <FontAwesomeIcon icon={faArrowRotateLeft} className="sm:mr-2" />
+          <span className="hidden sm:inline">Reset</span>
         </button>
       </div>
 
       <div className="border border-neutral-700 rounded p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="manualTimeInput" className="font-semibold">Temps</label>
+          <label htmlFor="manualTimeInput" className="font-semibold">Timecode</label>
           <input
             id="manualTimeInput"
             type="text"
@@ -96,7 +105,7 @@ export default function TimerControls({
           />
           <button
             id="applyManualTimeButton"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="sp-button sp-button-md sp-button-blue"
             onClick={onApplyManualTime}
           >
             <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />

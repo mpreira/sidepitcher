@@ -6,9 +6,14 @@ import {
   buildAccountLogoutCookie,
   buildAnonymousLogoutCookie,
   renameCurrentAccount,
+  requestPasswordReset,
+  resetPasswordFromToken,
   updateCurrentAccountProfile,
 } from "~/utils/account.server";
-import { sendNewAccountNotificationEmail } from "~/utils/mailer.server";
+import {
+  sendAccountPendingValidationEmail,
+  sendNewAccountNotificationEmail,
+} from "~/utils/mailer.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const connectedAccount = await getConnectedAccountFromRequest(request);
@@ -20,11 +25,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const action: ActionFunction = async ({ request }) => {
   const body = (await request.json()) as {
-    intent?: "create" | "login" | "rename" | "update-profile" | "logout";
+    intent?: "create" | "login" | "rename" | "update-profile" | "forgot-password" | "reset-password" | "logout";
     name?: string;
     email?: string;
     currentPassword?: string;
     password?: string;
+    token?: string;
   };
 
   if (body.intent === "create") {
@@ -48,7 +54,30 @@ export const action: ActionFunction = async ({ request }) => {
         accountName: created.account.name,
         accountEmail: created.account.email,
       });
-    } catch {
+    } catch (error) {
+      console.error("[account:create] notification email failed", {
+        accountId: created.account.id,
+        accountEmail: created.account.email,
+        to: process.env.ADMIN_NOTIFICATION_EMAIL ?? "mlpreira@gmail.com",
+        from: process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Notification failures should not block account creation.
+    }
+
+    try {
+      await sendAccountPendingValidationEmail({
+        accountName: created.account.name,
+        accountEmail: created.account.email,
+      });
+    } catch (error) {
+      console.error("[account:create] pending validation email failed", {
+        accountId: created.account.id,
+        accountEmail: created.account.email,
+        to: created.account.email,
+        from: process.env.RESEND_FROM_EMAIL ?? "Match Reporter <noreply@matchreporter.io>",
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Notification failures should not block account creation.
     }
 
@@ -79,6 +108,9 @@ export const action: ActionFunction = async ({ request }) => {
       password: body.password,
     });
     if (!logged.account) {
+      if (logged.reason === "not-approved") {
+        return Response.json({ ok: false, error: "account-not-approved" }, { status: 403 });
+      }
       return Response.json({ ok: false, error: "invalid-credentials" }, { status: 401 });
     }
 
@@ -133,6 +165,41 @@ export const action: ActionFunction = async ({ request }) => {
       return Response.json({ ok: true, account });
     } catch {
       return Response.json({ ok: false, error: "update-profile-failed" }, { status: 400 });
+    }
+  }
+
+  if (body.intent === "forgot-password") {
+    if (!body.email?.trim()) {
+      return Response.json({ ok: false, error: "missing-email" }, { status: 400 });
+    }
+
+    try {
+      await requestPasswordReset(body.email);
+      // Always return success to avoid account enumeration.
+      return Response.json({ ok: true });
+    } catch {
+      return Response.json({ ok: true });
+    }
+  }
+
+  if (body.intent === "reset-password") {
+    if (!body.token?.trim() || !body.password) {
+      return Response.json({ ok: false, error: "missing-fields" }, { status: 400 });
+    }
+
+    try {
+      const updated = await resetPasswordFromToken({
+        token: body.token,
+        password: body.password,
+      });
+
+      if (!updated) {
+        return Response.json({ ok: false, error: "invalid-or-expired-token" }, { status: 400 });
+      }
+
+      return Response.json({ ok: true });
+    } catch {
+      return Response.json({ ok: false, error: "reset-failed" }, { status: 400 });
     }
   }
 

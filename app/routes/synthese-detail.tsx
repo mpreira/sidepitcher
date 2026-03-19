@@ -1,13 +1,19 @@
 import { Link, useLoaderData } from "react-router";
 import { useLayoutEffect, useState } from "react";
 import type { Event } from "~/types/tracker";
-import { formatTime } from "~/utils/TimeUtils";
 import { exportSummaryToPdf } from "~/utils/EventUtils";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowCircleLeft } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { getSummaryById } from "~/utils/database.server";
 import { resolveDataScopeFromRequest } from "~/utils/account.server";
+import {
+    displayTeamName as displayEventTeamName,
+    formatEventTimeline,
+    formatSummaryStatLabel,
+    getEventLabel,
+    isCardEvent,
+} from "~/utils/eventPresentation";
 
 interface StoredSummary {
     id: string;
@@ -43,7 +49,7 @@ export async function loader({ request, params }: { request: Request; params: { 
 }
 
 export function meta() {
-    return [{ title: "Synthese" }];
+    return [{ title: "Synthèse" }];
 }
 
 function FormattedDateTime({ dateString }: { dateString: string }) {
@@ -60,7 +66,15 @@ function FormattedDateTime({ dateString }: { dateString: string }) {
 export default function SyntheseDetailPage() {
     const summary = useLoaderData<typeof loader>();
     const { teams: allTeams } = useTeams();
-
+    const STAT_LABEL_ORDER = [
+        "Essais",
+        "Pénalités",
+        "En-avants",
+        "Touches perdues",
+        "Mêlées perdues",
+        "Turnovers",
+        "Jeu au pied",
+    ];
     const displayTeamName = (name: string) => name.replace(/\s+J\d+$/, "");
     const getTeamsLabel = () => {
         const storedTeams: Array<{ id: string; name: string }> = summary.teams || [];
@@ -104,91 +118,329 @@ export default function SyntheseDetailPage() {
         return teamsLabel;
     };
 
-    const getTeamStatsFromRecap = () => {
-        const recapEvent = [...summary.events]
-            .reverse()
-            .find((event) => event.type === "Récapitulatif" && event.summary);
+    const getOrderedTeams = () => {
+        const storedTeams = summary.teams || [];
+        if (storedTeams.length >= 2) {
+            return storedTeams.slice(0, 2).map((team) => ({ id: team.id, name: displayTeamName(team.name) }));
+        }
 
-        if (!recapEvent?.summary) return null;
+        const inferred: Array<{ id: string; name: string }> = [];
+        for (const event of summary.events) {
+            if (!event.team?.id || !event.team.name) continue;
+            if (inferred.some((team) => team.id === event.team?.id)) continue;
+            inferred.push({ id: event.team.id, name: displayTeamName(event.team.name) });
+            if (inferred.length === 2) break;
+        }
 
-        const [rawLeft, rawRight] = recapEvent.summary.split(" / ");
-        if (!rawLeft || !rawRight) return null;
+        if (inferred.length >= 2) {
+            return inferred;
+        }
 
-        const leftAfterHalf = rawLeft.includes(" : ")
-            ? rawLeft.split(" : ").slice(1).join(" : ").trim()
-            : rawLeft.trim();
+        if (summary.matchDay) {
+            const fallback: Array<{ id: string; name: string }> = [];
+            for (const team of allTeams) {
+                if (!team.name.includes(`J${summary.matchDay}`)) continue;
+                if (fallback.some((entry) => entry.id === team.id)) continue;
+                fallback.push({ id: team.id, name: displayTeamName(team.name) });
+                if (fallback.length === 2) break;
+            }
+            return fallback;
+        }
 
-        const parseTeamBlock = (block: string) => {
-            const separatorIndex = block.indexOf(" : ");
-            if (separatorIndex === -1) return null;
-
-            const teamName = block.slice(0, separatorIndex).trim();
-            const statsText = block.slice(separatorIndex + 3).trim();
-            const stats = statsText
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean);
-
-            return { teamName, stats };
-        };
-
-        const leftTeam = parseTeamBlock(leftAfterHalf);
-        const rightTeam = parseTeamBlock(rawRight.trim());
-
-        if (!leftTeam || !rightTeam) return null;
-
-        return { leftTeam, rightTeam };
+        return inferred;
     };
 
-    const teamStats = getTeamStatsFromRecap();
+    const orderedTeams = getOrderedTeams();
+
+    const getSummaryByTeam = () => {
+        if (orderedTeams.length < 2) return null;
+
+        const counters = [new Map<string, number>(), new Map<string, number>()];
+
+        summary.events.forEach((event) => {
+            if (!event.team?.id) return;
+            if (event.type === "Récapitulatif" || event.summaryTable || event.summary) return;
+
+            const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+            if (teamIndex === -1) return;
+
+            const current = counters[teamIndex].get(event.type) || 0;
+            counters[teamIndex].set(event.type, current + 1);
+        });
+
+        return {
+            leftTeam: {
+                teamName: orderedTeams[0].name,
+                values: counters[0],
+            },
+            rightTeam: {
+                teamName: orderedTeams[1].name,
+                values: counters[1],
+            },
+        };
+    };
+
+    const getTeamStatsByHalf = () => {
+        if (orderedTeams.length < 2) return null;
+
+        type StatHalfValue = { mt1: number; mt2: number };
+        const teamStats = [new Map<string, StatHalfValue>(), new Map<string, StatHalfValue>()];
+
+        const ensureStat = (teamIndex: number, label: string) => {
+            const current = teamStats[teamIndex].get(label);
+            if (current) return current;
+            const next = { mt1: 0, mt2: 0 };
+            teamStats[teamIndex].set(label, next);
+            return next;
+        };
+
+        summary.events.forEach((event) => {
+            if ((event.type === "Essai" || event.type === "Essai de pénalité") && event.team?.id) {
+                const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+                if (teamIndex === -1) return;
+
+                const half = event.timelineHalf || (event.time >= 40 * 60 ? 2 : 1);
+                const tries = ensureStat(teamIndex, "Essais");
+                if (half === 1) tries.mt1 += 1;
+                else tries.mt2 += 1;
+            }
+        });
+
+        summary.events.forEach((event) => {
+            if (event.type !== "Récapitulatif" || !event.summaryTable) return;
+
+            const half = event.summaryTable.halfLabel.toUpperCase().includes("2") ? 2 : 1;
+            event.summaryTable.teams.slice(0, 2).forEach((team, teamIndex) => {
+                team.stats.forEach((stat) => {
+                    const values = ensureStat(teamIndex, stat.label);
+                    if (half === 1) values.mt1 = stat.value;
+                    else values.mt2 = stat.value;
+                });
+            });
+        });
+
+        const sortStats = (entries: Array<[string, StatHalfValue]>) => {
+            return entries.sort((first, second) => {
+                const firstIndex = STAT_LABEL_ORDER.indexOf(first[0]);
+                const secondIndex = STAT_LABEL_ORDER.indexOf(second[0]);
+
+                if (firstIndex === -1 && secondIndex === -1) {
+                    return first[0].localeCompare(second[0], "fr", { sensitivity: "base" });
+                }
+                if (firstIndex === -1) return 1;
+                if (secondIndex === -1) return -1;
+                return firstIndex - secondIndex;
+            });
+        };
+
+        return {
+            leftTeam: {
+                teamName: orderedTeams[0].name,
+                stats: sortStats(Array.from(teamStats[0].entries())),
+            },
+            rightTeam: {
+                teamName: orderedTeams[1].name,
+                stats: sortStats(Array.from(teamStats[1].entries())),
+            },
+        };
+    };
+
+    const recapStats = getTeamStatsByHalf();
+    const summaryByTeam = getSummaryByTeam();
+    const factEvents = summary.events.filter((event) => !(event.type === "Récapitulatif" || event.summaryTable || event.summary));
+    const getPluralReferenceValue = (values: { mt1: number; mt2: number }) => Math.max(values.mt1, values.mt2);
+
+    const scorePointsByType: Record<string, number> = {
+        "Essai": 5,
+        "Essai de pénalité": 7,
+        "Transformation": 2,
+        "Pénalité réussie": 3,
+        "Drop": 3,
+    };
+
+    const getScoreByTeam = (onlyFirstHalf: boolean) => {
+        if (orderedTeams.length < 2) return [0, 0] as const;
+
+        const scores = [0, 0];
+        summary.events.forEach((event) => {
+            const points = scorePointsByType[event.type] || 0;
+            if (!points || !event.team?.id) return;
+
+            const teamIndex = orderedTeams.findIndex((team) => team.id === event.team?.id);
+            if (teamIndex === -1) return;
+
+            if (onlyFirstHalf) {
+                const isFirstHalf =
+                    event.timelineHalf === 1 ||
+                    (event.timelineHalf == null && event.time < 40 * 60);
+                if (!isFirstHalf) return;
+            }
+
+            scores[teamIndex] += points;
+        });
+
+        return [scores[0], scores[1]] as const;
+    };
+
+    const [finalScoreLeft, finalScoreRight] = getScoreByTeam(false);
+    const [halfScoreLeft, halfScoreRight] = getScoreByTeam(true);
+    const finalScoreText = orderedTeams.length >= 2
+        ? `${orderedTeams[0].name} ${finalScoreLeft} - ${finalScoreRight} ${orderedTeams[1].name}`
+        : `${finalScoreLeft} - ${finalScoreRight}`;
+    const halfTimeScoreText = `${halfScoreLeft} - ${halfScoreRight}`;
 
     return (
-        <main className="w-full max-w-screen-md mx-auto px-4 py-6 space-y-4 overflow-x-hidden">
-            <h1 className="text-2xl font-bold">Synthèse - {getTeamsLabel()}</h1>
-            <p className="text-sm text-gray-700">
+        <main className="sp-page space-y-4">
+            <p className="text-sm text-gray-700 mb-2">
                 Date: <FormattedDateTime dateString={summary.createdAt} />
             </p>
+            <Link to="/syntheses" className="text-white text-base">
+                <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
+                Retour aux synthèses
+            </Link>
+            <br /><br /> 
             <button
-                className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
-                onClick={() => exportSummaryToPdf(summary.events, summary.currentTime, summary.summary)}
+                className="sp-button sp-button-md sp-button-neutral w-full sm:w-auto"
+                onClick={() =>
+                    exportSummaryToPdf(summary.events, summary.currentTime, summary.summary, {
+                        title: `Synthèse - ${getTeamsLabel()}`,
+                        fileName: getTeamsLabel(),
+                        layout: {
+                            dateLine: `Date: ${new Date(summary.createdAt).toLocaleString("fr-FR")}`,
+                            scoreLine: `${finalScoreText}\n${halfTimeScoreText}`,
+                            resumeColumns: summaryByTeam
+                                ? [
+                                    {
+                                        title: summaryByTeam.leftTeam.teamName,
+                                        lines:
+                                            Array.from(summaryByTeam.leftTeam.values.entries()).map(
+                                                ([type, count]) => `${type}: ${count}`
+                                            ) || [],
+                                    },
+                                    {
+                                        title: summaryByTeam.rightTeam.teamName,
+                                        lines:
+                                            Array.from(summaryByTeam.rightTeam.values.entries()).map(
+                                                ([type, count]) => `${type}: ${count}`
+                                            ) || [],
+                                    },
+                                ]
+                                : undefined,
+                            statsColumns: recapStats
+                                ? [
+                                    {
+                                        title: recapStats.leftTeam.teamName,
+                                        lines: recapStats.leftTeam.stats.map(
+                                            ([label, values]) =>
+                                                `${formatSummaryStatLabel(label, getPluralReferenceValue(values))}: ${values.mt1} -> ${values.mt2}`
+                                        ),
+                                    },
+                                    {
+                                        title: recapStats.rightTeam.teamName,
+                                        lines: recapStats.rightTeam.stats.map(
+                                            ([label, values]) =>
+                                                `${formatSummaryStatLabel(label, getPluralReferenceValue(values))}: ${values.mt1} -> ${values.mt2}`
+                                        ),
+                                    },
+                                ]
+                                : undefined,
+                            factsTitle: "Faits de match",
+                            factLines: factEvents.map((event) => {
+                                let line = `${formatEventTimeline(event)} - ${getEventLabel(event)}`;
+
+                                if (event.type !== "Arbitrage Vidéo" && event.player) {
+                                    line += `${isCardEvent(event.type) ? " pour " : " de "}${event.player.name}`;
+                                }
+                                if (event.team) {
+                                    line += ` ${displayEventTeamName(event.team)}`;
+                                }
+                                if (event.playerOut && event.playerIn) {
+                                    line += ` - ${event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}${event.playerOut.name}`;
+                                    line += ` -> ${event.playerInNumber ? `#${event.playerInNumber} ` : ""}${event.playerIn.name}`;
+                                }
+                                if (event.concussion) {
+                                    line += " - commotion";
+                                }
+
+                                return line;
+                            }),
+                        },
+                    })
+                }
             >
+                <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Télécharger PDF
             </button>
-
+            <h1 className="text-2xl text-center font-bold">{finalScoreText}</h1>
+            <h3 className="text-xl text-center font-semibold">
+                <span className="block text-base font-medium text-gray-300">{halfTimeScoreText}</span>
+            </h3>
+        
             <section className="space-y-2">
-                <h2 className="font-semibold">Resume</h2>
-                {Object.keys(summary.summary).length === 0 ? (
-                    <p className="text-sm text-gray-600">Pas de donnees.</p>
+                <h2 className="font-semibold">Résumé</h2>
+                {!summaryByTeam ? (
+                    <p className="text-sm text-gray-600">Résumé par équipe indisponible.</p>
                 ) : (
-                    <ul className="space-y-1">
-                        {Object.entries(summary.summary).map(([type, count]) => (
-                            <li key={type}>
-                                {type}: {count}
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
+                        <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
+                            <h3 className="font-semibold text-center mb-2">{summaryByTeam.leftTeam.teamName}</h3>
+                            {summaryByTeam.leftTeam.values.size === 0 ? (
+                                <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
+                            ) : (
+                                <ul className="space-y-1 text-sm">
+                                    {Array.from(summaryByTeam.leftTeam.values.entries()).map(([type, count]) => (
+                                        <li key={`summary-left-${type}`}>
+                                            <span>{type}: </span>
+                                            <span className="font-bold text-green-400">{count}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                        <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
+                            <h3 className="font-semibold mb-2">{summaryByTeam.rightTeam.teamName}</h3>
+                            {summaryByTeam.rightTeam.values.size === 0 ? (
+                                <p className="text-sm text-gray-400">Aucun événement d'équipe.</p>
+                            ) : (
+                                <ul className="space-y-1 text-sm">
+                                    {Array.from(summaryByTeam.rightTeam.values.entries()).map(([type, count]) => (
+                                        <li key={`summary-right-${type}`}>
+                                            <span>{type}: </span>
+                                            <span className="font-bold text-blue-400">{count}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
                 )}
             </section>
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Statistiques équipes</h2>
-                {!teamStats ? (
+                {!recapStats ? (
                     <p className="text-sm text-gray-600">Statistiques par équipe indisponibles.</p>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="border border-neutral-700 rounded p-3">
-                            <h3 className="font-semibold mb-2">{teamStats.leftTeam.teamName}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white">
+                        <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
+                            <h3 className="font-semibold text-center mb-2">{recapStats.leftTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
-                                {teamStats.leftTeam.stats.map((stat, idx) => (
-                                    <li key={`left-${idx}`}>{stat}</li>
+                                {recapStats.leftTeam.stats.map(([label, values], idx) => (
+                                    <li key={`left-${idx}`}>
+                                        <span>{formatSummaryStatLabel(label, getPluralReferenceValue(values))}: </span>
+                                        <span className="font-bold text-green-400">{values.mt1} -&gt; {values.mt2}</span>
+                                    </li>
                                 ))}
                             </ul>
                         </div>
-                        <div className="border border-neutral-700 rounded p-3">
-                            <h3 className="font-semibold mb-2">{teamStats.rightTeam.teamName}</h3>
+                        <div className="border border-neutral-700 bg-neutral-900 rounded p-3">
+                            <h3 className="font-semibold text-center mb-2">{recapStats.rightTeam.teamName}</h3>
                             <ul className="space-y-1 text-sm">
-                                {teamStats.rightTeam.stats.map((stat, idx) => (
-                                    <li key={`right-${idx}`}>{stat}</li>
+                                {recapStats.rightTeam.stats.map(([label, values], idx) => (
+                                    <li key={`right-${idx}`}>
+                                        <span>{formatSummaryStatLabel(label, getPluralReferenceValue(values))}: </span>
+                                        <span className="font-bold text-blue-400">{values.mt1} -&gt; {values.mt2}</span>
+                                    </li>
                                 ))}
                             </ul>
                         </div>
@@ -197,45 +449,37 @@ export default function SyntheseDetailPage() {
             </section>
 
             <section className="space-y-2">
-                <h2 className="font-semibold">Timeline</h2>
-                {summary.events.length === 0 ? (
-                    <p className="text-sm text-gray-600">Aucun evenement.</p>
+                <h2 className="font-semibold">Faits de match</h2>
+                {factEvents.length === 0 ? (
+                    <p className="text-sm text-gray-600">Aucun événement.</p>
                 ) : (
-                    <ul className="space-y-1 text-sm">
-                        {summary.events.map((event, index) => (
-                            <li key={`${event.time}-${index}`}>
-                                {event.summary ? (
-                                    <>
-                                        {formatTime(event.time)} - <span className="font-bold text-blue-700">{event.summary}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        {formatTime(event.time)} - <span className="font-semibold">{event.type}</span>
-                                        {event.team && <span> ({displayTeamName(event.team.name)})</span>}
-                                        {event.player && <span> — {event.player.name}{event.playerNumber ? ` (#${event.playerNumber})` : ""}</span>}
-                                        {event.playerOut && event.playerIn && (
-                                            <span>
-                                                {" — "}
-                                                {event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}
-                                                {event.playerOut.name}
-                                                {" → "}
-                                                {event.playerInNumber ? `#${event.playerInNumber} ` : ""}
-                                                {event.playerIn.name}
-                                            </span>
-                                        )}
-                                        {event.concussion && <span> 🚨 commotion</span>}
-                                    </>
-                                )}
+                    <ul className="space-y-1 text-white">
+                        {factEvents.map((event, index) => (
+                            <li key={`${event.time}-${index}`} className="flex flex-col gap-2 text-sm">
+                                <span>
+                                    {formatEventTimeline(event)} - {getEventLabel(event)}
+                                    {event.type !== "Arbitrage Vidéo" && event.player && (
+                                        <>
+                                            {isCardEvent(event.type) ? " pour " : " de "}
+                                            <strong>{event.player.name}</strong>
+                                        </>
+                                    )}
+                                    {event.team && ` ${displayEventTeamName(event.team)}`}
+                                    {event.playerOut && event.playerIn && (
+                                        <>
+                                            {" — "}
+                                            <strong>{event.playerOutNumber ? `#${event.playerOutNumber} ` : ""}{event.playerOut.name}</strong>
+                                            {" → "}
+                                            <strong>{event.playerInNumber ? `#${event.playerInNumber} ` : ""}{event.playerIn.name}</strong>
+                                        </>
+                                    )}
+                                    {event.concussion && " 🚨 commotion"}
+                                </span>
                             </li>
                         ))}
                     </ul>
                 )}
             </section>
-
-            <Link to="/syntheses" className="text-white text-base">
-                <FontAwesomeIcon icon={faArrowCircleLeft} className="mr-1" />
-                Retour aux syntheses
-            </Link>
         </main>
     );
 }

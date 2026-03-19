@@ -1,16 +1,18 @@
 import { v4 as uuidv4 } from "uuid";
-import type { Team, Player, CompositionEntry, Roster } from "~/types/tracker";
+import type { Team, Player, CompositionEntry, Roster, PlayerPosition } from "~/types/tracker";
 
 function sortEntriesByNumber(entries: CompositionEntry[]): CompositionEntry[] {
     return [...entries].sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number);
 }
 
 // Roster Operations
-export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2', nickname?: string): Roster {
+export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2', nickname?: string, color?: string, logo?: string): Roster {
     return {
         id: uuidv4(),
         name,
         nickname,
+        color,
+        logo,
         players: [],
         category,
     };
@@ -39,18 +41,32 @@ export function deletePlayerFromRoster(roster: Roster, playerId: string): Roster
     };
 }
 
-export function updatePlayerInRoster(roster: Roster, playerId: string, newName: string): Roster {
+export function updatePlayerInRoster(
+    roster: Roster,
+    playerId: string,
+    updates: { name: string; positions?: PlayerPosition[]; photoUrl?: string }
+): Roster {
     return {
         ...roster,
         players: (roster.players || []).map(p =>
-            p.id === playerId ? { ...p, name: newName } : p
+            p.id === playerId ? { ...p, ...updates } : p
         ),
     };
 }
 
-export function createPlayerFromNames(first: string, last: string): Player {
+export function createPlayerFromNames(
+    first: string,
+    last: string,
+    positions?: PlayerPosition[],
+    photoUrl?: string
+): Player {
     const name = `${first} ${last}`.trim();
-    return { id: uuidv4(), name };
+    return {
+        id: uuidv4(),
+        name,
+        positions: positions && positions.length > 0 ? positions : undefined,
+        photoUrl: photoUrl?.trim() ? photoUrl.trim() : undefined,
+    };
 }
 
 export function parsePlayerName(name: string): { first: string; last: string } {
@@ -62,11 +78,13 @@ export function parsePlayerName(name: string): { first: string; last: string } {
 }
 
 // Team Operations
-export function createTeam(name: string, rosterId: string, nickname?: string): Team {
+export function createTeam(name: string, rosterId: string, nickname?: string, color?: string, logo?: string): Team {
     return {
         id: `${name}`.replace(/\s+/g, "_"),
         name,
         nickname,
+        color,
+        logo,
         rosterId,
         captainPlayerId: null,
         starters: [],
@@ -125,7 +143,7 @@ export function addMultiplePlayersToTeam(team: Team, players: Player[], playerNu
 }
 
 // Import/Export
-export function importTeamFromJSON(jsonString: string, rosterId: string, rosterName: string, matchDay?: number, nickname?: string): Team {
+export function importTeamFromJSON(jsonString: string, rosterId: string, rosterName: string, matchDay?: number, nickname?: string, color?: string, logo?: string): Team {
     const data = JSON.parse(jsonString);
     
     if (!Array.isArray(data.starters)) {
@@ -139,6 +157,8 @@ export function importTeamFromJSON(jsonString: string, rosterId: string, rosterN
         id,
         name,
         nickname,
+        color,
+        logo,
         rosterId,
         starters: data.starters.map((p: any, idx: number) => ({
             player: { id: p.id || uuidv4(), name: p.name },

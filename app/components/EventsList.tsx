@@ -1,8 +1,14 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
-import React from "react";
+import { useRef, useEffect, useState } from "react";
 import type { Event } from "~/types/tracker";
-import { formatTimelineMoment } from "~/utils/TimeUtils";
+import {
+  displayTeamName,
+  formatEventTimeline,
+  formatSummaryStatLabel,
+  getEventLabel,
+  isCardEvent,
+} from "~/utils/eventPresentation";
 
 interface Props {
   events: Event[];
@@ -10,58 +16,22 @@ interface Props {
 }
 
 export default function EventsList({ events, remove }: Props) {
+  const prevCountRef = useRef(events.length);
+  const [newEventIdx, setNewEventIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    const currentCount = events.length;
+    if (currentCount > prevCountRef.current) {
+      setNewEventIdx(currentCount - 1);
+      const timer = setTimeout(() => setNewEventIdx(null), 8000);
+      prevCountRef.current = currentCount;
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = currentCount;
+  }, [events.length]);
+
   if (events.length === 0) {
     return <p>Aucune action enregistrée.</p>;
-  }
-
-  const displayTeamName = (team: Event["team"]) => {
-    if (!team) return "";
-    return team.nickname || team.name.replace(/\s+J\d+$/, "");
-  };
-
-  const formatEventTimeline = (event: Event) => {
-    if (typeof event.timelineMinute === "number") {
-      return formatTimelineMoment(
-        event.timelineMinute,
-        event.timelineAdditionalMinute || 0,
-        event.timelineSecond || 0,
-        event.timelineHalf
-      );
-    }
-
-    const minute = Math.floor(event.time / 60);
-    const second = event.time % 60;
-    return formatTimelineMoment(minute, 0, second);
-  };
-
-  const EVENT_ICONS: Record<string, string> = {
-    "Essai": "🏉",
-    "Transformation": "🎯",
-    "Pénalité réussie": "✅",
-    "Pénalité manquée": "❌",
-    "Drop": "🦶",
-    "Essai de pénalité": "⚖️",
-    "Carton jaune": "🟨",
-    "Carton rouge": "🟥",
-    "Carton orange": "🟧",
-    "Changement": "🔁",
-    "Saignement": "🩸",
-    "Blessure": "🩹",
-    "Arbitrage Vidéo": "📺",
-    "Récapitulatif": "📝",
-  };
-
-  const isCardEvent = (type: Event["type"]) =>
-    type === "Carton jaune" || type === "Carton rouge" || type === "Carton orange";
-
-  function getEventLabel(event: Event): string {
-    const icon = EVENT_ICONS[event.type] || "📍";
-
-    if (event.type === "Arbitrage Vidéo") {
-      return `${icon} ${event.type}${event.videoReason ? ` (${event.videoReason})` : ""}`;
-    }
-
-    return `${icon} ${event.type}`;
   }
 
   function renderSummaryEvent(event: Event) {
@@ -98,7 +68,7 @@ export default function EventsList({ events, remove }: Props) {
                     <td className="px-2 py-1">
                       {leftStat ? (
                         <>
-                          <span>{leftStat.label}: </span>
+                          <span>{formatSummaryStatLabel(leftStat.label, leftStat.value)}: </span>
                           <span className="font-bold text-green-400">{leftStat.value}</span>
                         </>
                       ) : "-"}
@@ -106,7 +76,7 @@ export default function EventsList({ events, remove }: Props) {
                     <td className="px-2 py-1">
                       {rightStat ? (
                         <>
-                          <span>{rightStat.label}: </span>
+                          <span>{formatSummaryStatLabel(rightStat.label, rightStat.value)}: </span>
                           <span className="font-bold text-blue-400">{rightStat.value}</span>
                         </>
                       ) : "-"}
@@ -125,7 +95,7 @@ export default function EventsList({ events, remove }: Props) {
     <ul className="space-y-1">
       {events.map((e, idx) => (
         <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
-          <span className="min-w-0 break-words">
+          <span className={`min-w-0 break-words${idx === newEventIdx ? " new-event-flash" : ""}`}>
             {e.summary ? (
               renderSummaryEvent(e)
             ) : (
@@ -152,7 +122,7 @@ export default function EventsList({ events, remove }: Props) {
             )}
           </span>
           <button
-            className="text-red-600 text-sm px-2 py-1"
+            className="sp-button sp-button-xs sp-button-red"
             onClick={() => remove(idx)}
           >
             <FontAwesomeIcon icon={faTrashCan} className="mr-1" />

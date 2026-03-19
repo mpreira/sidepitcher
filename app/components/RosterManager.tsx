@@ -43,6 +43,8 @@ export default function RosterManager({
     const [teamName, setTeamName] = useState("");
     const [newRosterName, setNewRosterName] = useState("");
     const [newRosterNickname, setNewRosterNickname] = useState("");
+    const [newRosterColor, setNewRosterColor] = useState("");
+    const [newRosterLogo, setNewRosterLogo] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
@@ -59,6 +61,8 @@ export default function RosterManager({
     const [editingRosterId, setEditingRosterId] = useState<string | null>(null);
     const [editingRosterName, setEditingRosterName] = useState("");
     const [editingRosterNickname, setEditingRosterNickname] = useState("");
+    const [editingRosterColor, setEditingRosterColor] = useState("");
+    const [editingRosterLogo, setEditingRosterLogo] = useState("");
     const [rosterFormError, setRosterFormError] = useState("");
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
@@ -68,27 +72,80 @@ export default function RosterManager({
         : activeRoster?.players || []; 
 
     function normalizeNickname(value: string): string {
-        return value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+        return value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
     }
 
     function validateNickname(value: string): string {
         if (!value) return "";
-        return /^[A-Z]{3}$/.test(value)
+        return /^[A-Z]{4}$/.test(value)
             ? ""
-            : "Le surnom doit contenir exactement 3 lettres majuscules (ex: OYO).";
+            : "Le surnom doit contenir exactement 4 lettres majuscules (ex: TOUL).";
+    }
+
+    function normalizeColor(value: string): string {
+        return value.trim().toUpperCase();
+    }
+
+    function normalizeLogo(value: string): string {
+        return value.trim();
+    }
+
+    async function readImageAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = typeof reader.result === "string" ? reader.result : "";
+                resolve(result);
+            };
+            reader.onerror = () => reject(new Error("Impossible de lire l'image."));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleRosterLogoUpload(event: React.ChangeEvent<HTMLInputElement>, target: "new" | "edit") {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const dataUrl = await readImageAsDataUrl(file);
+            if (target === "new") {
+                setNewRosterLogo(dataUrl);
+            } else {
+                setEditingRosterLogo(dataUrl);
+            }
+            setRosterFormError("");
+        } catch {
+            setRosterFormError("Impossible de televerser le logo.");
+        } finally {
+            event.target.value = "";
+        }
+    }
+
+    function validateColor(value: string): string {
+        if (!value) return "";
+        return /^#[0-9A-F]{6}$/.test(value)
+            ? ""
+            : "La couleur doit être au format hexadécimal #RRGGBB.";
     }
 
     function createRoster() {
         const trimmedName = newRosterName.trim();
         const nickname = normalizeNickname(newRosterNickname);
+        const color = normalizeColor(newRosterColor);
+        const logo = normalizeLogo(newRosterLogo);
         const nicknameError = validateNickname(nickname);
+        const colorError = validateColor(color);
         if (!trimmedName) return;
         if (nicknameError) {
             setRosterFormError(nicknameError);
             return;
         }
+        if (colorError) {
+            setRosterFormError(colorError);
+            return;
+        }
 
-        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined);
+        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined, color || undefined, logo || undefined);
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
         setRosterFeedbackMessage("Effectif créé avec succès.");
@@ -100,6 +157,8 @@ export default function RosterManager({
         setShowCreateRosterForm(false);
         setNewRosterName("");
         setNewRosterNickname("");
+        setNewRosterColor("");
+        setNewRosterLogo("");
         setNewRosterCategory('Top 14');
         setRosterFormError("");
     }
@@ -108,6 +167,8 @@ export default function RosterManager({
         setEditingRosterId(roster.id);
         setEditingRosterName(roster.name);
         setEditingRosterNickname(roster.nickname || "");
+        setEditingRosterColor(roster.color || "");
+        setEditingRosterLogo(roster.logo || "");
         setRosterFormError("");
     }
 
@@ -115,6 +176,8 @@ export default function RosterManager({
         setEditingRosterId(null);
         setEditingRosterName("");
         setEditingRosterNickname("");
+        setEditingRosterColor("");
+        setEditingRosterLogo("");
         setRosterFormError("");
     }
 
@@ -122,21 +185,28 @@ export default function RosterManager({
         if (!editingRosterId) return;
         const trimmedName = editingRosterName.trim();
         const nickname = normalizeNickname(editingRosterNickname);
+        const color = normalizeColor(editingRosterColor);
+        const logo = normalizeLogo(editingRosterLogo);
         const nicknameError = validateNickname(nickname);
+        const colorError = validateColor(color);
         if (!trimmedName) return;
         if (nicknameError) {
             setRosterFormError(nicknameError);
             return;
         }
+        if (colorError) {
+            setRosterFormError(colorError);
+            return;
+        }
 
         setRosters((prev) => prev.map((roster) =>
             roster.id === editingRosterId
-                ? { ...roster, name: trimmedName, nickname: nickname || undefined }
+                ? { ...roster, name: trimmedName, nickname: nickname || undefined, color: color || undefined, logo: logo || undefined }
                 : roster
         ));
         setTeams((prev) => prev.map((team) =>
             team.rosterId === editingRosterId
-                ? { ...team, nickname: nickname || undefined }
+                ? { ...team, nickname: nickname || undefined, color: color || undefined, logo: logo || undefined }
                 : team
         ));
         setRosterFeedbackMessage("Effectif modifié.");
@@ -206,7 +276,7 @@ export default function RosterManager({
         if (!activeRoster || !editingPlayerId) return;
         if (!editingPlayerFirst && !editingPlayerLast) return;
         const newName = `${editingPlayerFirst} ${editingPlayerLast}`.trim();
-        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, newName);
+        const updated = updatePlayerInRoster(activeRoster, editingPlayerId, { name: newName });
         setRosters(rosters.map(r => r.id === activeRoster.id ? updated : r));
         setEditingPlayerId(null);
         setEditingPlayerFirst("");
@@ -222,15 +292,23 @@ export default function RosterManager({
     function addTeam() {
         if (!activeRoster) return;
         const name = `${activeRoster.name}${matchDay ? ` J${matchDay}` : ""}`;
-        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname);
+        const newTeam = createTeam(name, activeRoster.id, activeRoster.nickname, activeRoster.color, activeRoster.logo);
         setTeams([...(teams || []), newTeam]);
     }
 
     function importTeam() {
         if (!activeRoster) return;
         try {
-            const newTeam = importTeamFromJSON(jsonInput, activeRoster.id, activeRoster.name, matchDay ? parseInt(matchDay) : undefined);
-            const withNickname = { ...newTeam, nickname: activeRoster.nickname };
+            const newTeam = importTeamFromJSON(
+                jsonInput,
+                activeRoster.id,
+                activeRoster.name,
+                matchDay ? parseInt(matchDay) : undefined,
+                activeRoster.nickname,
+                activeRoster.color,
+                activeRoster.logo
+            );
+            const withNickname = { ...newTeam, nickname: activeRoster.nickname, color: activeRoster.color, logo: activeRoster.logo };
             setTeams([...(teams || []), withNickname]);
             setJsonInput("");
         } catch (e) {
@@ -293,7 +371,7 @@ export default function RosterManager({
                 </button>
             </div>
             <button
-                className="px-3 py-2 bg-sky-500/20 text-sky-300 rounded border hover:bg-sky-600 flex items-center font-medium"
+                className="sp-button sp-button-sm sp-button-indigo"
                 onClick={() => {
                     setShowCreateRosterForm((value) => !value);
                     setRosterFeedbackMessage("");
@@ -312,44 +390,88 @@ export default function RosterManager({
                         className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30"
                         onClick={(event) => event.stopPropagation()}
                     >
-                        <input
-                            id="newRosterName"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Nom de l'effectif"
-                            value={newRosterName}
-                            onChange={(e) => setNewRosterName(e.target.value)}
-                        />
-                        <input
-                            id="newRosterNickname"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Surnom (ex: OYO)"
-                            value={newRosterNickname}
-                            onChange={(e) => {
-                                setNewRosterNickname(normalizeNickname(e.target.value));
-                                setRosterFormError("");
-                            }}
-                        />
-                        <select
-                            id="newRosterCategory"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            value={newRosterCategory}
-                            onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
-                        >
-                            {championshipOptions.map((option) => (
-                                <option key={option} value={option}>
-                                    {option}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterName">Nom de l'effectif</label>
+                            <input
+                                id="newRosterName"
+                                className="sp-input-control"
+                                placeholder="Nom de l'effectif"
+                                value={newRosterName}
+                                onChange={(e) => setNewRosterName(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterNickname">Surnom</label>
+                            <input
+                                id="newRosterNickname"
+                                className="sp-input-control"
+                                placeholder="ex: TOUL"
+                                value={newRosterNickname}
+                                onChange={(e) => {
+                                    setNewRosterNickname(normalizeNickname(e.target.value));
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterColor">Couleur</label>
+                            <input
+                                id="newRosterColor"
+                                className="sp-input-control"
+                                placeholder="optionnel, ex: #1E3A8A"
+                                value={newRosterColor}
+                                onChange={(e) => {
+                                    setNewRosterColor(e.target.value);
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterLogo">Logo (optionnel)</label>
+                            <input
+                                id="newRosterLogo"
+                                className="sp-input-control"
+                                placeholder="URL du logo"
+                                value={newRosterLogo}
+                                onChange={(e) => setNewRosterLogo(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="newRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "new");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
+                            <select
+                                id="newRosterCategory"
+                                className="sp-input-control"
+                                value={newRosterCategory}
+                                onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                            >
+                                {championshipOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-blue"
                                 onClick={createRoster}
                             >
                                 Valider
                             </button>
                             <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                className="sp-button sp-button-sm sp-button-light"
                                 onClick={closeCreateRosterForm}
                             >
                                 Annuler
@@ -369,32 +491,73 @@ export default function RosterManager({
                         className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
                         onClick={(event) => event.stopPropagation()}
                     >
-                        <input
-                            id="editingRosterName"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Nom de l'effectif"
-                            value={editingRosterName}
-                            onChange={(e) => setEditingRosterName(e.target.value)}
-                        />
-                        <input
-                            id="editingRosterNickname"
-                            className="h-auto w-full min-w-0 self-stretch border-0 bg-transparent p-0 text-left text-sm font-light leading-none shadow-none focus:ring-0 focus:border-0"
-                            placeholder="Surnom (ex: OYO)"
-                            value={editingRosterNickname}
-                            onChange={(e) => {
-                                setEditingRosterNickname(normalizeNickname(e.target.value));
-                                setRosterFormError("");
-                            }}
-                        />
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterName">Nom de l'effectif</label>
+                            <input
+                                id="editingRosterName"
+                                className="sp-input-control"
+                                placeholder="Nom de l'effectif"
+                                value={editingRosterName}
+                                onChange={(e) => setEditingRosterName(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterNickname">Surnom</label>
+                            <input
+                                id="editingRosterNickname"
+                                className="sp-input-control"
+                                placeholder="ex: TOUL"
+                                value={editingRosterNickname}
+                                onChange={(e) => {
+                                    setEditingRosterNickname(normalizeNickname(e.target.value));
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterColor">Couleur</label>
+                            <input
+                                id="editingRosterColor"
+                                className="sp-input-control"
+                                placeholder="optionnel, ex: #1E3A8A"
+                                value={editingRosterColor}
+                                onChange={(e) => {
+                                    setEditingRosterColor(e.target.value);
+                                    setRosterFormError("");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterLogo">Logo (optionnel)</label>
+                            <input
+                                id="editingRosterLogo"
+                                className="sp-input-control"
+                                placeholder="URL du logo"
+                                value={editingRosterLogo}
+                                onChange={(e) => setEditingRosterLogo(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="editingRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "edit");
+                                }}
+                            />
+                        </div>
                         <div className="flex items-center justify-center gap-2">
                             <button
-                                className="px-3 py-2 bg-blue-500 text-white rounded"
+                                className="sp-button sp-button-sm sp-button-blue h-[36px]"
                                 onClick={saveEditedRoster}
                             >
                                 Valider
                             </button>
                             <button
-                                className="px-3 py-2 bg-gray-200 text-gray-800 rounded"
+                                className="sp-button sp-button-sm sp-button-light"
                                 onClick={closeEditRosterForm}
                             >
                                 Annuler
@@ -410,7 +573,7 @@ export default function RosterManager({
             ) : filteredRosters.length === 0 ? (
                 <p className="text-sm text-gray-600">Aucun effectif dans {activeCategoryTab}</p>
             ) : (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2 mt-6 md:grid-cols-3">
                     {filteredRosters.map((r) => (
                         <div key={r.id} className="flex items-center justify-between gap-2 rounded bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 py-2 px-4">
                             <button
@@ -424,7 +587,7 @@ export default function RosterManager({
                                 {r.nickname && <span className="block text-xs text-sky-300">{r.nickname}</span>}
                             </button>
                             <button
-                                className="flex h-8 w-8 items-center justify-center bg-yellow-500 text-white text-sm rounded"
+                                className="sp-button sp-button-yellow sp-button-icon"
                                 onClick={() => openEditRosterForm(r)}
                                 aria-label={`Modifier ${r.name}`}
                             >
@@ -436,7 +599,7 @@ export default function RosterManager({
             )}
 
             {rosterFeedbackMessage && (
-                <p className="flex items-center gap-2 text-sm text-green-400">
+                <p className="flex items-center gap-2 text-sm text-green-400 mt-6">
                     <FontAwesomeIcon icon={faCircleCheck} />
                     {rosterFeedbackMessage}
                 </p>

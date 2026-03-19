@@ -1,3 +1,5 @@
+import { faCopy, faDownload, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import type { Event, Team } from "~/types/tracker";
 import { buildEventSummary, exportSummaryToClipboard, exportSummaryToPdf } from "~/utils/EventUtils";
@@ -12,6 +14,12 @@ interface Props {
 
 export default function Summary({ events, currentTime, teams, matchDay, onSaved }: Props) {
     const summary = buildEventSummary(events);
+    const teamLabel = teams.length >= 2
+        ? `${teams[0].name.replace(/\s+J\d+$/, "")} vs ${teams[1].name.replace(/\s+J\d+$/, "")}`
+        : teams.length === 1
+            ? teams[0].name.replace(/\s+J\d+$/, "")
+            : "Match";
+    const summaryTitle = matchDay ? `J${matchDay} - ${teamLabel}` : teamLabel;
 
     async function saveSummary() {
         try {
@@ -27,31 +35,39 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                 }),
             });
             onSaved?.();
-            alert("Synthese sauvegardee.");
+            alert("Synthèse sauvegardée.");
         } catch (e) {
-            alert("Impossible de sauvegarder la synthese.");
+            alert("Impossible de sauvegarder la synthèse.");
         }
     }
 
     return (
         <section className="space-y-2">
-            <div className="mt-2 flex flex-col sm:flex-row gap-2">
+            <div className="mt-2 flex flex-col justify-center sm:flex-row gap-2">
                 <button
-                    className="px-4 py-2 bg-green-600 text-white rounded w-full sm:w-auto"
+                    className="sp-button sp-button-md sp-button-green w-full sm:w-auto"
                     onClick={saveSummary}
                 >
-                    Sauvegarder la synthese
+                    <FontAwesomeIcon icon={faFloppyDisk} className="mr-2" />
+                    Sauvegarder la synthèse
                 </button>
                 <button
-                    className="px-4 py-2 bg-indigo-600 text-white rounded w-full sm:w-auto"
+                    className="sp-button sp-button-md sp-button-indigo w-full sm:w-auto"
                     onClick={() => exportSummaryToClipboard(events, currentTime, summary)}
                 >
+                    <FontAwesomeIcon icon={faCopy} className="mr-2" />
                     Copier la synthèse
                 </button>
                 <button
-                    className="px-4 py-2 bg-gray-800 text-white rounded w-full sm:w-auto"
-                    onClick={() => exportSummaryToPdf(events, currentTime, summary)}
+                    className="sp-button sp-button-md sp-button-neutral w-full sm:w-auto"
+                    onClick={() =>
+                        exportSummaryToPdf(events, currentTime, summary, {
+                            title: `Synthèse - ${summaryTitle}`,
+                            fileName: summaryTitle,
+                        })
+                    }
                 >
+                    <FontAwesomeIcon icon={faDownload} className="mr-2" />
                     Télécharger PDF
                 </button>
             </div>

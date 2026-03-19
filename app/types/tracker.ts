@@ -1,7 +1,23 @@
+export const PLAYER_POSITIONS = [
+    "pilier",
+    "talonneur",
+    "deuxième ligne",
+    "troisième ligne",
+    "demi de mêlée",
+    "demi d'ouverture",
+    "centre",
+    "ailier",
+    "arrière",
+] as const;
+
+export type PlayerPosition = typeof PLAYER_POSITIONS[number];
+
 export interface Player {
     id: string;
     name: string;
     number?: number; // optional jersey number
+    positions?: PlayerPosition[];
+    photoUrl?: string;
 }
 
 export interface CompositionEntry {
@@ -13,6 +29,8 @@ export interface Roster {
     id: string;
     name: string;
     nickname?: string;
+    color?: string;
+    logo?: string;
     players: Player[]; // effectif global
     category?: 'Top 14' | 'Pro D2';
 }
@@ -21,6 +39,8 @@ export interface Team {
     id: string;              // nouveau : « nomDuRoster_journee »
     name: string;
     nickname?: string;
+    color?: string;
+    logo?: string;
     rosterId: string;        // which roster this team draws from
     captainPlayerId?: string | null;
     starters: CompositionEntry[]; // numbers 1–15
