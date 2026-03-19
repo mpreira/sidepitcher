@@ -72,14 +72,14 @@ export default function RosterManager({
         : activeRoster?.players || []; 
 
     function normalizeNickname(value: string): string {
-        return value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+        return value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
     }
 
     function validateNickname(value: string): string {
         if (!value) return "";
-        return /^[A-Z]{3}$/.test(value)
+        return /^[A-Z]{4}$/.test(value)
             ? ""
-            : "Le surnom doit contenir exactement 3 lettres majuscules (ex: OYO).";
+            : "Le surnom doit contenir exactement 4 lettres majuscules (ex: TOUL).";
     }
 
     function normalizeColor(value: string): string {
@@ -405,7 +405,7 @@ export default function RosterManager({
                             <input
                                 id="newRosterNickname"
                                 className="sp-input-control"
-                                placeholder="ex: OYO"
+                                placeholder="ex: TOUL"
                                 value={newRosterNickname}
                                 onChange={(e) => {
                                     setNewRosterNickname(normalizeNickname(e.target.value));
@@ -506,7 +506,7 @@ export default function RosterManager({
                             <input
                                 id="editingRosterNickname"
                                 className="sp-input-control"
-                                placeholder="ex: OYO"
+                                placeholder="ex: TOUL"
                                 value={editingRosterNickname}
                                 onChange={(e) => {
                                     setEditingRosterNickname(normalizeNickname(e.target.value));
