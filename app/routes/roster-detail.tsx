@@ -469,6 +469,16 @@ export default function RosterDetailPage() {
                     <FontAwesomeIcon icon={faArrowLeft} />
                     Retour aux effectifs
                 </Link>
+                <div>
+                    <Link
+                        className="sp-button sp-button-sm sp-button-indigo"
+                        to={getRosterProfilePath()}
+                        aria-label={`Voir le détail de l'effectif ${roster.name}`}
+                    >
+                        <FontAwesomeIcon icon={faEye} className="mr-1" />
+                        Détail
+                    </Link>
+                </div>
             </div>
 
             <section className="space-y-2">
@@ -607,13 +617,6 @@ export default function RosterDetailPage() {
                                         >
                                             <FontAwesomeIcon icon={faPlus} /> <FontAwesomeIcon icon={faUser} />
                                         </button>
-                                        <Link
-                                            className="sp-button sp-button-xs sp-button-blue h-8"
-                                            to={getRosterProfilePath()}
-                                            aria-label={`Voir la vue effectif de ${roster.name}`}
-                                        >
-                                            <FontAwesomeIcon icon={faEye} />
-                                        </Link>
                                         <button
                                             className="sp-button sp-button-red sp-button-icon"
                                             onClick={() => deleteTeam(team)}
