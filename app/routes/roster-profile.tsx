@@ -119,27 +119,39 @@ export default function RosterProfilePage() {
         </Link>
       </div>
 
-      <section className="sp-panel space-y-3">
-        <h2 className="font-semibold">Informations</h2>
-        <p className="text-sm text-neutral-200">
-          <strong>Championnat:</strong> {roster.category || "Non renseigne"}
-        </p>
-        <p className="text-sm text-neutral-200">
-          <strong>Surnom:</strong> {roster.nickname || "Non renseigne"}
-        </p>
-        <p className="text-sm text-neutral-200">
-          <strong>Couleur:</strong> {roster.color || "Non renseignee"}
-        </p>
-        <p className="text-sm text-neutral-200">
-          <strong>Compositions:</strong> {rosterTeams.length}
-        </p>
-        <p className="text-sm text-neutral-200">
-          <strong>Joueurs selectionnables:</strong> {roster.players.length}
-        </p>
-        <p className="text-sm text-neutral-200">
-          <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
-        </p>
-      </section>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
+        <section className="sp-panel space-y-3 md:col-span-2">
+          <h2 className="font-semibold">Informations</h2>
+          <p className="text-sm text-neutral-200">
+            <strong>Championnat:</strong> {roster.category || "Non renseigne"}
+          </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Surnom:</strong> {roster.nickname || "Non renseigne"}
+          </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Couleur:</strong> {roster.color || "Non renseignee"}
+          </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Compositions:</strong> {rosterTeams.length}
+          </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Joueurs selectionnables:</strong> {roster.players.length}
+          </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
+          </p>
+        </section>
+
+        {roster.logo && (
+          <aside className="md:col-span-1 md:justify-self-end w-full md:w-auto">
+            <img
+              src={roster.logo}
+              alt={`Logo de ${roster.name}`}
+              className="mx-auto md:mx-0 h-auto w-full max-w-[12rem] md:max-w-full rounded-md border border-neutral-700 bg-neutral-900/40 object-contain"
+            />
+          </aside>
+        )}
+      </div>
 
       <section className="sp-panel space-y-3">
         <h2 className="font-semibold">Joueurs de l'effectif</h2>
