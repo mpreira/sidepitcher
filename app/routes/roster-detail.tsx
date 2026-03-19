@@ -15,7 +15,7 @@ import {
     updateTeamInList,
     parsePlayerName,
 } from "~/utils/RosterUtils";
-import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft, faEye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -198,6 +198,14 @@ export default function RosterDetailPage() {
             return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
         }
         return `/roster/${rosterSlugId}/player/${playerId}`;
+    }
+
+    function getTeamProfilePath(teamId: string): string {
+        if (!rosterSlugId) return "/roster";
+        if (championshipSlug) {
+            return `/roster/${championshipSlug}/${rosterSlugId}/team/${teamId}`;
+        }
+        return `/roster/${rosterSlugId}/team/${teamId}`;
     }
 
     function addTeam() {
@@ -599,6 +607,13 @@ export default function RosterDetailPage() {
                                         >
                                             <FontAwesomeIcon icon={faPlus} /> <FontAwesomeIcon icon={faUser} />
                                         </button>
+                                        <Link
+                                            className="sp-button sp-button-xs sp-button-blue h-8"
+                                            to={getTeamProfilePath(team.id)}
+                                            aria-label={`Voir la vue effectif de ${team.name}`}
+                                        >
+                                            <FontAwesomeIcon icon={faEye} />
+                                        </Link>
                                         <button
                                             className="sp-button sp-button-red sp-button-icon"
                                             onClick={() => deleteTeam(team)}
