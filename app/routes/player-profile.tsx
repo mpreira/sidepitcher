@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { getFlagUrl, getCountryByCode } from "~/utils/countries";
 
 export function meta({ params }: Route.MetaArgs) {
   const playerId = params.playerId;
@@ -84,28 +85,43 @@ export default function PlayerProfilePage() {
         </Link>
       </div>
 
-      <section className="sp-panel space-y-3">
-        <h2 className="font-semibold">Informations</h2>
-        <p className="text-sm text-neutral-200">
-          <strong>Postes:</strong>{" "}
-          {player.positions && player.positions.length > 0
-            ? player.positions.join(" / ")
-            : "Non renseignes"}
-        </p>
-        <p className="text-sm text-neutral-200 break-all">
-          <strong>Photo URL:</strong> {player.photoUrl || "Non renseignee"}
-        </p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
+        <section className="sp-panel space-y-3 md:col-span-2">
+          <h2 className="font-semibold">Informations</h2>
+          <p className="text-sm text-neutral-200">
+            <strong>Postes:</strong>{" "}
+            {player.positions && player.positions.length > 0
+              ? player.positions.join(" / ")
+              : "Non renseignes"}
+          </p>
+          {player.nationality && (() => {
+            const country = getCountryByCode(player.nationality);
+            return (
+              <p className="text-sm text-neutral-200 flex items-center gap-1.5">
+                <strong>Nationalité:</strong>
+                <img
+                  src={getFlagUrl(player.nationality)}
+                  alt={country?.name ?? player.nationality}
+                  width={16}
+                  height={12}
+                  className="inline-block"
+                />
+                {country?.name ?? player.nationality}
+              </p>
+            );
+          })()}
+        </section>
+
         {player.photoUrl && (
-          <div className="space-y-2">
-            <p className="text-xs text-neutral-400">Apercu photo</p>
+          <aside className="md:col-span-1 md:justify-self-end w-full md:w-auto">
             <img
               src={player.photoUrl}
               alt={`Photo de ${player.name}`}
-              className="h-36 w-36 rounded-md object-cover border border-neutral-700"
+              className="mx-auto md:mx-0 h-auto w-full max-w-[10rem] md:max-w-full rounded-md border border-neutral-700 bg-neutral-900/40 object-cover"
             />
-          </div>
+          </aside>
         )}
-      </section>
+      </div>
 
       <section className="sp-panel space-y-3">
         <h2 className="font-semibold">Compositions</h2>

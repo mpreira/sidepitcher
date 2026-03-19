@@ -18,6 +18,7 @@ export interface Player {
     number?: number; // optional jersey number
     positions?: PlayerPosition[];
     photoUrl?: string;
+    nationality?: string; // ISO 3166-1 alpha-2 code
 }
 
 export interface CompositionEntry {

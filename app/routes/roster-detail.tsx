@@ -16,6 +16,7 @@ import {
     parsePlayerName,
 } from "~/utils/RosterUtils";
 import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft, faEye } from "@fortawesome/free-solid-svg-icons";
+import { COUNTRIES, getFlagUrl } from "~/utils/countries";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -62,6 +63,7 @@ export default function RosterDetailPage() {
     const [newPlayerLast, setNewPlayerLast] = useState("");
     const [newPlayerPositions, setNewPlayerPositions] = useState<PlayerPosition[]>([]);
     const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState("");
+    const [newPlayerNationality, setNewPlayerNationality] = useState("");
     const [compositionMessage, setCompositionMessage] = useState("");
     const [playerMessage, setPlayerMessage] = useState("");
     const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -69,6 +71,7 @@ export default function RosterDetailPage() {
     const [editingPlayerLast, setEditingPlayerLast] = useState("");
     const [editingPlayerPositions, setEditingPlayerPositions] = useState<PlayerPosition[]>([]);
     const [editingPlayerPhotoUrl, setEditingPlayerPhotoUrl] = useState("");
+    const [editingPlayerNationality, setEditingPlayerNationality] = useState("");
     const [newPlayerFirstError, setNewPlayerFirstError] = useState("");
     const [newPlayerLastError, setNewPlayerLastError] = useState("");
     const [editingPlayerFirstError, setEditingPlayerFirstError] = useState("");
@@ -362,7 +365,8 @@ export default function RosterDetailPage() {
             formattedFirst,
             formattedLast,
             newPlayerPositions,
-            newPlayerPhotoUrl
+            newPlayerPhotoUrl,
+            newPlayerNationality || undefined
         );
         const updatedRoster = addPlayerToRosterList(roster, player);
 
@@ -377,11 +381,12 @@ export default function RosterDetailPage() {
         setNewPlayerLast("");
         setNewPlayerPositions([]);
         setNewPlayerPhotoUrl("");
+        setNewPlayerNationality("");
         setNewPlayerFirstError("");
         setNewPlayerLastError("");
     }
 
-    function startEditPlayer(player: { id: string; name: string; positions?: PlayerPosition[]; photoUrl?: string }) {
+    function startEditPlayer(player: { id: string; name: string; positions?: PlayerPosition[]; photoUrl?: string; nationality?: string }) {
         const { first, last } = parsePlayerName(player.name);
         const formattedFirst = formatName(first);
         const formattedLast = formatName(last);
@@ -390,6 +395,7 @@ export default function RosterDetailPage() {
         setEditingPlayerLast(formattedLast);
         setEditingPlayerPositions(player.positions ?? []);
         setEditingPlayerPhotoUrl(player.photoUrl ?? "");
+        setEditingPlayerNationality(player.nationality ?? "");
         setEditingPlayerFirstError(validateName(formattedFirst));
         setEditingPlayerLastError(validateName(formattedLast));
         setPlayerMessage("");
@@ -401,6 +407,7 @@ export default function RosterDetailPage() {
         setEditingPlayerLast("");
         setEditingPlayerPositions([]);
         setEditingPlayerPhotoUrl("");
+        setEditingPlayerNationality("");
         setEditingPlayerFirstError("");
         setEditingPlayerLastError("");
     }
@@ -420,6 +427,7 @@ export default function RosterDetailPage() {
             name: newName,
             positions: editingPlayerPositions,
             photoUrl: editingPlayerPhotoUrl,
+            nationality: editingPlayerNationality || undefined,
         });
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
         cancelEditPlayer();
@@ -819,6 +827,20 @@ export default function RosterDetailPage() {
                                     }}
                                 />
                             </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerNationality">Nationalité</label>
+                                <select
+                                    id="newPlayerNationality"
+                                    className="sp-input-control"
+                                    value={newPlayerNationality}
+                                    onChange={(event) => setNewPlayerNationality(event.target.value)}
+                                >
+                                    <option value="">— Non renseignée —</option>
+                                    {COUNTRIES.map((c) => (
+                                        <option key={c.code} value={c.code}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
                                     className="sp-button sp-button-sm sp-button-blue"
@@ -944,6 +966,20 @@ export default function RosterDetailPage() {
                                         void handlePlayerPhotoUpload(event, "edit");
                                     }}
                                 />
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerNationality">Nationalité</label>
+                                <select
+                                    id="editingPlayerNationality"
+                                    className="sp-input-control"
+                                    value={editingPlayerNationality}
+                                    onChange={(event) => setEditingPlayerNationality(event.target.value)}
+                                >
+                                    <option value="">— Non renseignée —</option>
+                                    {COUNTRIES.map((c) => (
+                                        <option key={c.code} value={c.code}>{c.name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
