@@ -147,7 +147,7 @@ export default function RosterProfilePage() {
             <img
               src={roster.logo}
               alt={`Logo de ${roster.name}`}
-              className="mx-auto md:mx-0 h-auto w-full max-w-[12rem] md:max-w-full rounded-md border border-neutral-700 bg-neutral-900/40 object-contain"
+              className="mx-auto md:mx-0 h-auto w-full max-w-[12rem] md:max-w-full rounded-md bg-neutral-900/40 object-contain"
             />
           </aside>
         )}
