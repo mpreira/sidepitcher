@@ -471,7 +471,7 @@ export default function RosterDetailPage() {
                 </Link>
                 <div>
                     <Link
-                        className="sp-button sp-button-sm sp-button-indigo"
+                        className="sp-button sp-button-sm sp-button-indigo mt-4"
                         to={getRosterProfilePath()}
                         aria-label={`Voir le détail de l'effectif ${roster.name}`}
                     >
