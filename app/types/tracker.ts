@@ -1,5 +1,5 @@
 export const PLAYER_POSITIONS = [
-    "pilier",
+    "première ligne",
     "talonneur",
     "deuxième ligne",
     "troisième ligne",
