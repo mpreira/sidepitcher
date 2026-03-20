@@ -141,9 +141,6 @@ export default function RosterProfilePage() {
           <p className="text-sm text-neutral-200">
             <strong>Championnat:</strong> {roster.category || "Non renseigné"}
           </p>
-          <p className="text-sm text-neutral-200">
-            <strong>Surnom:</strong> {roster.nickname || "Non renseigné"}
-          </p>
           <div className="flex items-center justify-between">
             {isEditingCoach ? (
               <input
@@ -215,7 +212,7 @@ export default function RosterProfilePage() {
                     </p>
                   </div>
                   <div className="text-right text-xs text-neutral-300 shrink-0">
-                      <p>{row.compositions.length > 0 ? `${row.compositions.length} composition(s)` : "Hors composition"}</p>
+                      <p>{row.player.nationality}</p>
                   </div>
                 </div>
                   {row.compositions.length > 0 && (
