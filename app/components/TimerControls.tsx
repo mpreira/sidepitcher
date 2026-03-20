@@ -98,14 +98,14 @@ export default function TimerControls({
             id="manualTimeInput"
             type="text"
             placeholder="05:30"
-            className="sp-input-control flex-1 min-w-[8rem]"
+            className="sp-input-control flex-1 min-w-[8rem] pt-[9px]"
             value={manualTimeInput}
             onChange={(e) => onManualTimeInputChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onApplyManualTime()}
           />
           <button
             id="applyManualTimeButton"
-            className="sp-button sp-button-md sp-button-blue"
+            className="sp-button sp-button-md sp-button-blue self-center shrink-0"
             onClick={onApplyManualTime}
           >
             <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />

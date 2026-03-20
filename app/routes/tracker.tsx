@@ -461,11 +461,11 @@ export default function Tracker() {
                         onChange={(event) => setRefereeInput(event.target.value)}
                         onKeyDown={(event) => event.key === "Enter" && applyReferee()}
                         placeholder="Nom de l'arbitre"
-                        className="sp-input-control flex-1 min-w-[10rem]"
+                        className="sp-input-control flex-1 min-w-[10rem] pt-[9px]"
                     />
                     <button
                         type="button"
-                        className="sp-button sp-button-md sp-button-blue"
+                        className="sp-button sp-button-md sp-button-blue self-center shrink-0"
                         onClick={applyReferee}
                     >
                         <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />
