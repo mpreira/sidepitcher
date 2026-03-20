@@ -6,13 +6,21 @@ function sortEntriesByNumber(entries: CompositionEntry[]): CompositionEntry[] {
 }
 
 // Roster Operations
-export function createNewRoster(name: string, category: 'Top 14' | 'Pro D2', nickname?: string, color?: string, logo?: string): Roster {
+export function createNewRoster(
+    name: string,
+    category: 'Top 14' | 'Pro D2',
+    nickname?: string,
+    color?: string,
+    logo?: string,
+    coach?: string
+): Roster {
     return {
         id: uuidv4(),
         name,
         nickname,
         color,
         logo,
+        coach,
         players: [],
         category,
     };

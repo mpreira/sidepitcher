@@ -45,6 +45,7 @@ export default function RosterManager({
     const [newRosterNickname, setNewRosterNickname] = useState("");
     const [newRosterColor, setNewRosterColor] = useState("");
     const [newRosterLogo, setNewRosterLogo] = useState("");
+    const [newRosterCoach, setNewRosterCoach] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
@@ -63,6 +64,7 @@ export default function RosterManager({
     const [editingRosterNickname, setEditingRosterNickname] = useState("");
     const [editingRosterColor, setEditingRosterColor] = useState("");
     const [editingRosterLogo, setEditingRosterLogo] = useState("");
+    const [editingRosterCoach, setEditingRosterCoach] = useState("");
     const [rosterFormError, setRosterFormError] = useState("");
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
@@ -87,6 +89,10 @@ export default function RosterManager({
     }
 
     function normalizeLogo(value: string): string {
+        return value.trim();
+    }
+
+    function normalizeCoach(value: string): string {
         return value.trim();
     }
 
@@ -133,6 +139,7 @@ export default function RosterManager({
         const nickname = normalizeNickname(newRosterNickname);
         const color = normalizeColor(newRosterColor);
         const logo = normalizeLogo(newRosterLogo);
+        const coach = normalizeCoach(newRosterCoach);
         const nicknameError = validateNickname(nickname);
         const colorError = validateColor(color);
         if (!trimmedName) return;
@@ -145,7 +152,14 @@ export default function RosterManager({
             return;
         }
 
-        const newRoster = createNewRoster(trimmedName, newRosterCategory, nickname || undefined, color || undefined, logo || undefined);
+        const newRoster = createNewRoster(
+            trimmedName,
+            newRosterCategory,
+            nickname || undefined,
+            color || undefined,
+            logo || undefined,
+            coach || undefined
+        );
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
         setRosterFeedbackMessage("Effectif créé avec succès.");
@@ -159,6 +173,7 @@ export default function RosterManager({
         setNewRosterNickname("");
         setNewRosterColor("");
         setNewRosterLogo("");
+        setNewRosterCoach("");
         setNewRosterCategory('Top 14');
         setRosterFormError("");
     }
@@ -169,6 +184,7 @@ export default function RosterManager({
         setEditingRosterNickname(roster.nickname || "");
         setEditingRosterColor(roster.color || "");
         setEditingRosterLogo(roster.logo || "");
+        setEditingRosterCoach(roster.coach || "");
         setRosterFormError("");
     }
 
@@ -178,6 +194,7 @@ export default function RosterManager({
         setEditingRosterNickname("");
         setEditingRosterColor("");
         setEditingRosterLogo("");
+        setEditingRosterCoach("");
         setRosterFormError("");
     }
 
@@ -187,6 +204,7 @@ export default function RosterManager({
         const nickname = normalizeNickname(editingRosterNickname);
         const color = normalizeColor(editingRosterColor);
         const logo = normalizeLogo(editingRosterLogo);
+        const coach = normalizeCoach(editingRosterCoach);
         const nicknameError = validateNickname(nickname);
         const colorError = validateColor(color);
         if (!trimmedName) return;
@@ -201,7 +219,14 @@ export default function RosterManager({
 
         setRosters((prev) => prev.map((roster) =>
             roster.id === editingRosterId
-                ? { ...roster, name: trimmedName, nickname: nickname || undefined, color: color || undefined, logo: logo || undefined }
+                ? {
+                    ...roster,
+                    name: trimmedName,
+                    nickname: nickname || undefined,
+                    color: color || undefined,
+                    logo: logo || undefined,
+                    coach: coach || undefined,
+                }
                 : roster
         ));
         setTeams((prev) => prev.map((team) =>
@@ -437,6 +462,16 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterCoach">Coach (optionnel)</label>
+                            <input
+                                id="newRosterCoach"
+                                className="sp-input-control"
+                                placeholder="Nom du coach"
+                                value={newRosterCoach}
+                                onChange={(e) => setNewRosterCoach(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
                             <input
                                 id="newRosterLogoFile"
@@ -535,6 +570,16 @@ export default function RosterManager({
                                 placeholder="URL du logo"
                                 value={editingRosterLogo}
                                 onChange={(e) => setEditingRosterLogo(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterCoach">Coach (optionnel)</label>
+                            <input
+                                id="editingRosterCoach"
+                                className="sp-input-control"
+                                placeholder="Nom du coach"
+                                value={editingRosterCoach}
+                                onChange={(e) => setEditingRosterCoach(e.target.value)}
                             />
                         </div>
                         <div className="sp-input-shell">
