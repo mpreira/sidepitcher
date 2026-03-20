@@ -138,7 +138,7 @@ function AppContent() {
                   className={`flex flex-1 min-w-0 flex-col items-center justify-start gap-1 py-1 text-[11px] leading-none transition-colors md:text-[13px] ${
                     item.active
                       ? isSelected
-                        ? "text-sky-400"
+                        ? "text-blue-400"
                         : "text-gray-300"
                       : "text-gray-500"
                   }`}
@@ -148,7 +148,7 @@ function AppContent() {
                     className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors md:h-12 md:w-12 ${
                       item.active
                         ? isSelected
-                          ? "border-sky-500/70 bg-sky-500/15"
+                          ? "border-blue-500/70 bg-blue-500/15"
                           : "border-gray-700 bg-neutral-900"
                         : "border-gray-800 bg-neutral-900/60"
                     }`}

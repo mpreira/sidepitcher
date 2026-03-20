@@ -11,6 +11,8 @@ import TrackerTeamSelection from "~/components/TrackerTeamSelection";
 import TrackerStatsPanel from "~/components/TrackerStatsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { useTrackerClock } from "~/hooks/useTrackerClock";
@@ -82,6 +84,8 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [actionTab, setActionTab] = useState<"events" | "stats">("events");
+    const [referee, setReferee] = useState<string>("");
+    const [refereeInput, setRefereeInput] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const contextInitializedRef = useRef(false);
@@ -145,6 +149,18 @@ export default function Tracker() {
     useEffect(() => {
         window.localStorage.setItem(TRACKER_ACTION_TAB_STORAGE_KEY, actionTab);
     }, [actionTab]);
+
+    useEffect(() => {
+        const knownRef = events.find((event) => event.ref)?.ref;
+        if (knownRef && knownRef !== referee) {
+            setReferee(knownRef);
+            setRefereeInput(knownRef);
+        }
+    }, [events, referee]);
+
+    function applyReferee() {
+        setReferee(refereeInput.trim());
+    }
 
     // Load saved selection for the current championship/matchday.
     useEffect(() => {
@@ -225,7 +241,7 @@ export default function Tracker() {
     }, [running]);
 
     function handleAddEvent(event: Event) {
-        addEvent(event);
+        addEvent({ ...event, ref: referee.trim() || undefined });
         setActiveCommand(null);
     }
 
@@ -432,10 +448,31 @@ export default function Tracker() {
     return (
         <main className="sp-page space-y-6">
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
-            <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
+            <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto">
                 {matchDay && <>Journée : {matchDay} — </>}
                 Championnat : {championship}
             </p>
+            <div className="sp-input-shell max-w-3xl mx-auto mb-8">
+                <div className="flex items-center gap-3">
+                    <label htmlFor="refereeInput" className="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-neutral-400">Arbitre</label>
+                    <input
+                        id="refereeInput"
+                        value={refereeInput}
+                        onChange={(event) => setRefereeInput(event.target.value)}
+                        onKeyDown={(event) => event.key === "Enter" && applyReferee()}
+                        placeholder="Nom de l'arbitre"
+                        className="sp-input-control h-10 flex-1 min-w-[10rem]"
+                    />
+                    <button
+                        type="button"
+                        className="sp-button sp-button-md sp-button-blue h-10 self-center shrink-0"
+                        onClick={applyReferee}
+                    >
+                        <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />
+                        <span className="hidden sm:inline">Appliquer</span>
+                    </button>
+                </div>
+            </div>
 
             {!activeRoster && (
                 <p className="text-red-600">
@@ -536,6 +573,7 @@ export default function Tracker() {
             />
 
             <section className="space-y-2">
+                <p></p>
                 <div className="flex items-center gap-2">
                     <button
                         className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
