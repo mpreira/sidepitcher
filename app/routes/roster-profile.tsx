@@ -1,10 +1,11 @@
 import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-profile";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
 
 export function meta({ params }: Route.MetaArgs) {
   const rosterSlugId = params.rosterSlugId;
@@ -94,25 +95,19 @@ export default function RosterProfilePage() {
     }));
   }, [sortedPlayers, roster, rosterTeams]);
 
-  const coachSourceRosters = useMemo(
-    () => rosters.filter((item) => item.id !== roster?.id),
-    [rosters, roster?.id]
-  );
+  const [isEditingCoach, setIsEditingCoach] = useState(false);
+  const [coachInput, setCoachInput] = useState("");
 
-  function handleCoachSourceChange(sourceRosterId: string) {
+  function saveCoach() {
     if (!roster) return;
-    const sourceRoster = rosters.find((item) => item.id === sourceRosterId);
-    const nextCoach = sourceRoster?.coach?.trim() || undefined;
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
-          ? {
-              ...item,
-              coach: nextCoach,
-            }
+          ? { ...item, coach: coachInput.trim() || undefined }
           : item
       )
     );
+    setIsEditingCoach(false);
   }
 
   const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
@@ -149,27 +144,32 @@ export default function RosterProfilePage() {
           <p className="text-sm text-neutral-200">
             <strong>Surnom:</strong> {roster.nickname || "Non renseigné"}
           </p>
-          <div className="sp-input-shell">
-            <label className="sp-input-label" htmlFor="coachFromRosterSelect">Entraineur</label>
-            <select
-              id="coachFromRosterSelect"
-              className="sp-input-control"
-              value=""
-              onChange={(event) => {
-                handleCoachSourceChange(event.target.value);
-                event.currentTarget.value = "";
-              }}
-            >
-              <option value="">Choisir depuis un autre effectif</option>
-              {coachSourceRosters.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} {item.coach ? `- ${item.coach}` : "- coach non renseigné"}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-neutral-400">
-              Valeur actuelle: {roster.coach || "Non renseigné"}
-            </p>
+          <div className="flex items-center justify-between">
+            {isEditingCoach ? (
+              <input
+                type="text"
+                className="sp-input-control flex-1 text-sm"
+                autoFocus
+                value={coachInput}
+                onChange={(e) => setCoachInput(e.target.value)}
+                onBlur={saveCoach}
+                onKeyDown={(e) => { if (e.key === "Enter") saveCoach(); if (e.key === "Escape") setIsEditingCoach(false); }}
+              />
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Entraineur :</strong> {roster.coach || "Non renseigné"}
+              </p>
+            )}
+            {!isEditingCoach && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => { setCoachInput(roster.coach || ""); setIsEditingCoach(true); }}
+                aria-label="Modifier l'entraîneur"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
           </div>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
