@@ -82,7 +82,7 @@ export default function RosterDetailPage() {
     const [selectedCaptainPlayerId, setSelectedCaptainPlayerId] = useState<string | null>(null);
     const [compositionEditMessage, setCompositionEditMessage] = useState("");
     const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
-    const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(true);
+    const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(false);
 
     const rosterId = getRosterIdFromParam(rosterSlugId);
     const roster = useMemo(
