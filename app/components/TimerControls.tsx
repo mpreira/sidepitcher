@@ -92,20 +92,20 @@ export default function TimerControls({
       </div>
 
       <div className="sp-input-shell mt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="manualTimeInput" className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Timecode</label>
+        <div className="flex items-center gap-3">
+          <label htmlFor="manualTimeInput" className="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-neutral-400">Timecode</label>
           <input
             id="manualTimeInput"
             type="text"
             placeholder="05:30"
-            className="sp-input-control flex-1 min-w-[8rem] pt-[9px]"
+            className="sp-input-control h-10 flex-1 min-w-[8rem] pt-[9px]"
             value={manualTimeInput}
             onChange={(e) => onManualTimeInputChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onApplyManualTime()}
           />
           <button
             id="applyManualTimeButton"
-            className="sp-button sp-button-md sp-button-blue self-center shrink-0"
+            className="sp-button sp-button-md sp-button-blue h-10 self-center shrink-0"
             onClick={onApplyManualTime}
           >
             <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />

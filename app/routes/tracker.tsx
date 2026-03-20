@@ -453,19 +453,19 @@ export default function Tracker() {
                 Championnat : {championship}
             </p>
             <div className="sp-input-shell max-w-3xl mx-auto mb-8">
-                <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor="refereeInput" className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-neutral-400">Arbitre</label>
+                <div className="flex items-center gap-3">
+                    <label htmlFor="refereeInput" className="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-neutral-400">Arbitre</label>
                     <input
                         id="refereeInput"
                         value={refereeInput}
                         onChange={(event) => setRefereeInput(event.target.value)}
                         onKeyDown={(event) => event.key === "Enter" && applyReferee()}
                         placeholder="Nom de l'arbitre"
-                        className="sp-input-control flex-1 min-w-[10rem] pt-[9px]"
+                        className="sp-input-control h-10 flex-1 min-w-[10rem] pt-[9px]"
                     />
                     <button
                         type="button"
-                        className="sp-button sp-button-md sp-button-blue self-center shrink-0"
+                        className="sp-button sp-button-md sp-button-blue h-10 self-center shrink-0"
                         onClick={applyReferee}
                     >
                         <FontAwesomeIcon icon={faCheck} className="sm:mr-2" />
