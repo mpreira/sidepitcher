@@ -98,7 +98,7 @@ export default function TimerControls({
             id="manualTimeInput"
             type="text"
             placeholder="05:30"
-            className="sp-input-control h-10 flex-1 min-w-[8rem] pt-[9px]"
+            className="sp-input-control h-10 flex-1 min-w-[8rem]"
             value={manualTimeInput}
             onChange={(e) => onManualTimeInputChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onApplyManualTime()}
