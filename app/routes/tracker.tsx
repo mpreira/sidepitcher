@@ -442,13 +442,18 @@ export default function Tracker() {
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
             <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
                 {matchDay && <>Journée : {matchDay} — </>}
-                Championnat : {championship} — Arbitre:
-                <input
-                    value={referee}
-                    onChange={(event) => setReferee(event.target.value)}
-                    placeholder="Nom de l'arbitre"
-                    className="sp-input-control ml-2 text-sm w-auto"
-                />
+                Championnat : {championship}
+                <div className="sp-input-shell">
+                    <label htmlFor="refereeInput" className="sp-input-label">Arbitre</label>
+                    <input
+                        id="refereeInput"
+                        value={referee}
+                        onChange={(event) => setReferee(event.target.value)}
+                        placeholder="Nom de l'arbitre"
+                        className="sp-input-control ml-2 text-sm w-auto"
+                    />
+                </div>
+                
             </p>
 
             {!activeRoster && (
