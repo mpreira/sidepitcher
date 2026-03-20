@@ -483,33 +483,7 @@ export default function RosterDetailPage() {
             <div className="space-y-1">
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
-                <div className="flex items-center justify-between max-w-3xl mx-auto">
-                    {isEditingCoach ? (
-                        <input
-                            type="text"
-                            className="sp-input-control flex-1 text-sm"
-                            autoFocus
-                            value={coachInput}
-                            onChange={(e) => setCoachInput(e.target.value)}
-                            onBlur={saveCoach}
-                            onKeyDown={(e) => { if (e.key === "Enter") saveCoach(); if (e.key === "Escape") setIsEditingCoach(false); }}
-                        />
-                    ) : (
-                        <p className="text-sm font-light text-white">
-                            Entraineur : {roster.coach || "Non renseigné"}
-                        </p>
-                    )}
-                    {!isEditingCoach && (
-                        <button
-                            type="button"
-                            className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
-                            onClick={() => { setCoachInput(roster.coach || ""); setIsEditingCoach(true); }}
-                            aria-label="Modifier l'entraîneur"
-                        >
-                            <FontAwesomeIcon icon={faPenToSquareRegular} />
-                        </button>
-                    )}
-                </div>
+                
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
                     <FontAwesomeIcon icon={faArrowLeft} />
                     Retour aux effectifs
@@ -575,8 +549,23 @@ export default function RosterDetailPage() {
 
                                 return (
                                     <div className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-                                        {coachInfo}
-                                        <p></p>
+                                        <div className="flex items-center justify-between max-w-3xl mx-auto">
+                    {isEditingCoach ? (
+                        <input
+                            type="text"
+                            className="sp-input-control flex-1 text-sm"
+                            autoFocus
+                            value={coachInput}
+                            onChange={(e) => setCoachInput(e.target.value)}
+                            onBlur={saveCoach}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveCoach(); if (e.key === "Escape") setIsEditingCoach(false); }}
+                        />
+                    ) : (
+                        <p className="text-sm font-light text-white">
+                            Entraineur : {roster.coach || "Non renseigné"}
+                        </p>
+                    )}
+                </div>
                                         <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
                                             <span>Joueur</span>
                                             <span className="text-center">Capitaine</span>
