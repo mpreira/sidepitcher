@@ -550,22 +550,10 @@ export default function RosterDetailPage() {
                                 return (
                                     <div className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
                                         <div className="flex items-center justify-between max-w-3xl mx-auto">
-                    {isEditingCoach ? (
-                        <input
-                            type="text"
-                            className="sp-input-control flex-1 text-sm"
-                            autoFocus
-                            value={coachInput}
-                            onChange={(e) => setCoachInput(e.target.value)}
-                            onBlur={saveCoach}
-                            onKeyDown={(e) => { if (e.key === "Enter") saveCoach(); if (e.key === "Escape") setIsEditingCoach(false); }}
-                        />
-                    ) : (
-                        <p className="text-sm font-light text-white">
-                            Entraineur : {roster.coach || "Non renseigné"}
-                        </p>
-                    )}
-                </div>
+                                            <p className="text-sm font-light text-white">
+                                                Entraineur : {roster.coach || "Non renseigné"}
+                                            </p>
+                                        </div>
                                         <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
                                             <span>Joueur</span>
                                             <span className="text-center">Capitaine</span>
