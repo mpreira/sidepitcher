@@ -648,7 +648,7 @@ export default function RosterDetailPage() {
                 ) : (
                     <ul className="space-y-1">
                         {rosterTeams.map((team: Team) => (
-                            <li key={team.id} className="p-2 space-y-2 mb-6 py-6">
+                            <li key={team.id} className="p-2 space-y-2 py-2">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <button
