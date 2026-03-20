@@ -5,6 +5,7 @@ import { useTeams } from "~/context/TeamsContext";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -212,7 +213,15 @@ export default function RosterProfilePage() {
                     </p>
                   </div>
                   <div className="text-right text-xs text-neutral-300 shrink-0">
-                      <p>{row.player.nationality}</p>
+                    {row.player.nationality && (
+                      <img
+                        src={getFlagUrl(row.player.nationality)}
+                        alt={row.player.nationality}
+                        className="inline-block"
+                        width={16}
+                        height={12}
+                      />
+                    )}
                   </div>
                 </div>
                   {row.compositions.length > 0 && (
