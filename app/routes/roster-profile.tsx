@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
+import type { PlayerPosition } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
   const rosterSlugId = params.rosterSlugId;
@@ -45,6 +46,42 @@ function getSortableFirstName(fullName: string): string {
   return (first || last).trim();
 }
 
+const POSITION_PRIORITY: PlayerPosition[] = [
+  "première ligne",
+  "talonneur",
+  "deuxième ligne",
+  "troisième ligne",
+  "demi de mêlée",
+  "demi d'ouverture",
+  "centre",
+  "ailier",
+  "arrière",
+];
+
+function getPositionRank(positions?: PlayerPosition[]): number {
+  if (!positions || positions.length === 0) return POSITION_PRIORITY.length;
+  const rankedPositions = positions
+    .map((position) => POSITION_PRIORITY.indexOf(position))
+    .filter((index) => index >= 0);
+  return rankedPositions.length > 0 ? Math.min(...rankedPositions) : POSITION_PRIORITY.length;
+}
+
+function comparePlayersByPositionThenName(
+  firstPlayer: { name: string; positions?: PlayerPosition[] },
+  secondPlayer: { name: string; positions?: PlayerPosition[] }
+): number {
+  const firstRank = getPositionRank(firstPlayer.positions);
+  const secondRank = getPositionRank(secondPlayer.positions);
+  if (firstRank !== secondRank) return firstRank - secondRank;
+
+  const firstFirstName = getSortableFirstName(firstPlayer.name);
+  const secondFirstName = getSortableFirstName(secondPlayer.name);
+  const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
+  if (firstNameComparison !== 0) return firstNameComparison;
+
+  return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
+}
+
 export default function RosterProfilePage() {
   const { rosterSlugId, championshipSlug } = useParams();
   const { rosters, teams, setRosters } = useTeams();
@@ -63,13 +100,7 @@ export default function RosterProfilePage() {
   const sortedPlayers = useMemo(() => {
     if (!roster) return [];
 
-    return [...roster.players].sort((firstPlayer, secondPlayer) => {
-      const firstFirstName = getSortableFirstName(firstPlayer.name);
-      const secondFirstName = getSortableFirstName(secondPlayer.name);
-      const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
-      if (firstNameComparison !== 0) return firstNameComparison;
-      return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
-    });
+    return [...roster.players].sort(comparePlayersByPositionThenName);
   }, [roster]);
 
   const playerRows = useMemo(() => {

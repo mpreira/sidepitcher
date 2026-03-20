@@ -48,6 +48,42 @@ function getSortableFirstName(fullName: string): string {
     return (first || last).trim();
 }
 
+const POSITION_PRIORITY: PlayerPosition[] = [
+    "première ligne",
+    "talonneur",
+    "deuxième ligne",
+    "troisième ligne",
+    "demi de mêlée",
+    "demi d'ouverture",
+    "centre",
+    "ailier",
+    "arrière",
+];
+
+function getPositionRank(positions?: PlayerPosition[]): number {
+    if (!positions || positions.length === 0) return POSITION_PRIORITY.length;
+    const rankedPositions = positions
+        .map((position) => POSITION_PRIORITY.indexOf(position))
+        .filter((index) => index >= 0);
+    return rankedPositions.length > 0 ? Math.min(...rankedPositions) : POSITION_PRIORITY.length;
+}
+
+function comparePlayersByPositionThenName(
+    firstPlayer: { name: string; positions?: PlayerPosition[] },
+    secondPlayer: { name: string; positions?: PlayerPosition[] }
+): number {
+    const firstRank = getPositionRank(firstPlayer.positions);
+    const secondRank = getPositionRank(secondPlayer.positions);
+    if (firstRank !== secondRank) return firstRank - secondRank;
+
+    const firstFirstName = getSortableFirstName(firstPlayer.name);
+    const secondFirstName = getSortableFirstName(secondPlayer.name);
+    const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
+    if (firstNameComparison !== 0) return firstNameComparison;
+
+    return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
+}
+
 export default function RosterDetailPage() {
     const { rosterSlugId, championshipSlug } = useParams();
     const {
@@ -118,13 +154,7 @@ export default function RosterDetailPage() {
     const sortedRosterPlayers = useMemo(() => {
         if (!roster) return [];
 
-        return [...roster.players].sort((firstPlayer, secondPlayer) => {
-            const firstFirstName = getSortableFirstName(firstPlayer.name);
-            const secondFirstName = getSortableFirstName(secondPlayer.name);
-            const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
-            if (firstNameComparison !== 0) return firstNameComparison;
-            return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
-        });
+        return [...roster.players].sort(comparePlayersByPositionThenName);
     }, [roster]);
 
     const compositionName = matchDay ? `${roster?.name} J${matchDay}` : null;
@@ -527,9 +557,9 @@ export default function RosterDetailPage() {
                             {(() => {
                                 const allEntries = [...compositionEditTeam.starters, ...compositionEditTeam.substitutes];
                                 const existingIds = new Set(allEntries.map((entry) => entry.player.id));
-                                const availablePlayers = roster.players.filter(
-                                    (player) => !existingIds.has(player.id)
-                                );
+                                const availablePlayers = roster.players
+                                    .filter((player) => !existingIds.has(player.id))
+                                    .sort(comparePlayersByPositionThenName);
 
                                 if (availablePlayers.length === 0) {
                                     return (
