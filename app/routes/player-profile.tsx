@@ -1,10 +1,36 @@
 import { Link, useParams } from "react-router";
 import type { Route } from "./+types/player-profile";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl, getCountryByCode } from "~/utils/countries";
+import type { PlayerStats } from "~/types/tracker";
+
+function sanitizeStat(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.floor(n);
+}
+
+function sanitizeRate(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function buildStats(playerStats: PlayerStats | undefined, matchs2526: number, titularisations2526: number): PlayerStats {
+  return {
+    points: sanitizeStat(playerStats?.points),
+    essais: sanitizeStat(playerStats?.essais),
+    pied: sanitizeStat(playerStats?.pied),
+    tauxTransfo: sanitizeRate(playerStats?.tauxTransfo),
+    cartons: sanitizeStat(playerStats?.cartons),
+    drops: sanitizeStat(playerStats?.drops),
+    matchs2526: sanitizeStat(playerStats?.matchs2526 ?? matchs2526),
+    titularisations2526: sanitizeStat(playerStats?.titularisations2526 ?? titularisations2526),
+  };
+}
 
 export function meta({ params }: Route.MetaArgs) {
   const playerId = params.playerId;
@@ -28,7 +54,19 @@ function getRosterBackPath(rosterSlugId: string | undefined, championshipSlug: s
 
 export default function PlayerProfilePage() {
   const { rosterSlugId, championshipSlug, playerId } = useParams();
-  const { rosters, teams } = useTeams();
+  const { rosters, teams, setRosters } = useTeams();
+  const [isEditingStats, setIsEditingStats] = useState(false);
+  const [statsMessage, setStatsMessage] = useState("");
+  const [statsDraft, setStatsDraft] = useState<PlayerStats>({
+    points: 0,
+    essais: 0,
+    pied: 0,
+    tauxTransfo: 0,
+    cartons: 0,
+    drops: 0,
+    matchs2526: 0,
+    titularisations2526: 0,
+  });
 
   const rosterId = getRosterIdFromParam(rosterSlugId);
   const roster = useMemo(
@@ -60,6 +98,43 @@ export default function PlayerProfilePage() {
       .sort((first, second) => first.number - second.number);
   }, [teams, roster, player]);
 
+  const computedMatchs2526 = playerCompositions.length;
+  const computedTitularisations2526 = useMemo(
+    () => teams.filter((team) => team.rosterId === roster?.id).filter((team) => team.starters.some((entry) => entry.player.id === player?.id)).length,
+    [teams, roster?.id, player?.id]
+  );
+
+  const effectiveStats = useMemo(
+    () => buildStats(player?.stats, computedMatchs2526, computedTitularisations2526),
+    [player?.stats, computedMatchs2526, computedTitularisations2526]
+  );
+
+  useEffect(() => {
+    setStatsDraft(effectiveStats);
+  }, [effectiveStats]);
+
+  function updateDraftNumber<K extends keyof PlayerStats>(key: K, value: string) {
+    setStatsDraft((current) => ({
+      ...current,
+      [key]: key === "tauxTransfo" ? sanitizeRate(value) : sanitizeStat(value),
+    }));
+  }
+
+  function saveStats() {
+    if (!roster || !player) return;
+    const nextStats = buildStats(statsDraft, computedMatchs2526, computedTitularisations2526);
+    const updatedRosters = rosters.map((item) => {
+      if (item.id !== roster.id) return item;
+      return {
+        ...item,
+        players: item.players.map((p) => (p.id === player.id ? { ...p, stats: nextStats } : p)),
+      };
+    });
+    setRosters(updatedRosters);
+    setStatsMessage("Statistiques mises à jour.");
+    setIsEditingStats(false);
+  }
+
   const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
 
   if (!roster || !player) {
@@ -68,7 +143,7 @@ export default function PlayerProfilePage() {
         <h1 className="text-2xl font-bold">Profil joueur introuvable</h1>
         <Link to={backPath} className="sp-link-muted">
         <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
-          Retour a l'effectif
+          Retour à l'effectif
         </Link>
       </main>
     );
@@ -81,7 +156,7 @@ export default function PlayerProfilePage() {
         <p className="text-sm text-neutral-400">Effectif: {roster.name}</p>
         <Link to={backPath} className="sp-link-muted">
         <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
-          Retour a l'effectif
+          Retour à l'effectif
         </Link>
       </div>
 
@@ -122,6 +197,144 @@ export default function PlayerProfilePage() {
           </aside>
         )}
       </div>
+
+      <section className="sp-panel space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-semibold">Stats joueur</h2>
+          {!isEditingStats ? (
+            <button
+              type="button"
+              className="sp-button sp-button-xs sp-button-indigo"
+              onClick={() => {
+                setStatsDraft(effectiveStats);
+                setIsEditingStats(true);
+                setStatsMessage("");
+              }}
+            >
+              Modifier
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button type="button" className="sp-button sp-button-xs sp-button-blue" onClick={saveStats}>
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                className="sp-button sp-button-xs sp-button-light"
+                onClick={() => {
+                  setStatsDraft(effectiveStats);
+                  setIsEditingStats(false);
+                }}
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+        </div>
+        {statsMessage && <p className="text-xs text-emerald-400">{statsMessage}</p>}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsPoints">Points</label>
+            <input
+              id="playerStatsPoints"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.points : effectiveStats.points}
+              onChange={(event) => updateDraftNumber("points", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsEssais">Essais</label>
+            <input
+              id="playerStatsEssais"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.essais : effectiveStats.essais}
+              onChange={(event) => updateDraftNumber("essais", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsPied">Pied</label>
+            <input
+              id="playerStatsPied"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.pied : effectiveStats.pied}
+              onChange={(event) => updateDraftNumber("pied", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsTauxTransfo">Taux de transfo (%)</label>
+            <input
+              id="playerStatsTauxTransfo"
+              type="number"
+              min={0}
+              max={100}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.tauxTransfo : effectiveStats.tauxTransfo}
+              onChange={(event) => updateDraftNumber("tauxTransfo", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsCartons">Cartons</label>
+            <input
+              id="playerStatsCartons"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.cartons : effectiveStats.cartons}
+              onChange={(event) => updateDraftNumber("cartons", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsDrops">Drops</label>
+            <input
+              id="playerStatsDrops"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.drops : effectiveStats.drops}
+              onChange={(event) => updateDraftNumber("drops", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsMatchs2526">Matchs 25-26</label>
+            <input
+              id="playerStatsMatchs2526"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.matchs2526 : effectiveStats.matchs2526}
+              onChange={(event) => updateDraftNumber("matchs2526", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="playerStatsTitularisations2526">Titularisations 25-26</label>
+            <input
+              id="playerStatsTitularisations2526"
+              type="number"
+              min={0}
+              className="sp-input-control"
+              value={isEditingStats ? statsDraft.titularisations2526 : effectiveStats.titularisations2526}
+              onChange={(event) => updateDraftNumber("titularisations2526", event.target.value)}
+              disabled={!isEditingStats}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-neutral-500">
+          Valeur initiale automatique: Matchs 25-26 et Titularisations 25-26 sont préremplis depuis les compositions, puis restent modifiables manuellement.
+        </p>
+      </section>
 
       <section className="sp-panel space-y-3">
         <h2 className="font-semibold">Compositions</h2>

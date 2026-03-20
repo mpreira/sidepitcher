@@ -12,6 +12,17 @@ export const PLAYER_POSITIONS = [
 
 export type PlayerPosition = typeof PLAYER_POSITIONS[number];
 
+export interface PlayerStats {
+    points: number;
+    essais: number;
+    pied: number;
+    tauxTransfo: number; // 0..100
+    cartons: number;
+    drops: number;
+    matchs2526: number;
+    titularisations2526: number;
+}
+
 export interface Player {
     id: string;
     name: string;
@@ -19,6 +30,7 @@ export interface Player {
     positions?: PlayerPosition[];
     photoUrl?: string;
     nationality?: string; // ISO 3166-1 alpha-2 code
+    stats?: PlayerStats;
 }
 
 export interface CompositionEntry {

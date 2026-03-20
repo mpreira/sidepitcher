@@ -102,7 +102,7 @@ export default function RosterProfilePage() {
         <h1 className="text-2xl font-bold">Vue effectif introuvable</h1>
         <Link to={backPath} className="sp-link-muted">
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
-          Retour a l'effectif
+          Retour à l'effectif
         </Link>
       </main>
     );
@@ -115,7 +115,7 @@ export default function RosterProfilePage() {
         <p className="text-sm text-neutral-400">Vue globale de l'effectif</p>
         <Link to={backPath} className="sp-link-muted">
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
-          Retour a l'effectif
+          Retour à l'effectif
         </Link>
       </div>
 
@@ -123,19 +123,19 @@ export default function RosterProfilePage() {
         <section className="sp-panel space-y-3 md:col-span-2">
           <h2 className="font-semibold">Informations</h2>
           <p className="text-sm text-neutral-200">
-            <strong>Championnat:</strong> {roster.category || "Non renseigne"}
+            <strong>Championnat:</strong> {roster.category || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Surnom:</strong> {roster.nickname || "Non renseigne"}
+            <strong>Surnom:</strong> {roster.nickname || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Couleur:</strong> {roster.color || "Non renseignee"}
+            <strong>Couleur:</strong> {roster.color || "Non renseignée"}
           </p>
           <p className="text-sm text-neutral-200">
             <strong>Compositions:</strong> {rosterTeams.length}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Joueurs selectionnables:</strong> {roster.players.length}
+            <strong>Joueurs sélectionnables:</strong> {roster.players.length}
           </p>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
