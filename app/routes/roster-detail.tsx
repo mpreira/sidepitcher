@@ -502,6 +502,9 @@ export default function RosterDetailPage() {
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Compositions</h2>
+                <p className="text-sm font-light text-white">
+                    Entraineur : {roster.coach || "Non renseigné"}
+                </p>
                 {compositionEditTeamId && compositionEditTeam && roster && (
                     <div
                         className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
@@ -531,9 +534,6 @@ export default function RosterDetailPage() {
                                 if (availablePlayers.length === 0) {
                                     return (
                                         <div className="space-y-2">
-                                            <p className="text-sm font-light text-white">
-                                                Entraineur : {roster.coach || "Non renseigné"}
-                                            </p>
                                             <p className="text-sm text-gray-600">
                                                 Aucun joueur disponible pour cette composition.
                                             </p>
