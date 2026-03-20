@@ -528,18 +528,12 @@ export default function RosterDetailPage() {
                                     (player) => !existingIds.has(player.id)
                                 );
 
-                                const coachLabel = roster.coach || "Non renseigné";
-
-                                const coachInfo = (
-                                    <p className="text-sm text-neutral-300">
-                                        Entraineur : {coachLabel}
-                                    </p>
-                                );
-
                                 if (availablePlayers.length === 0) {
                                     return (
                                         <div className="space-y-2">
-                                            {coachInfo}
+                                            <p className="text-sm font-light text-white">
+                                                Entraineur : {roster.coach || "Non renseigné"}
+                                            </p>
                                             <p className="text-sm text-gray-600">
                                                 Aucun joueur disponible pour cette composition.
                                             </p>
@@ -549,11 +543,6 @@ export default function RosterDetailPage() {
 
                                 return (
                                     <div className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
-                                        <div className="flex items-center justify-between max-w-3xl mx-auto">
-                                            <p className="text-sm font-light text-white">
-                                                Entraineur : {roster.coach || "Non renseigné"}
-                                            </p>
-                                        </div>
                                         <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
                                             <span>Joueur</span>
                                             <span className="text-center">Capitaine</span>
