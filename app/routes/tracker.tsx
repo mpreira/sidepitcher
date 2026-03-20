@@ -447,7 +447,7 @@ export default function Tracker() {
                     value={referee}
                     onChange={(event) => setReferee(event.target.value)}
                     placeholder="Nom de l'arbitre"
-                    className="ml-2 rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm text-white"
+                    className="sp-input-control ml-2 text-sm w-auto"
                 />
             </p>
 
