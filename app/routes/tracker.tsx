@@ -82,6 +82,7 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [actionTab, setActionTab] = useState<"events" | "stats">("events");
+    const [referee, setReferee] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const contextInitializedRef = useRef(false);
@@ -145,6 +146,13 @@ export default function Tracker() {
     useEffect(() => {
         window.localStorage.setItem(TRACKER_ACTION_TAB_STORAGE_KEY, actionTab);
     }, [actionTab]);
+
+    useEffect(() => {
+        const knownRef = events.find((event) => event.ref)?.ref;
+        if (knownRef && knownRef !== referee) {
+            setReferee(knownRef);
+        }
+    }, [events, referee]);
 
     // Load saved selection for the current championship/matchday.
     useEffect(() => {
@@ -225,7 +233,7 @@ export default function Tracker() {
     }, [running]);
 
     function handleAddEvent(event: Event) {
-        addEvent(event);
+        addEvent({ ...event, ref: referee.trim() || undefined });
         setActiveCommand(null);
     }
 
@@ -434,7 +442,13 @@ export default function Tracker() {
             <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">Feuille de match</h1>
             <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">
                 {matchDay && <>Journée : {matchDay} — </>}
-                Championnat : {championship}
+                Championnat : {championship} — Arbitre:
+                <input
+                    value={referee}
+                    onChange={(event) => setReferee(event.target.value)}
+                    placeholder="Nom de l'arbitre"
+                    className="ml-2 rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm text-white"
+                />
             </p>
 
             {!activeRoster && (
@@ -536,6 +550,7 @@ export default function Tracker() {
             />
 
             <section className="space-y-2">
+                <p></p>
                 <div className="flex items-center gap-2">
                     <button
                         className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${

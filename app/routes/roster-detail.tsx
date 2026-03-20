@@ -473,6 +473,9 @@ export default function RosterDetailPage() {
             <div className="space-y-1">
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
+                <p className="text-foreground max-w-3xl text-sm font-light text-white text-balance text-center mx-auto">
+                    Entraineur : {roster.coach || "Non renseigné"}
+                </p>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
                     <FontAwesomeIcon icon={faArrowLeft} />
                     Retour aux effectifs
@@ -517,16 +520,29 @@ export default function RosterDetailPage() {
                                     (player) => !existingIds.has(player.id)
                                 );
 
+                                const coachLabel = roster.coach || "Non renseigné";
+
+                                const coachInfo = (
+                                    <p className="text-sm text-neutral-300">
+                                        Entraineur : {coachLabel}
+                                    </p>
+                                );
+
                                 if (availablePlayers.length === 0) {
                                     return (
-                                        <p className="text-sm text-gray-600">
-                                            Aucun joueur disponible pour cette composition.
-                                        </p>
+                                        <div className="space-y-2">
+                                            {coachInfo}
+                                            <p className="text-sm text-gray-600">
+                                                Aucun joueur disponible pour cette composition.
+                                            </p>
+                                        </div>
                                     );
                                 }
 
                                 return (
                                     <div className="space-y-2 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30">
+                                        {coachInfo}
+                                        <p></p>
                                         <div className="grid grid-cols-[minmax(0,1fr)_8rem_6rem] items-center gap-3 border-b border-neutral-700 pb-2 text-xs font-semibold text-gray-400">
                                             <span>Joueur</span>
                                             <span className="text-center">Capitaine</span>

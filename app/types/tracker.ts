@@ -38,12 +38,20 @@ export interface CompositionEntry {
     number: number; // jersey number
 }
 
+export interface Coach {
+    name: string;
+    photoUrl?: string;
+    nationality?: string; // ISO 3166-1 alpha-2 code
+    club?: Team["name"];
+    }
+
 export interface Roster {
     id: string;
     name: string;
     nickname?: string;
     color?: string;
     logo?: string;
+    coach?: Coach["name"];
     players: Player[]; // effectif global
     category?: 'Top 14' | 'Pro D2';
 }
@@ -86,6 +94,7 @@ export interface Event {
     videoReason?: "essai" | "jeu déloyal";
     player?: Player;
     playerNumber?: number;
+    ref?: string;
     concussion?: boolean;
     // for substitutions
     playerOut?: Player;

@@ -92,7 +92,7 @@ export default function TimerControls({
       </div>
 
       <div className="border border-neutral-700 rounded p-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mt-4">
           <label htmlFor="manualTimeInput" className="font-semibold">Timecode</label>
           <input
             id="manualTimeInput"

@@ -45,7 +45,7 @@ function getSortableFirstName(fullName: string): string {
 
 export default function RosterProfilePage() {
   const { rosterSlugId, championshipSlug } = useParams();
-  const { rosters, teams } = useTeams();
+  const { rosters, teams, setRosters } = useTeams();
 
   const rosterId = getRosterIdFromParam(rosterSlugId);
   const roster = useMemo(
@@ -94,6 +94,27 @@ export default function RosterProfilePage() {
     }));
   }, [sortedPlayers, roster, rosterTeams]);
 
+  const coachSourceRosters = useMemo(
+    () => rosters.filter((item) => item.id !== roster?.id),
+    [rosters, roster?.id]
+  );
+
+  function handleCoachSourceChange(sourceRosterId: string) {
+    if (!roster) return;
+    const sourceRoster = rosters.find((item) => item.id === sourceRosterId);
+    const nextCoach = sourceRoster?.coach?.trim() || undefined;
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? {
+              ...item,
+              coach: nextCoach,
+            }
+          : item
+      )
+    );
+  }
+
   const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
 
   if (!roster) {
@@ -128,15 +149,28 @@ export default function RosterProfilePage() {
           <p className="text-sm text-neutral-200">
             <strong>Surnom:</strong> {roster.nickname || "Non renseigné"}
           </p>
-          <p className="text-sm text-neutral-200">
-            <strong>Couleur:</strong> {roster.color || "Non renseignée"}
-          </p>
-          <p className="text-sm text-neutral-200">
-            <strong>Compositions:</strong> {rosterTeams.length}
-          </p>
-          <p className="text-sm text-neutral-200">
-            <strong>Joueurs sélectionnables:</strong> {roster.players.length}
-          </p>
+          <div className="sp-input-shell">
+            <label className="sp-input-label" htmlFor="coachFromRosterSelect">Entraineur</label>
+            <select
+              id="coachFromRosterSelect"
+              className="sp-input-control"
+              value=""
+              onChange={(event) => {
+                handleCoachSourceChange(event.target.value);
+                event.currentTarget.value = "";
+              }}
+            >
+              <option value="">Choisir depuis un autre effectif</option>
+              {coachSourceRosters.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} {item.coach ? `- ${item.coach}` : "- coach non renseigné"}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-neutral-400">
+              Valeur actuelle: {roster.coach || "Non renseigné"}
+            </p>
+          </div>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
           </p>
