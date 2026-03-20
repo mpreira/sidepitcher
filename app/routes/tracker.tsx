@@ -490,7 +490,7 @@ export default function Tracker() {
                 saveMessage={saveMessage}
             />
 
-            <section className="sp-panel-compact space-y-2">
+            {account && <section className="sp-panel-compact space-y-2">
                 <p className="text-sm text-neutral-300">Diffusion externe en lecture seule</p>
                 {!livePublicSlug ? (
                     <button
@@ -522,7 +522,7 @@ export default function Tracker() {
                     <p className="text-xs text-neutral-400">Sélectionne deux équipes différentes pour activer le live.</p>
                 )}
                 {liveMessage && <p className="text-sm text-green-700">{liveMessage}</p>}
-            </section>
+            </section>}
 
             {/* scoreboard showing teams, computed score and timers */}
             {(() => {
