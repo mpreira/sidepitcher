@@ -16,6 +16,7 @@ import {
     parsePlayerName,
 } from "~/utils/RosterUtils";
 import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
 import { COUNTRIES, getFlagUrl } from "~/utils/countries";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -83,6 +84,15 @@ export default function RosterDetailPage() {
     const [compositionEditMessage, setCompositionEditMessage] = useState("");
     const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
     const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(false);
+    const [isEditingCoach, setIsEditingCoach] = useState(false);
+    const [coachInput, setCoachInput] = useState("");
+
+    function saveCoach() {
+        if (!roster) return;
+        const updatedRoster = { ...roster, coach: coachInput.trim() || undefined };
+        setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        setIsEditingCoach(false);
+    }
 
     const rosterId = getRosterIdFromParam(rosterSlugId);
     const roster = useMemo(
@@ -473,9 +483,33 @@ export default function RosterDetailPage() {
             <div className="space-y-1">
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
-                <p className="text-foreground max-w-3xl text-sm font-light text-white text-balance text-center mx-auto">
-                    Entraineur : {roster.coach || "Non renseigné"}
-                </p>
+                <div className="flex items-center justify-between max-w-3xl mx-auto">
+                    {isEditingCoach ? (
+                        <input
+                            type="text"
+                            className="sp-input-control flex-1 text-sm"
+                            autoFocus
+                            value={coachInput}
+                            onChange={(e) => setCoachInput(e.target.value)}
+                            onBlur={saveCoach}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveCoach(); if (e.key === "Escape") setIsEditingCoach(false); }}
+                        />
+                    ) : (
+                        <p className="text-sm font-light text-white">
+                            Entraineur : {roster.coach || "Non renseigné"}
+                        </p>
+                    )}
+                    {!isEditingCoach && (
+                        <button
+                            type="button"
+                            className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                            onClick={() => { setCoachInput(roster.coach || ""); setIsEditingCoach(true); }}
+                            aria-label="Modifier l'entraîneur"
+                        >
+                            <FontAwesomeIcon icon={faPenToSquareRegular} />
+                        </button>
+                    )}
+                </div>
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
                     <FontAwesomeIcon icon={faArrowLeft} />
                     Retour aux effectifs
