@@ -341,7 +341,9 @@ export default function PlayerProfilePage() {
         {playerCompositions.length === 0 ? (
           <p className="text-sm text-neutral-400">Aucune composition pour ce joueur.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul
+            className={`space-y-2 ${playerCompositions.length > 4 ? "max-h-56 overflow-y-auto pr-1" : ""}`}
+          >
             {playerCompositions.map((entry) => (
               <li key={`${entry.teamId}-${entry.number}`} className="rounded border border-neutral-700 bg-neutral-800/40 px-3 py-2 text-sm text-neutral-200">
                 {entry.teamName} - #{entry.number}
