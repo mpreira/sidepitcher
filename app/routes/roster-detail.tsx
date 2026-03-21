@@ -15,7 +15,9 @@ import {
     updateTeamInList,
     parsePlayerName,
 } from "~/utils/RosterUtils";
-import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck, faPlus, faCircleXmark, faAngleRight, faAngleDown, faTrashCan, faPenToSquare, faUser, faCrown, faChevronLeft, faArrowLeft, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
+import { COUNTRIES, getFlagUrl } from "~/utils/countries";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -46,6 +48,42 @@ function getSortableFirstName(fullName: string): string {
     return (first || last).trim();
 }
 
+const POSITION_PRIORITY: PlayerPosition[] = [
+    "première ligne",
+    "talonneur",
+    "deuxième ligne",
+    "troisième ligne",
+    "demi de mêlée",
+    "demi d'ouverture",
+    "centre",
+    "ailier",
+    "arrière",
+];
+
+function getPositionRank(positions?: PlayerPosition[]): number {
+    if (!positions || positions.length === 0) return POSITION_PRIORITY.length;
+    const rankedPositions = positions
+        .map((position) => POSITION_PRIORITY.indexOf(position))
+        .filter((index) => index >= 0);
+    return rankedPositions.length > 0 ? Math.min(...rankedPositions) : POSITION_PRIORITY.length;
+}
+
+function comparePlayersByPositionThenName(
+    firstPlayer: { name: string; positions?: PlayerPosition[] },
+    secondPlayer: { name: string; positions?: PlayerPosition[] }
+): number {
+    const firstRank = getPositionRank(firstPlayer.positions);
+    const secondRank = getPositionRank(secondPlayer.positions);
+    if (firstRank !== secondRank) return firstRank - secondRank;
+
+    const firstFirstName = getSortableFirstName(firstPlayer.name);
+    const secondFirstName = getSortableFirstName(secondPlayer.name);
+    const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
+    if (firstNameComparison !== 0) return firstNameComparison;
+
+    return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
+}
+
 export default function RosterDetailPage() {
     const { rosterSlugId, championshipSlug } = useParams();
     const {
@@ -62,6 +100,7 @@ export default function RosterDetailPage() {
     const [newPlayerLast, setNewPlayerLast] = useState("");
     const [newPlayerPositions, setNewPlayerPositions] = useState<PlayerPosition[]>([]);
     const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState("");
+    const [newPlayerNationality, setNewPlayerNationality] = useState("");
     const [compositionMessage, setCompositionMessage] = useState("");
     const [playerMessage, setPlayerMessage] = useState("");
     const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -69,6 +108,7 @@ export default function RosterDetailPage() {
     const [editingPlayerLast, setEditingPlayerLast] = useState("");
     const [editingPlayerPositions, setEditingPlayerPositions] = useState<PlayerPosition[]>([]);
     const [editingPlayerPhotoUrl, setEditingPlayerPhotoUrl] = useState("");
+    const [editingPlayerNationality, setEditingPlayerNationality] = useState("");
     const [newPlayerFirstError, setNewPlayerFirstError] = useState("");
     const [newPlayerLastError, setNewPlayerLastError] = useState("");
     const [editingPlayerFirstError, setEditingPlayerFirstError] = useState("");
@@ -79,7 +119,16 @@ export default function RosterDetailPage() {
     const [selectedCaptainPlayerId, setSelectedCaptainPlayerId] = useState<string | null>(null);
     const [compositionEditMessage, setCompositionEditMessage] = useState("");
     const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
-    const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(true);
+    const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(false);
+    const [isEditingCoach, setIsEditingCoach] = useState(false);
+    const [coachInput, setCoachInput] = useState("");
+
+    function saveCoach() {
+        if (!roster) return;
+        const updatedRoster = { ...roster, coach: coachInput.trim() || undefined };
+        setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        setIsEditingCoach(false);
+    }
 
     const rosterId = getRosterIdFromParam(rosterSlugId);
     const roster = useMemo(
@@ -105,13 +154,7 @@ export default function RosterDetailPage() {
     const sortedRosterPlayers = useMemo(() => {
         if (!roster) return [];
 
-        return [...roster.players].sort((firstPlayer, secondPlayer) => {
-            const firstFirstName = getSortableFirstName(firstPlayer.name);
-            const secondFirstName = getSortableFirstName(secondPlayer.name);
-            const firstNameComparison = firstFirstName.localeCompare(secondFirstName, "fr", { sensitivity: "base" });
-            if (firstNameComparison !== 0) return firstNameComparison;
-            return firstPlayer.name.localeCompare(secondPlayer.name, "fr", { sensitivity: "base" });
-        });
+        return [...roster.players].sort(comparePlayersByPositionThenName);
     }, [roster]);
 
     const compositionName = matchDay ? `${roster?.name} J${matchDay}` : null;
@@ -198,6 +241,14 @@ export default function RosterDetailPage() {
             return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
         }
         return `/roster/${rosterSlugId}/player/${playerId}`;
+    }
+
+    function getRosterProfilePath(): string {
+        if (!rosterSlugId) return "/roster";
+        if (championshipSlug) {
+            return `/roster/${championshipSlug}/${rosterSlugId}/effectif`;
+        }
+        return `/roster/${rosterSlugId}/effectif`;
     }
 
     function addTeam() {
@@ -354,7 +405,8 @@ export default function RosterDetailPage() {
             formattedFirst,
             formattedLast,
             newPlayerPositions,
-            newPlayerPhotoUrl
+            newPlayerPhotoUrl,
+            newPlayerNationality || undefined
         );
         const updatedRoster = addPlayerToRosterList(roster, player);
 
@@ -369,11 +421,12 @@ export default function RosterDetailPage() {
         setNewPlayerLast("");
         setNewPlayerPositions([]);
         setNewPlayerPhotoUrl("");
+        setNewPlayerNationality("");
         setNewPlayerFirstError("");
         setNewPlayerLastError("");
     }
 
-    function startEditPlayer(player: { id: string; name: string; positions?: PlayerPosition[]; photoUrl?: string }) {
+    function startEditPlayer(player: { id: string; name: string; positions?: PlayerPosition[]; photoUrl?: string; nationality?: string }) {
         const { first, last } = parsePlayerName(player.name);
         const formattedFirst = formatName(first);
         const formattedLast = formatName(last);
@@ -382,6 +435,7 @@ export default function RosterDetailPage() {
         setEditingPlayerLast(formattedLast);
         setEditingPlayerPositions(player.positions ?? []);
         setEditingPlayerPhotoUrl(player.photoUrl ?? "");
+        setEditingPlayerNationality(player.nationality ?? "");
         setEditingPlayerFirstError(validateName(formattedFirst));
         setEditingPlayerLastError(validateName(formattedLast));
         setPlayerMessage("");
@@ -393,6 +447,7 @@ export default function RosterDetailPage() {
         setEditingPlayerLast("");
         setEditingPlayerPositions([]);
         setEditingPlayerPhotoUrl("");
+        setEditingPlayerNationality("");
         setEditingPlayerFirstError("");
         setEditingPlayerLastError("");
     }
@@ -412,6 +467,7 @@ export default function RosterDetailPage() {
             name: newName,
             positions: editingPlayerPositions,
             photoUrl: editingPlayerPhotoUrl,
+            nationality: editingPlayerNationality || undefined,
         });
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
         cancelEditPlayer();
@@ -457,14 +513,28 @@ export default function RosterDetailPage() {
             <div className="space-y-1">
                 <h1 className="leading-[0.95] font-bold tracking-[-0.03em] text-4xl text-center text-white">{roster.name}</h1>
                 <p className="text-foreground max-w-3xl text-base font-light text-white text-balance sm:text-lg text-center mx-auto mb-8">Championnat : {roster.category || "N/A"}</p>
+                
                 <Link to="/roster" className="inline-flex items-center gap-2 text-white text-sm">
                     <FontAwesomeIcon icon={faArrowLeft} />
                     Retour aux effectifs
                 </Link>
+                <div>
+                    <Link
+                        className="sp-button sp-button-sm sp-button-indigo mt-4"
+                        to={getRosterProfilePath()}
+                        aria-label={`Voir le détail de l'effectif ${roster.name}`}
+                    >
+                        <FontAwesomeIcon icon={faEye} className="mr-1" />
+                        Détail
+                    </Link>
+                </div>
             </div>
 
             <section className="space-y-2">
                 <h2 className="font-semibold">Compositions</h2>
+                <p className="text-sm font-light text-white">
+                    Entraineur : {roster.coach || "Non renseigné"}
+                </p>
                 {compositionEditTeamId && compositionEditTeam && roster && (
                     <div
                         className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
@@ -487,15 +557,17 @@ export default function RosterDetailPage() {
                             {(() => {
                                 const allEntries = [...compositionEditTeam.starters, ...compositionEditTeam.substitutes];
                                 const existingIds = new Set(allEntries.map((entry) => entry.player.id));
-                                const availablePlayers = roster.players.filter(
-                                    (player) => !existingIds.has(player.id)
-                                );
+                                const availablePlayers = roster.players
+                                    .filter((player) => !existingIds.has(player.id))
+                                    .sort(comparePlayersByPositionThenName);
 
                                 if (availablePlayers.length === 0) {
                                     return (
-                                        <p className="text-sm text-gray-600">
-                                            Aucun joueur disponible pour cette composition.
-                                        </p>
+                                        <div className="space-y-2">
+                                            <p className="text-sm text-gray-600">
+                                                Aucun joueur disponible pour cette composition.
+                                            </p>
+                                        </div>
                                     );
                                 }
 
@@ -576,7 +648,7 @@ export default function RosterDetailPage() {
                 ) : (
                     <ul className="space-y-1">
                         {rosterTeams.map((team: Team) => (
-                            <li key={team.id} className="p-2 space-y-2 mb-6 py-6">
+                            <li key={team.id} className="p-2 space-y-2 py-2">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <button
@@ -801,6 +873,20 @@ export default function RosterDetailPage() {
                                     }}
                                 />
                             </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="newPlayerNationality">Nationalité</label>
+                                <select
+                                    id="newPlayerNationality"
+                                    className="sp-input-control"
+                                    value={newPlayerNationality}
+                                    onChange={(event) => setNewPlayerNationality(event.target.value)}
+                                >
+                                    <option value="">— Non renseignée —</option>
+                                    {COUNTRIES.map((c) => (
+                                        <option key={c.code} value={c.code}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button
                                     className="sp-button sp-button-sm sp-button-blue"
@@ -926,6 +1012,20 @@ export default function RosterDetailPage() {
                                         void handlePlayerPhotoUpload(event, "edit");
                                     }}
                                 />
+                            </div>
+                            <div className="sp-input-shell">
+                                <label className="sp-input-label" htmlFor="editingPlayerNationality">Nationalité</label>
+                                <select
+                                    id="editingPlayerNationality"
+                                    className="sp-input-control"
+                                    value={editingPlayerNationality}
+                                    onChange={(event) => setEditingPlayerNationality(event.target.value)}
+                                >
+                                    <option value="">— Non renseignée —</option>
+                                    {COUNTRIES.map((c) => (
+                                        <option key={c.code} value={c.code}>{c.name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="flex items-center justify-center gap-2">
                                 <button

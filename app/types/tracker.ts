@@ -1,5 +1,5 @@
 export const PLAYER_POSITIONS = [
-    "pilier",
+    "première ligne",
     "talonneur",
     "deuxième ligne",
     "troisième ligne",
@@ -12,12 +12,25 @@ export const PLAYER_POSITIONS = [
 
 export type PlayerPosition = typeof PLAYER_POSITIONS[number];
 
+export interface PlayerStats {
+    points: number;
+    essais: number;
+    pied: number;
+    tauxTransfo: number; // 0..100
+    cartons: number;
+    drops: number;
+    matchs2526: number;
+    titularisations2526: number;
+}
+
 export interface Player {
     id: string;
     name: string;
     number?: number; // optional jersey number
     positions?: PlayerPosition[];
     photoUrl?: string;
+    nationality?: string; // ISO 3166-1 alpha-2 code
+    stats?: PlayerStats;
 }
 
 export interface CompositionEntry {
@@ -25,12 +38,20 @@ export interface CompositionEntry {
     number: number; // jersey number
 }
 
+export interface Coach {
+    name: string;
+    photoUrl?: string;
+    nationality?: string; // ISO 3166-1 alpha-2 code
+    club?: Team["name"];
+    }
+
 export interface Roster {
     id: string;
     name: string;
     nickname?: string;
     color?: string;
     logo?: string;
+    coach?: Coach["name"];
     players: Player[]; // effectif global
     category?: 'Top 14' | 'Pro D2';
 }
@@ -73,6 +94,7 @@ export interface Event {
     videoReason?: "essai" | "jeu déloyal";
     player?: Player;
     playerNumber?: number;
+    ref?: string;
     concussion?: boolean;
     // for substitutions
     playerOut?: Player;

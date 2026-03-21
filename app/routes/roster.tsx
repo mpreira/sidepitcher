@@ -8,7 +8,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function RosterPage() {
-    const { account } = useAccount();
     const {
         rosters,
         teams,
