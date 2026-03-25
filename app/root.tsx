@@ -161,9 +161,9 @@ function AppContent() {
                 className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition-colors ${
                   item.active
                     ? item.isSelected
-                      ? "border-blue-500/70 bg-blue-500/15 text-blue-400"
-                      : "border-gray-700 bg-neutral-900 text-gray-300 hover:bg-neutral-800"
-                    : "border-gray-800 bg-neutral-900/60 text-gray-500"
+                      ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                      : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                    : "border-neutral-800 bg-neutral-900/60 text-neutral-500"
                 }`}
                 title={item.active ? item.label : `${item.label} (bientôt)`}
               >
@@ -171,9 +171,9 @@ function AppContent() {
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${
                     item.active
                       ? item.isSelected
-                        ? "border-blue-500/70 bg-blue-500/15"
-                        : "border-gray-700 bg-neutral-900"
-                      : "border-gray-800 bg-neutral-900/60"
+                        ? "border-blue-500 bg-blue-500/20"
+                        : "border-neutral-700 bg-neutral-900"
+                      : "border-neutral-800 bg-neutral-900/60"
                   }`}
                 >
                   <FontAwesomeIcon className="text-base" icon={item.icon} />
