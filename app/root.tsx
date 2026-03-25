@@ -110,6 +110,10 @@ function AppContent() {
         <Outlet />
       </div>
 
+      <footer className="pointer-events-none px-4 pb-20 text-center text-[10px] uppercase tracking-wide text-neutral-600">
+        © {new Date().getFullYear()} Match Reporter
+      </footer>
+
       <ScrollPageControls />
 
       <nav className="fixed inset-x-0 bottom-3 z-50 px-3">
