@@ -92,7 +92,7 @@ export default function TrackerStatsPanel({
               const statValue = stat.values[teamIdx] || 0;
               return (
                 <div key={stat.label} className="rounded p-2 text-center">
-                  <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     <button
                       className="sp-button sp-button-icon text-neutral-200"
                       onClick={() => stat.onAdjust(teamIdx, -1)}
