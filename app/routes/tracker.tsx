@@ -9,6 +9,7 @@ import EventForm from "~/components/EventForm";
 import EventsList from "~/components/EventsList";
 import TrackerTeamSelection from "~/components/TrackerTeamSelection";
 import TrackerStatsPanel from "~/components/TrackerStatsPanel";
+import TrackerTeamsPanel from "~/components/TrackerTeamsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -83,7 +84,7 @@ export default function Tracker() {
     const [team1Id, setTeam1Id] = useState<string>("");
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
-    const [actionTab, setActionTab] = useState<"events" | "stats">("events");
+    const [actionTab, setActionTab] = useState<"events" | "stats" | "teams">("events");
     const [referee, setReferee] = useState<string>("");
     const [refereeInput, setRefereeInput] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
@@ -141,7 +142,7 @@ export default function Tracker() {
 
     useEffect(() => {
         const storedTab = window.localStorage.getItem(TRACKER_ACTION_TAB_STORAGE_KEY);
-        if (storedTab === "events" || storedTab === "stats") {
+        if (storedTab === "events" || storedTab === "stats" || storedTab === "teams") {
             setActionTab(storedTab);
         }
     }, []);
@@ -598,8 +599,31 @@ export default function Tracker() {
                     >
                         Statistiques
                     </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "teams"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("teams");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        Équipes
+                    </button>
                 </div>
             </section>
+
+            {actionTab === "teams" && (
+                <section className="space-y-3">
+                    <TrackerTeamsPanel
+                        selectedTeams={selectedTeams}
+                        events={events}
+                        getDisplayTeamLabel={getDisplayTeamLabel}
+                    />
+                </section>
+            )}
 
             {actionTab === "stats" && (
                 <section className="space-y-3">
