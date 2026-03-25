@@ -13,7 +13,7 @@ import TrackerTeamsPanel from "~/components/TrackerTeamsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faChartLine, faCheck, faListCheck, faStickyNote, faUsers } from "@fortawesome/free-solid-svg-icons";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { useTrackerClock } from "~/hooks/useTrackerClock";
@@ -22,6 +22,7 @@ import { useTrackerStats } from "~/hooks/useTrackerStats";
 import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
 import TrackerNotesPanel from "~/components/TrackerNotesPanel";
+import { faClipboard } from "@fortawesome/free-regular-svg-icons";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Match Reporter" }];
@@ -593,6 +594,7 @@ export default function Tracker() {
                         }`}
                         onClick={() => setActionTab("events")}
                     >
+                        <FontAwesomeIcon icon={faListCheck} className="mr-1" />
                         Événements
                     </button>
                     <button
@@ -606,6 +608,7 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
+                        <FontAwesomeIcon icon={faChartLine} className="mr-1" />
                         Statistiques
                     </button>
                     <button
@@ -619,6 +622,7 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
+                        <FontAwesomeIcon icon={faUsers} className="mr-1" />
                         Équipes
                     </button>
                     <button
@@ -632,7 +636,7 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
-                        Notes
+                        <FontAwesomeIcon icon={faClipboard} className="mr-1" />
                     </button>
                 </div>
             </section>
