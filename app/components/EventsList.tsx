@@ -17,13 +17,18 @@ interface Props {
 
 export default function EventsList({ events, remove }: Props) {
   const prevCountRef = useRef(events.length);
-  const [newEventIdx, setNewEventIdx] = useState<number | null>(null);
+  // flashGeneration est un timestamp (Date.now()) non-null pendant 8 s après l'ajout d'un événement.
+  // Pendant ce temps, le premier élément (idx === 0) reçoit l'animation "new-event-flash".
+  // On utilise idx === 0 car matchFactsEvents est triée du plus récent au plus ancien :
+  // le dernier événement ajouté est toujours à l'index 0.
+  const [flashGeneration, setFlashGeneration] = useState<number | null>(null);
 
   useEffect(() => {
     const currentCount = events.length;
     if (currentCount > prevCountRef.current) {
-      setNewEventIdx(currentCount - 1);
-      const timer = setTimeout(() => setNewEventIdx(null), 8000);
+      const gen = Date.now();
+      setFlashGeneration(gen);
+      const timer = setTimeout(() => setFlashGeneration(null), 8000);
       prevCountRef.current = currentCount;
       return () => clearTimeout(timer);
     }
@@ -95,7 +100,7 @@ export default function EventsList({ events, remove }: Props) {
     <ul className="space-y-1">
       {events.map((e, idx) => (
         <li key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-white">
-          <span className={`min-w-0 break-words${idx === newEventIdx ? " new-event-flash" : ""}`}>
+          <span className={`min-w-0 break-words${idx === 0 && flashGeneration !== null ? " new-event-flash" : ""}`}>
             {e.summary ? (
               renderSummaryEvent(e)
             ) : (

@@ -43,7 +43,20 @@ export interface Coach {
     photoUrl?: string;
     nationality?: string; // ISO 3166-1 alpha-2 code
     club?: Team["name"];
-    }
+}
+
+export interface President {
+    name: string;
+    photoUrl?: string;
+    nationality?: string; // ISO 3166-1 alpha-2 code
+    club?: Team["name"];
+}
+
+export interface Title {
+    competition: 'Top 14' | 'Pro D2 | Coupe d\'Europe' | 'Challenge Cup' | string;
+    ranking: 'Vainqueur' | 'Finaliste' | string;
+    year: number;
+}
 
 export interface Roster {
     id: string;
@@ -52,8 +65,11 @@ export interface Roster {
     color?: string;
     logo?: string;
     coach?: Coach["name"];
+    president?: President["name"];
     players: Player[]; // effectif global
     category?: 'Top 14' | 'Pro D2';
+    founded_in?: number; // year of creation
+    titles?: Title[]; // list of titles won
 }
 
 export interface Team {

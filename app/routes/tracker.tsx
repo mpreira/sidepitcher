@@ -9,10 +9,11 @@ import EventForm from "~/components/EventForm";
 import EventsList from "~/components/EventsList";
 import TrackerTeamSelection from "~/components/TrackerTeamSelection";
 import TrackerStatsPanel from "~/components/TrackerStatsPanel";
+import TrackerTeamsPanel from "~/components/TrackerTeamsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faChartLine, faCheck, faListCheck, faStickyNote, faUsers } from "@fortawesome/free-solid-svg-icons";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { useTrackerClock } from "~/hooks/useTrackerClock";
@@ -20,6 +21,8 @@ import { useTrackerEvents } from "~/hooks/useTrackerEvents";
 import { useTrackerStats } from "~/hooks/useTrackerStats";
 import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
+import TrackerNotesPanel from "~/components/TrackerNotesPanel";
+import { faClipboard } from "@fortawesome/free-regular-svg-icons";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Match Reporter" }];
@@ -71,6 +74,8 @@ export default function Tracker() {
         [rosters]
     );
     
+    // Si une journée est sélectionnée, on ne garde que les équipes correspondant à cette journée
+    // (leur nom contient "J{matchDay}"). On y injecte aussi le surnom de l'effectif associé.
     const teamsForDay = useMemo(
         () => matchDay
             ? teams
@@ -83,7 +88,7 @@ export default function Tracker() {
     const [team1Id, setTeam1Id] = useState<string>("");
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
-    const [actionTab, setActionTab] = useState<"events" | "stats">("events");
+    const [actionTab, setActionTab] = useState<"events" | "stats" | "teams"| "notes" >("events");
     const [referee, setReferee] = useState<string>("");
     const [refereeInput, setRefereeInput] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
@@ -114,6 +119,7 @@ export default function Tracker() {
         selectedTeamsCount: selectedTeams.length,
     });
 
+    // Retourne le surnom de l'équipe s'il existe, sinon le nom sans le suffixe de journée (ex: " J3").
     function getDisplayTeamLabel(team: { name: string; nickname?: string }): string {
         return team.nickname || team.name.replace(/\s+J\d+$/, "");
     }
@@ -141,7 +147,7 @@ export default function Tracker() {
 
     useEffect(() => {
         const storedTab = window.localStorage.getItem(TRACKER_ACTION_TAB_STORAGE_KEY);
-        if (storedTab === "events" || storedTab === "stats") {
+        if (storedTab === "events" || storedTab === "stats" || storedTab === "teams") {
             setActionTab(storedTab);
         }
     }, []);
@@ -162,7 +168,8 @@ export default function Tracker() {
         setReferee(refereeInput.trim());
     }
 
-    // Load saved selection for the current championship/matchday.
+    // Charge la sélection d'équipes sauvegardée pour le championnat + la journée en cours.
+    // On utilise un flag "cancelled" pour ignorer la réponse si le composant s'est démonté entre-temps.
     useEffect(() => {
         if (!championship || !matchDay) return;
 
@@ -204,8 +211,12 @@ export default function Tracker() {
         setSavedTrackingSignature(null);
     }
 
+    // Détecte un changement de contexte (championnat / journée / sport) après le premier rendu.
+    // On utilise des refs pour comparer les valeurs précédentes sans déclencher de boucle.
+    // Si le contexte change, on remet à zéro tous les événements, la minuterie et les stats.
     useEffect(() => {
         if (!contextInitializedRef.current) {
+            // Premier rendu : on mémorise le contexte initial sans réinitialiser
             contextInitializedRef.current = true;
             prevContextRef.current = { matchDay, championship, sport };
             return;
@@ -583,6 +594,7 @@ export default function Tracker() {
                         }`}
                         onClick={() => setActionTab("events")}
                     >
+                        <FontAwesomeIcon icon={faListCheck} className="mr-1" />
                         Événements
                     </button>
                     <button
@@ -596,10 +608,55 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
+                        <FontAwesomeIcon icon={faChartLine} className="mr-1" />
                         Statistiques
+                    </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "teams"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("teams");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faUsers} className="mr-1" />
+                        Équipes
+                    </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "notes"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("notes");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faClipboard} className="mr-1" />
+                        Notes
                     </button>
                 </div>
             </section>
+
+            {actionTab === "teams" && (
+                <section className="space-y-3">
+                    <TrackerTeamsPanel
+                        selectedTeams={selectedTeams}
+                        events={events}
+                        getDisplayTeamLabel={getDisplayTeamLabel}
+                    />
+                </section>
+            )}
+
+            {actionTab === "notes" && (
+                <section className="space-y-3">
+                    <TrackerNotesPanel />
+                </section>
+            )}
 
             {actionTab === "stats" && (
                 <section className="space-y-3">

@@ -13,6 +13,10 @@ export function useTrackerClock() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   }
 
+  // Retourne deux valeurs d'affichage :
+  //   - mainTime    : le temps principal, plafonné à 40 min par mi-temps
+  //   - secondaryTime : le temps additionnel si la mi-temps dépasse 40 min (null sinon)
+  // La 2e mi-temps commence à partir de 40 min côté chrono interne (time démarre toujours à 0).
   function getDisplayTimes() {
     const HALF_SECONDS = 40 * 60;
 

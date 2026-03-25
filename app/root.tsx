@@ -103,28 +103,92 @@ function AppContent() {
     : [];
 
   const navigationItems = isLiveRoute ? liveNavigationItems : defaultNavigationItems;
+  const resolvedNavigationItems = navigationItems.map((item) => {
+    const itemPathname = item.href.split("?")[0];
+    const isSelected =
+      item.active &&
+      (itemPathname === "/"
+        ? pathname === "/"
+        : itemPathname === liveBasePath
+          ? pathname === itemPathname
+          : pathname === itemPathname || pathname.startsWith(`${itemPathname}/`));
+
+    return {
+      ...item,
+      isSelected,
+    };
+  });
 
   return (
     <>
-      <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden" : "min-h-screen w-full max-w-full pb-32 overflow-x-hidden"}>
+      <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden xl:pl-72" : "min-h-screen w-full max-w-full overflow-x-hidden pb-32 xl:pl-72 xl:pb-10"}>
         <Outlet />
       </div>
 
+      <footer className="pointer-events-none px-4 pb-20 text-center text-[10px] uppercase tracking-wide text-neutral-600 xl:pb-6 xl:pl-72">
+        © {new Date().getFullYear()} Match Reporter
+      </footer>
+
       <ScrollPageControls />
 
-      <nav className="fixed inset-x-0 bottom-3 z-50 px-3">
+      <nav className="fixed left-4 top-4 bottom-4 z-50 hidden w-64 xl:block">
+        <div className="flex h-full flex-col rounded-3xl border border-gray-700 bg-neutral-950/95 px-4 py-5 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
+          <div className="border-b border-gray-800 pb-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-700 bg-neutral-900 p-2">
+                <img src="/favicon_mr.png" alt="Match Reporter" className="h-full w-full object-contain" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-lg font-semibold text-white">Match Reporter</p>
+                <p className="text-xs uppercase tracking-wide text-neutral-500">
+                  {isLiveRoute ? "Navigation live" : "Navigation"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-1 flex-col gap-2 overflow-y-auto">
+            {resolvedNavigationItems.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                aria-disabled={!item.active}
+                onClick={(event) => {
+                  if (!item.active) {
+                    event.preventDefault();
+                  }
+                }}
+                className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition-colors ${
+                  item.active
+                    ? item.isSelected
+                      ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                      : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                    : "border-neutral-800 bg-neutral-900/60 text-neutral-500"
+                }`}
+                title={item.active ? item.label : `${item.label} (bientôt)`}
+              >
+                <span
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                    item.active
+                      ? item.isSelected
+                        ? "border-blue-500 bg-blue-500/20"
+                        : "border-neutral-700 bg-neutral-900"
+                      : "border-neutral-800 bg-neutral-900/60"
+                  }`}
+                >
+                  <FontAwesomeIcon className="text-base" icon={item.icon} />
+                </span>
+                <span className="min-w-0 truncate font-medium">{item.label}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <nav className="fixed inset-x-0 bottom-3 z-50 px-3 xl:hidden">
         <div className="mx-auto max-w-screen-md">
           <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
-            {navigationItems.map((item) => {
-              const itemPathname = item.href.split("?")[0];
-              const isSelected =
-                item.active &&
-                (itemPathname === "/"
-                  ? pathname === "/"
-                  : itemPathname === liveBasePath
-                    ? pathname === itemPathname
-                  : pathname === itemPathname || pathname.startsWith(`${itemPathname}/`));
-
+            {resolvedNavigationItems.map((item) => {
               return (
                 <a
                   key={item.label}
@@ -137,7 +201,7 @@ function AppContent() {
                   }}
                   className={`flex flex-1 min-w-0 flex-col items-center justify-start gap-1 py-1 text-[11px] leading-none transition-colors md:text-[13px] ${
                     item.active
-                      ? isSelected
+                      ? item.isSelected
                         ? "text-blue-400"
                         : "text-gray-300"
                       : "text-gray-500"
@@ -147,7 +211,7 @@ function AppContent() {
                   <span
                     className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors md:h-12 md:w-12 ${
                       item.active
-                        ? isSelected
+                        ? item.isSelected
                           ? "border-blue-500/70 bg-blue-500/15"
                           : "border-gray-700 bg-neutral-900"
                         : "border-gray-800 bg-neutral-900/60"
