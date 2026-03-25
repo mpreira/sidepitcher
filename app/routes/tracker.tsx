@@ -21,6 +21,7 @@ import { useTrackerEvents } from "~/hooks/useTrackerEvents";
 import { useTrackerStats } from "~/hooks/useTrackerStats";
 import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
+import TrackerNotesPanel from "~/components/TrackerNotesPanel";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Match Reporter" }];
@@ -86,7 +87,7 @@ export default function Tracker() {
     const [team1Id, setTeam1Id] = useState<string>("");
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
-    const [actionTab, setActionTab] = useState<"events" | "stats" | "teams">("events");
+    const [actionTab, setActionTab] = useState<"events" | "stats" | "teams"| "notes" >("events");
     const [referee, setReferee] = useState<string>("");
     const [refereeInput, setRefereeInput] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
@@ -620,6 +621,19 @@ export default function Tracker() {
                     >
                         Équipes
                     </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "notes"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("notes");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        Notes
+                    </button>
                 </div>
             </section>
 
@@ -630,6 +644,12 @@ export default function Tracker() {
                         events={events}
                         getDisplayTeamLabel={getDisplayTeamLabel}
                     />
+                </section>
+            )}
+
+            {actionTab === "notes" && (
+                <section className="space-y-3">
+                    <TrackerNotesPanel />
                 </section>
             )}
 
