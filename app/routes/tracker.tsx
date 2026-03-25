@@ -637,6 +637,7 @@ export default function Tracker() {
                         }}
                     >
                         <FontAwesomeIcon icon={faClipboard} className="mr-1" />
+                        Notes
                     </button>
                 </div>
             </section>
