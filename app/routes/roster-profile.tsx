@@ -173,6 +173,12 @@ export default function RosterProfilePage() {
           <p className="text-sm text-neutral-200">
             <strong>Championnat:</strong> {roster.category || "Non renseigné"}
           </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Création :</strong> uc
+          </p>
+          <p className="text-sm text-neutral-200">
+            <strong>Palmarès :</strong> uc
+          </p>
           <div className="flex items-center justify-between">
             {isEditingCoach ? (
               <input
@@ -200,6 +206,9 @@ export default function RosterProfilePage() {
               </button>
             )}
           </div>
+          <p className="text-sm text-neutral-200">
+            <strong>Président :</strong> uc
+          </p>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
           </p>
