@@ -162,8 +162,8 @@ function AppContent() {
                   item.active
                     ? item.isSelected
                       ? "border-blue-500/70 bg-blue-500/15 text-blue-400"
-                      : "border-gray-700 bg-neutral-900 text-gray-300 hover:bg-neutral-800"
-                    : "border-gray-800 bg-neutral-900/60 text-gray-500"
+                      : "bg-neutral-900 text-gray-300 hover:bg-neutral-800"
+                    : "bg-neutral-900/60 text-gray-500"
                 }`}
                 title={item.active ? item.label : `${item.label} (bientôt)`}
               >
