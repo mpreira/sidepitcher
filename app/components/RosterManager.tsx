@@ -19,7 +19,7 @@ import {
     getTeamPlayers,
 } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleCheck, faPlus, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck, faPlus, faPenToSquare, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 interface Props {
     rosters: Roster[];
@@ -249,6 +249,10 @@ export default function RosterManager({
         if (activeRosterId === id) {
             setActiveRosterId(null);
         }
+        if (editingRosterId === id) {
+            closeEditRosterForm();
+        }
+        setRosterFeedbackMessage("Effectif supprimé.");
     }
 
     function addPlayerToRoster() {
@@ -608,6 +612,13 @@ export default function RosterManager({
                                 Annuler
                             </button>
                         </div>
+                        <button
+                            className="sp-button sp-button-sm sp-button-red"
+                            onClick={() => editingRosterId && deleteRoster(editingRosterId)}
+                        >
+                            <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
+                            Supprimer l'effectif
+                        </button>
                         {rosterFormError && <p className="text-sm text-red-400">{rosterFormError}</p>}
                     </div>
                 </div>
