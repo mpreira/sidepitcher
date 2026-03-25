@@ -34,7 +34,7 @@ export default function TrackerNotesPanel() {
         <>
           <textarea
             className="sp-input-control w-full min-h-[10rem] max-h-[50vh] resize-y text-sm"
-            placeholder="Prends tes notes ici…"
+            placeholder="Une note par ligne…"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             autoFocus
@@ -51,8 +51,16 @@ export default function TrackerNotesPanel() {
         </>
       ) : (
         <>
-          <div className="whitespace-pre-wrap rounded bg-neutral-900 px-3 py-2 text-sm text-neutral-200 min-h-[5rem] max-h-[50vh] overflow-y-auto">
-            {notes || <span className="text-neutral-500 italic">Aucune note.</span>}
+          <div className="rounded bg-neutral-900 px-3 py-2 text-sm text-neutral-200 min-h-[5rem] max-h-[50vh] overflow-y-auto">
+            {notes ? (
+              <ul className="list-disc list-inside space-y-1">
+                {notes.split("\n").filter((line) => line.trim()).map((line, i) => (
+                  <li key={i}>{line.trim()}</li>
+                ))}
+              </ul>
+            ) : (
+              <span className="text-neutral-500 italic">Aucune note.</span>
+            )}
           </div>
           <div className="flex justify-end">
             <button
