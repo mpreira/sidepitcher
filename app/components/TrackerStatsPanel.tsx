@@ -94,7 +94,7 @@ export default function TrackerStatsPanel({
                 <div key={stat.label} className="rounded p-2 text-center">
                   <div className="flex items-center justify-between gap-1">
                     <button
-                      className="sp-button sp-button-neutral sp-button-icon text-neutral-200"
+                      className="sp-button sp-button-icon text-neutral-200"
                       onClick={() => stat.onAdjust(teamIdx, -1)}
                       aria-label={`Diminuer ${stat.label}`}
                     >
@@ -102,7 +102,7 @@ export default function TrackerStatsPanel({
                     </button>
                     <span className="text-2xl leading-none text-white font-bold min-w-8">{statValue}</span>
                     <button
-                      className="sp-button sp-button-neutral sp-button-icon text-neutral-200"
+                      className="sp-button sp-button-icon text-neutral-200"
                       onClick={() => stat.onAdjust(teamIdx, 1)}
                       aria-label={`Augmenter ${stat.label}`}
                     >
