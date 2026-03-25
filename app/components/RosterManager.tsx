@@ -611,14 +611,15 @@ export default function RosterManager({
                             >
                                 Annuler
                             </button>
+                            <button
+                                className="sp-button sp-button-sm sp-button-red"
+                                onClick={() => editingRosterId && deleteRoster(editingRosterId)}
+                            >
+                                <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
+                                Supprimer l'effectif
+                            </button>
                         </div>
-                        <button
-                            className="sp-button sp-button-sm sp-button-red"
-                            onClick={() => editingRosterId && deleteRoster(editingRosterId)}
-                        >
-                            <FontAwesomeIcon icon={faTrashCan} className="mr-1" />
-                            Supprimer l'effectif
-                        </button>
+                        
                         {rosterFormError && <p className="text-sm text-red-400">{rosterFormError}</p>}
                     </div>
                 </div>
