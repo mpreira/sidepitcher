@@ -465,6 +465,21 @@ export default function RosterManager({
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
+                            <select
+                                id="newRosterCategory"
+                                className="sp-input-control"
+                                value={newRosterCategory}
+                                onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                            >
+                                {championshipOptions.map((option) => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterName">Nom de l'effectif</label>
                             <input
                                 id="newRosterName"
@@ -511,6 +526,18 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
+                            <input
+                                id="newRosterLogoFile"
+                                type="file"
+                                accept="image/*"
+                                className="sp-input-control"
+                                onChange={(event) => {
+                                    void handleRosterLogoUpload(event, "new");
+                                }}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterCoach">Coach (optionnel)</label>
                             <input
                                 id="newRosterCoach"
@@ -550,33 +577,7 @@ export default function RosterManager({
                                 onChange={(e) => setNewRosterTitles(e.target.value)}
                             />
                         </div>
-                        <div className="sp-input-shell">
-                            <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
-                            <input
-                                id="newRosterLogoFile"
-                                type="file"
-                                accept="image/*"
-                                className="sp-input-control"
-                                onChange={(event) => {
-                                    void handleRosterLogoUpload(event, "new");
-                                }}
-                            />
-                        </div>
-                        <div className="sp-input-shell">
-                            <label className="sp-input-label" htmlFor="newRosterCategory">Championnat</label>
-                            <select
-                                id="newRosterCategory"
-                                className="sp-input-control"
-                                value={newRosterCategory}
-                                onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
-                            >
-                                {championshipOptions.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        
                         <div className="flex items-center justify-center gap-2">
                             <button
                                 className="sp-button sp-button-sm sp-button-blue"
