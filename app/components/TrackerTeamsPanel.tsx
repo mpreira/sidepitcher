@@ -1,6 +1,7 @@
 import { faRepeat } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { CompositionEntry, Event, Team } from "~/types/tracker";
+import { formatEventTimeline } from "~/utils/eventPresentation";
 
 interface Props {
   selectedTeams: Team[];
@@ -16,11 +17,20 @@ interface SubstitutionInfo {
 }
 
 function getEventMinuteLabel(event: Event): string {
-  const minute = event.timelineMinute ?? Math.floor(event.time / 60);
-  if (event.timelineAdditionalMinute && event.timelineAdditionalMinute > 0) {
-    return `${minute}+${event.timelineAdditionalMinute}'`;
-  }
-  return `${minute}'`;
+  return formatEventTimeline(event);
+}
+
+function isInverseSubstitution(first: Event, second: Event): boolean {
+  return (
+    first.type === "Changement" &&
+    second.type === "Changement" &&
+    !!first.team?.id &&
+    first.team.id === second.team?.id &&
+    !!first.playerOut?.id &&
+    !!first.playerIn?.id &&
+    first.playerOut.id === second.playerIn?.id &&
+    first.playerIn.id === second.playerOut?.id
+  );
 }
 
 export default function TrackerTeamsPanel({ selectedTeams, events, getDisplayTeamLabel }: Props) {
@@ -38,25 +48,31 @@ export default function TrackerTeamsPanel({ selectedTeams, events, getDisplayTea
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
       if (event.type === "Changement" && event.team?.id === team.id && event.playerOut && event.playerIn) {
-        let isTemporary = false;
-
-        for (let laterIndex = index + 1; laterIndex < events.length; laterIndex += 1) {
-          const laterEvent = events[laterIndex];
-          if (
-            laterEvent.type === "Changement" &&
-            laterEvent.team?.id === team.id &&
-            laterEvent.playerOut?.id === event.playerIn.id &&
-            laterEvent.playerIn?.id === event.playerOut.id
-          ) {
-            isTemporary = true;
+        let previousInverseIndex: number | null = null;
+        for (let prevIndex = index - 1; prevIndex >= 0; prevIndex -= 1) {
+          if (isInverseSubstitution(event, events[prevIndex])) {
+            previousInverseIndex = prevIndex;
             break;
           }
         }
 
+        let nextInverseIndex: number | null = null;
+        if (previousInverseIndex === null) {
+          for (let laterIndex = index + 1; laterIndex < events.length; laterIndex += 1) {
+            if (isInverseSubstitution(event, events[laterIndex])) {
+              nextInverseIndex = laterIndex;
+              break;
+            }
+          }
+        }
+
+        const isTemporary = previousInverseIndex !== null || nextInverseIndex !== null;
+        const initialEvent = previousInverseIndex !== null ? events[previousInverseIndex] : event;
+
         map.set(event.playerOut.id, {
           playerInName: event.playerIn.name,
           playerInNumber: event.playerInNumber,
-          initialMinuteLabel: getEventMinuteLabel(event),
+          initialMinuteLabel: getEventMinuteLabel(initialEvent),
           isTemporary,
         });
       }
