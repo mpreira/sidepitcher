@@ -17,8 +17,10 @@ interface Props {
 
 export default function EventsList({ events, remove }: Props) {
   const prevCountRef = useRef(events.length);
-  // We track a flash generation counter: when it's non-null, the first item
-  // in the received list (index 0) is the newest and gets highlighted.
+  // flashGeneration est un timestamp (Date.now()) non-null pendant 8 s après l'ajout d'un événement.
+  // Pendant ce temps, le premier élément (idx === 0) reçoit l'animation "new-event-flash".
+  // On utilise idx === 0 car matchFactsEvents est triée du plus récent au plus ancien :
+  // le dernier événement ajouté est toujours à l'index 0.
   const [flashGeneration, setFlashGeneration] = useState<number | null>(null);
 
   useEffect(() => {

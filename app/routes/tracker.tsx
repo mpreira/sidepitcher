@@ -72,6 +72,8 @@ export default function Tracker() {
         [rosters]
     );
     
+    // Si une journée est sélectionnée, on ne garde que les équipes correspondant à cette journée
+    // (leur nom contient "J{matchDay}"). On y injecte aussi le surnom de l'effectif associé.
     const teamsForDay = useMemo(
         () => matchDay
             ? teams
@@ -115,6 +117,7 @@ export default function Tracker() {
         selectedTeamsCount: selectedTeams.length,
     });
 
+    // Retourne le surnom de l'équipe s'il existe, sinon le nom sans le suffixe de journée (ex: " J3").
     function getDisplayTeamLabel(team: { name: string; nickname?: string }): string {
         return team.nickname || team.name.replace(/\s+J\d+$/, "");
     }
@@ -163,7 +166,8 @@ export default function Tracker() {
         setReferee(refereeInput.trim());
     }
 
-    // Load saved selection for the current championship/matchday.
+    // Charge la sélection d'équipes sauvegardée pour le championnat + la journée en cours.
+    // On utilise un flag "cancelled" pour ignorer la réponse si le composant s'est démonté entre-temps.
     useEffect(() => {
         if (!championship || !matchDay) return;
 
@@ -205,8 +209,12 @@ export default function Tracker() {
         setSavedTrackingSignature(null);
     }
 
+    // Détecte un changement de contexte (championnat / journée / sport) après le premier rendu.
+    // On utilise des refs pour comparer les valeurs précédentes sans déclencher de boucle.
+    // Si le contexte change, on remet à zéro tous les événements, la minuterie et les stats.
     useEffect(() => {
         if (!contextInitializedRef.current) {
+            // Premier rendu : on mémorise le contexte initial sans réinitialiser
             contextInitializedRef.current = true;
             prevContextRef.current = { matchDay, championship, sport };
             return;

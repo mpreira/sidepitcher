@@ -58,6 +58,8 @@ export function useTrackerEvents({ selectedTeamIds, selectedTeamsCount }: UseTra
     setEvents([]);
   }, []);
 
+  // Liste inversée pour afficher les événements du plus récent (index 0) au plus ancien.
+  // C'est l'ordre utilisé par EventsList pour cibler le flash sur le dernier ajout.
   const matchFactsEvents = useMemo(() => [...events].reverse(), [events]);
 
   const computeScores = useCallback((): number[] => {
@@ -107,10 +109,12 @@ export function useTrackerEvents({ selectedTeamIds, selectedTeamsCount }: UseTra
         const opponentIdx = idx === 0 ? 1 : 0;
         const tags: string[] = [];
 
+        // BO (bonification offensive) : au moins 3 essais de plus que l'adversaire
         if ((tries[idx] || 0) - (tries[opponentIdx] || 0) >= 3) {
           tags.push("BO");
         }
 
+        // BD (bonification défensive) : défaite par 5 points ou moins
         const pointsBehind = (scores[opponentIdx] || 0) - (scores[idx] || 0);
         if (pointsBehind > 0 && pointsBehind <= 5) {
           tags.push("BD");

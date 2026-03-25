@@ -20,6 +20,11 @@ function getEventMinuteLabel(event: Event): string {
   return formatEventTimeline(event);
 }
 
+/**
+ * Vérifie si deux changements sont l'inverse l'un de l'autre : A → B suivi de B → A.
+ * C'est le cas d'un remplacement temporaire (protocolaire commotion / saignement),
+ * où le joueur sorti revient ensuite sur le terrain.
+ */
 function isInverseSubstitution(first: Event, second: Event): boolean {
   return (
     first.type === "Changement" &&
@@ -42,12 +47,18 @@ export default function TrackerTeamsPanel({ selectedTeams, events, getDisplayTea
     );
   }
 
-  // Build substitution map: playerOut.id -> substitution info, per team
+  // Construit une map playerOut.id → infos de remplacement pour une équipe donnée.
+  // Pour chaque changement, on cherche :
+  //   - un changement précédent inverse → ce changement est le "retour" (temporaire)
+  //   - un changement suivant inverse   → ce changement est le "départ" initial (temporaire)
+  // Si aucun inverse n'existe, c'est un remplacement définitif.
+  // Dans les deux cas, la minute affichée est celle du premier changement (le départ initial).
   function getSubstitutionsByTeam(team: Team): Map<string, SubstitutionInfo> {
     const map = new Map<string, SubstitutionInfo>();
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
       if (event.type === "Changement" && event.team?.id === team.id && event.playerOut && event.playerIn) {
+        // Cherche un changement précédent qui serait l'inverse de cet événement
         let previousInverseIndex: number | null = null;
         for (let prevIndex = index - 1; prevIndex >= 0; prevIndex -= 1) {
           if (isInverseSubstitution(event, events[prevIndex])) {
@@ -56,6 +67,7 @@ export default function TrackerTeamsPanel({ selectedTeams, events, getDisplayTea
           }
         }
 
+        // Si aucun précédent inverse, cherche un changement suivant inverse
         let nextInverseIndex: number | null = null;
         if (previousInverseIndex === null) {
           for (let laterIndex = index + 1; laterIndex < events.length; laterIndex += 1) {
@@ -67,6 +79,7 @@ export default function TrackerTeamsPanel({ selectedTeams, events, getDisplayTea
         }
 
         const isTemporary = previousInverseIndex !== null || nextInverseIndex !== null;
+        // On affiche la minute du premier départ (pas du retour)
         const initialEvent = previousInverseIndex !== null ? events[previousInverseIndex] : event;
 
         map.set(event.playerOut.id, {
