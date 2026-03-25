@@ -121,17 +121,17 @@ function AppContent() {
 
   return (
     <>
-      <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden md:pl-72" : "min-h-screen w-full max-w-full overflow-x-hidden pb-32 md:pl-72 md:pb-10"}>
+      <div className={isHome ? "h-dvh w-full max-w-full overflow-x-hidden xl:pl-72" : "min-h-screen w-full max-w-full overflow-x-hidden pb-32 xl:pl-72 xl:pb-10"}>
         <Outlet />
       </div>
 
-      <footer className="pointer-events-none px-4 pb-20 text-center text-[10px] uppercase tracking-wide text-neutral-600 md:pb-6 md:pl-72">
+      <footer className="pointer-events-none px-4 pb-20 text-center text-[10px] uppercase tracking-wide text-neutral-600 xl:pb-6 xl:pl-72">
         © {new Date().getFullYear()} Match Reporter
       </footer>
 
       <ScrollPageControls />
 
-      <nav className="fixed left-4 top-4 bottom-4 z-50 hidden w-64 md:block">
+      <nav className="fixed left-4 top-4 bottom-4 z-50 hidden w-64 xl:block">
         <div className="flex h-full flex-col rounded-3xl border border-gray-700 bg-neutral-950/95 px-4 py-5 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
           <div className="border-b border-gray-800 pb-4">
             <div className="flex items-center gap-3">
@@ -185,7 +185,7 @@ function AppContent() {
         </div>
       </nav>
 
-      <nav className="fixed inset-x-0 bottom-3 z-50 px-3 md:hidden">
+      <nav className="fixed inset-x-0 bottom-3 z-50 px-3 xl:hidden">
         <div className="mx-auto max-w-screen-md">
           <div className="flex items-start justify-between gap-1 rounded-3xl border border-gray-700 bg-neutral-950/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80">
             {resolvedNavigationItems.map((item) => {
