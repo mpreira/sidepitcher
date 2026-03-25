@@ -166,7 +166,7 @@ export default function RosterDetailPage() {
         const cleaned = value.replace(/\s+/g, " ");
         if (!cleaned) return "";
         const lowered = cleaned.toLowerCase();
-        return lowered.replace(/(^|[-' ])[A-Za-zÀ-ÖØ-öø-ÿ]/g, (match) => {
+        return lowered.replace(/(^|[- ])[A-Za-zÀ-ÖØ-öø-ÿ]/g, (match) => {
             if (match.length === 1) return match.toUpperCase();
             return `${match.slice(0, -1)}${match.slice(-1).toUpperCase()}`;
         });

@@ -13,7 +13,7 @@ import TrackerTeamsPanel from "~/components/TrackerTeamsPanel";
 import Summary from "~/components/Summary";
 import Scoreboard from "~/components/Scoreboard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faChartLine, faCheck, faListCheck, faStickyNote, faUsers } from "@fortawesome/free-solid-svg-icons";
 import { useTeams } from "~/context/TeamsContext";
 import { useAccount } from "~/context/AccountContext";
 import { useTrackerClock } from "~/hooks/useTrackerClock";
@@ -21,6 +21,8 @@ import { useTrackerEvents } from "~/hooks/useTrackerEvents";
 import { useTrackerStats } from "~/hooks/useTrackerStats";
 import { useLiveBroadcast } from "~/hooks/useLiveBroadcast";
 import { getTimelineMomentFromClock } from "~/utils/TimeUtils";
+import TrackerNotesPanel from "~/components/TrackerNotesPanel";
+import { faClipboard } from "@fortawesome/free-regular-svg-icons";
 
 export function meta({}: Route.MetaArgs) {
     return [{ title: "Match Reporter" }];
@@ -86,7 +88,7 @@ export default function Tracker() {
     const [team1Id, setTeam1Id] = useState<string>("");
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
-    const [actionTab, setActionTab] = useState<"events" | "stats" | "teams">("events");
+    const [actionTab, setActionTab] = useState<"events" | "stats" | "teams"| "notes" >("events");
     const [referee, setReferee] = useState<string>("");
     const [refereeInput, setRefereeInput] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
@@ -592,6 +594,7 @@ export default function Tracker() {
                         }`}
                         onClick={() => setActionTab("events")}
                     >
+                        <FontAwesomeIcon icon={faListCheck} className="mr-1" />
                         Événements
                     </button>
                     <button
@@ -605,6 +608,7 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
+                        <FontAwesomeIcon icon={faChartLine} className="mr-1" />
                         Statistiques
                     </button>
                     <button
@@ -618,7 +622,22 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
+                        <FontAwesomeIcon icon={faUsers} className="mr-1" />
                         Équipes
+                    </button>
+                    <button
+                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                            actionTab === "notes"
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                        onClick={() => {
+                            setActionTab("notes");
+                            setActiveCommand(null);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faClipboard} className="mr-1" />
+                        Notes
                     </button>
                 </div>
             </section>
@@ -630,6 +649,12 @@ export default function Tracker() {
                         events={events}
                         getDisplayTeamLabel={getDisplayTeamLabel}
                     />
+                </section>
+            )}
+
+            {actionTab === "notes" && (
+                <section className="space-y-3">
+                    <TrackerNotesPanel />
                 </section>
             )}
 
