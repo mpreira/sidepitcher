@@ -33,7 +33,7 @@ export default function TrackerNotesPanel() {
       {editing ? (
         <>
           <textarea
-            className="sp-input-control w-full min-h-[10rem] resize-y text-sm"
+            className="sp-input-control w-full min-h-[10rem] max-h-[50vh] resize-y text-sm"
             placeholder="Prends tes notes ici…"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -51,7 +51,7 @@ export default function TrackerNotesPanel() {
         </>
       ) : (
         <>
-          <div className="whitespace-pre-wrap rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-200 min-h-[5rem]">
+          <div className="whitespace-pre-wrap rounded bg-neutral-900 px-3 py-2 text-sm text-neutral-200 min-h-[5rem] max-h-[50vh] overflow-y-auto">
             {notes || <span className="text-neutral-500 italic">Aucune note.</span>}
           </div>
           <div className="flex justify-end">
