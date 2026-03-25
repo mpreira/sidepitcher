@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import type { Team, Player, Roster } from "~/types/tracker";
+import type { Team, Player, Roster, Title } from "~/types/tracker";
 import { useTeams } from "~/context/TeamsContext";
 import {
     createNewRoster,
@@ -46,6 +46,9 @@ export default function RosterManager({
     const [newRosterColor, setNewRosterColor] = useState("");
     const [newRosterLogo, setNewRosterLogo] = useState("");
     const [newRosterCoach, setNewRosterCoach] = useState("");
+    const [newRosterPresident, setNewRosterPresident] = useState("");
+    const [newRosterFoundedIn, setNewRosterFoundedIn] = useState("");
+    const [newRosterTitles, setNewRosterTitles] = useState("");
     const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
     const championshipOptions = ['Top 14', 'Pro D2'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
@@ -65,6 +68,9 @@ export default function RosterManager({
     const [editingRosterColor, setEditingRosterColor] = useState("");
     const [editingRosterLogo, setEditingRosterLogo] = useState("");
     const [editingRosterCoach, setEditingRosterCoach] = useState("");
+    const [editingRosterPresident, setEditingRosterPresident] = useState("");
+    const [editingRosterFoundedIn, setEditingRosterFoundedIn] = useState("");
+    const [editingRosterTitles, setEditingRosterTitles] = useState("");
     const [rosterFormError, setRosterFormError] = useState("");
 
     const activeRoster = rosters.find((r) => r.id === activeRosterId);
@@ -94,6 +100,26 @@ export default function RosterManager({
 
     function normalizeCoach(value: string): string {
         return value.trim();
+    }
+
+    // Parse un texte libre de palmarès (une ligne = un titre).
+    // Format attendu par ligne : "Compétition Résultat Année" (ex: "Top 14 Vainqueur 2019")
+    function parseTitlesText(text: string): Title[] {
+        return text
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+                const parts = line.split(/\s+/);
+                const yearStr = parts[parts.length - 1];
+                const year = parseInt(yearStr, 10);
+                if (parts.length >= 3 && !isNaN(year)) {
+                    const ranking = parts[parts.length - 2];
+                    const competition = parts.slice(0, -2).join(" ");
+                    return { competition, ranking, year };
+                }
+                return { competition: line, ranking: "", year: 0 };
+            });
     }
 
     async function readImageAsDataUrl(file: File): Promise<string> {
@@ -152,13 +178,19 @@ export default function RosterManager({
             return;
         }
 
+        const president = newRosterPresident.trim();
+        const foundedIn = newRosterFoundedIn.trim() ? parseInt(newRosterFoundedIn.trim(), 10) : undefined;
+        const titlesText = newRosterTitles.trim();
         const newRoster = createNewRoster(
             trimmedName,
             newRosterCategory,
             nickname || undefined,
             color || undefined,
             logo || undefined,
-            coach || undefined
+            coach || undefined,
+            president || undefined,
+            !isNaN(foundedIn as number) ? foundedIn : undefined,
+            titlesText || undefined
         );
         setRosters([...rosters, newRoster]);
         setActiveRosterId(newRoster.id);
@@ -174,6 +206,9 @@ export default function RosterManager({
         setNewRosterColor("");
         setNewRosterLogo("");
         setNewRosterCoach("");
+        setNewRosterPresident("");
+        setNewRosterFoundedIn("");
+        setNewRosterTitles("");
         setNewRosterCategory('Top 14');
         setRosterFormError("");
     }
@@ -185,6 +220,9 @@ export default function RosterManager({
         setEditingRosterColor(roster.color || "");
         setEditingRosterLogo(roster.logo || "");
         setEditingRosterCoach(roster.coach || "");
+        setEditingRosterPresident(roster.president || "");
+        setEditingRosterFoundedIn(roster.founded_in ? String(roster.founded_in) : "");
+        setEditingRosterTitles(roster.titles?.map((t) => `${t.competition} ${t.ranking} ${t.year}`).join("\n") || "");
         setRosterFormError("");
     }
 
@@ -195,6 +233,9 @@ export default function RosterManager({
         setEditingRosterColor("");
         setEditingRosterLogo("");
         setEditingRosterCoach("");
+        setEditingRosterPresident("");
+        setEditingRosterFoundedIn("");
+        setEditingRosterTitles("");
         setRosterFormError("");
     }
 
@@ -205,6 +246,9 @@ export default function RosterManager({
         const color = normalizeColor(editingRosterColor);
         const logo = normalizeLogo(editingRosterLogo);
         const coach = normalizeCoach(editingRosterCoach);
+        const president = editingRosterPresident.trim();
+        const foundedIn = editingRosterFoundedIn.trim() ? parseInt(editingRosterFoundedIn.trim(), 10) : undefined;
+        const titlesText = editingRosterTitles.trim();
         const nicknameError = validateNickname(nickname);
         const colorError = validateColor(color);
         if (!trimmedName) return;
@@ -225,8 +269,9 @@ export default function RosterManager({
                     nickname: nickname || undefined,
                     color: color || undefined,
                     logo: logo || undefined,
-                    coach: coach || undefined,
-                }
+                    coach: coach || undefined,                    president: president || undefined,
+                    founded_in: !isNaN(foundedIn as number) ? foundedIn : undefined,
+                    titles: titlesText ? parseTitlesText(titlesText) : undefined,                }
                 : roster
         ));
         setTeams((prev) => prev.map((team) =>
@@ -412,11 +457,11 @@ export default function RosterManager({
 
             {showCreateRosterForm && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-8"
                     onClick={closeCreateRosterForm}
                 >
                     <div
-                        className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30"
+                        className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 transition-shadow focus-within:border-sky-500/70 focus-within:shadow-md focus-within:shadow-sky-500/30 my-auto"
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="sp-input-shell">
@@ -476,6 +521,36 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterPresident">Président (optionnel)</label>
+                            <input
+                                id="newRosterPresident"
+                                className="sp-input-control"
+                                placeholder="Nom du président"
+                                value={newRosterPresident}
+                                onChange={(e) => setNewRosterPresident(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterFoundedIn">Année de création (optionnel)</label>
+                            <input
+                                id="newRosterFoundedIn"
+                                className="sp-input-control"
+                                placeholder="ex: 1907"
+                                value={newRosterFoundedIn}
+                                onChange={(e) => setNewRosterFoundedIn(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="newRosterTitles">Palmarès (optionnel, un titre par ligne)</label>
+                            <textarea
+                                id="newRosterTitles"
+                                className="sp-input-control resize-y min-h-[4rem]"
+                                placeholder="Top 14 Vainqueur 2019"
+                                value={newRosterTitles}
+                                onChange={(e) => setNewRosterTitles(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
                             <label className="sp-input-label" htmlFor="newRosterLogoFile">Televerser un logo</label>
                             <input
                                 id="newRosterLogoFile"
@@ -523,11 +598,11 @@ export default function RosterManager({
 
             {editingRosterId && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-8"
                     onClick={closeEditRosterForm}
                 >
                     <div
-                        className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2"
+                        className="w-full max-w-lg flex flex-col items-stretch gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 my-auto"
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="sp-input-shell">
@@ -577,17 +652,7 @@ export default function RosterManager({
                             />
                         </div>
                         <div className="sp-input-shell">
-                            <label className="sp-input-label" htmlFor="editingRosterCoach">Coach (optionnel)</label>
-                            <input
-                                id="editingRosterCoach"
-                                className="sp-input-control"
-                                placeholder="Nom du coach"
-                                value={editingRosterCoach}
-                                onChange={(e) => setEditingRosterCoach(e.target.value)}
-                            />
-                        </div>
-                        <div className="sp-input-shell">
-                            <label className="sp-input-label" htmlFor="editingRosterLogoFile">Televerser un logo</label>
+                            <label className="sp-input-label" htmlFor="editingRosterLogoFile">Téléverser un logo</label>
                             <input
                                 id="editingRosterLogoFile"
                                 type="file"
@@ -598,6 +663,48 @@ export default function RosterManager({
                                 }}
                             />
                         </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterFoundedIn">Année de création (optionnel)</label>
+                            <input
+                                id="editingRosterFoundedIn"
+                                className="sp-input-control"
+                                placeholder="ex: 1907"
+                                value={editingRosterFoundedIn}
+                                onChange={(e) => setEditingRosterFoundedIn(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterCoach">Coach (optionnel)</label>
+                            <input
+                                id="editingRosterCoach"
+                                className="sp-input-control"
+                                placeholder="Nom du coach"
+                                value={editingRosterCoach}
+                                onChange={(e) => setEditingRosterCoach(e.target.value)}
+                            />
+                        </div>
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterPresident">Président (optionnel)</label>
+                            <input
+                                id="editingRosterPresident"
+                                className="sp-input-control"
+                                placeholder="Nom du président"
+                                value={editingRosterPresident}
+                                onChange={(e) => setEditingRosterPresident(e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="sp-input-shell">
+                            <label className="sp-input-label" htmlFor="editingRosterTitles">Palmarès (optionnel, un titre par ligne)</label>
+                            <textarea
+                                id="editingRosterTitles"
+                                className="sp-input-control resize-y min-h-[4rem]"
+                                placeholder="Top 14 Vainqueur 2019"
+                                value={editingRosterTitles}
+                                onChange={(e) => setEditingRosterTitles(e.target.value)}
+                            />
+                        </div>
+                        
                         <div className="flex items-center justify-center gap-2">
                             <button
                                 className="sp-button sp-button-sm sp-button-blue h-[36px]"

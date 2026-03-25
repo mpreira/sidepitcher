@@ -174,10 +174,10 @@ export default function RosterProfilePage() {
             <strong>Championnat:</strong> {roster.category || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Création :</strong> uc
+            <strong>Création :</strong> {roster.founded_in || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Palmarès :</strong> uc
+            <strong>Palmarès :</strong> {roster.titles && roster.titles.length > 0 ? roster.titles.map((title) => `${title.ranking} ${title.competition} (${title.year})`).join(", ") : "Non renseigné"}
           </p>
           <div className="flex items-center justify-between">
             {isEditingCoach ? (
@@ -207,7 +207,7 @@ export default function RosterProfilePage() {
             )}
           </div>
           <p className="text-sm text-neutral-200">
-            <strong>Président :</strong> uc
+            <strong>Président :</strong> {roster.president || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
