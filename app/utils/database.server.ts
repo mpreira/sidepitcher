@@ -1096,6 +1096,40 @@ async function migrateFromJsonFiles(pool: Pool) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Backfill: sync all existing JSON blobs to structured tables
+// ---------------------------------------------------------------------------
+
+async function backfillStructuredTables(pool: Pool): Promise<void> {
+  // Only run once: skip if stored_rosters already has data
+  const check = await pool.query<{ count: string }>(
+    "SELECT COUNT(*)::text AS count FROM stored_rosters"
+  );
+  if (Number(check.rows[0]?.count ?? "0") > 0) return;
+
+  console.log("[backfill] Syncing existing roster blobs to structured tables…");
+  const rostersRows = await pool.query<{ account_id: string; payload: string }>(
+    "SELECT account_id, payload FROM account_rosters_state"
+  );
+  for (const row of rostersRows.rows) {
+    const parsed = parseJsonOrNull<RosterStatePayload>(row.payload);
+    if (!parsed) continue;
+    await syncRosterDataToTables(pool, row.account_id, parsed);
+  }
+
+  console.log("[backfill] Syncing existing summary blobs to structured tables…");
+  const summaryRows = await pool.query<{ account_id: string; payload: string }>(
+    "SELECT account_id, payload FROM summaries"
+  );
+  for (const row of summaryRows.rows) {
+    const parsed = parseJsonOrNull<StoredSummary>(row.payload);
+    if (!parsed) continue;
+    await syncSummaryDataToTables(pool, { ...parsed, accountId: parsed.accountId ?? row.account_id });
+  }
+
+  console.log("[backfill] Done.");
+}
+
 async function ensureInitialized() {
   if (initializationPromise) {
     await initializationPromise;
@@ -1106,6 +1140,7 @@ async function ensureInitialized() {
   initializationPromise = (async () => {
     await initializeSchema(pool);
     await migrateFromJsonFiles(pool);
+    await backfillStructuredTables(pool);
   })();
 
   await initializationPromise;
