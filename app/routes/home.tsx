@@ -3,7 +3,7 @@ import { Welcome } from "~/components/Welcome";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Pitch Sider" },
+    { title: "Match Reporter" },
     { name: "description", content: "L'application de suivi de match pour les journalistes bord-terrain" },
   ];
 }
