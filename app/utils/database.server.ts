@@ -323,6 +323,23 @@ async function ensureAdminAccount(pool: Pool): Promise<void> {
   );
 }
 
+async function addForeignKeyIfMissing(
+  pool: Pool,
+  constraintName: string,
+  tableName: string,
+  constraintDef: string
+): Promise<void> {
+  const check = await pool.query(
+    `SELECT 1 FROM pg_constraint WHERE conname = $1`,
+    [constraintName]
+  );
+  if (check.rowCount === 0) {
+    await pool.query(
+      `ALTER TABLE ${tableName} ADD CONSTRAINT ${constraintName} ${constraintDef}`
+    );
+  }
+}
+
 async function initializeSchema(pool: Pool) {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS accounts (
@@ -404,7 +421,190 @@ async function initializeSchema(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_account_password_resets_account_id ON account_password_resets(account_id);
 
     ALTER TABLE match_day_selections ADD COLUMN IF NOT EXISTS account_id TEXT;
+
+    -- Structured relational tables --
+
+    CREATE TABLE IF NOT EXISTS coaches (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR NOT NULL UNIQUE,
+      photo_url VARCHAR,
+      nationality VARCHAR,
+      club VARCHAR,
+      last_modified_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS presidents (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR NOT NULL UNIQUE,
+      photo_url VARCHAR,
+      nationality VARCHAR,
+      club VARCHAR,
+      last_modified_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS competitions (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE
+    );
+
+    CREATE TABLE IF NOT EXISTS stored_rosters (
+      id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      nickname TEXT,
+      color TEXT,
+      logo TEXT,
+      coach TEXT,
+      president TEXT,
+      category TEXT,
+      founded_in INTEGER,
+      players JSONB NOT NULL DEFAULT '[]',
+      titles JSONB NOT NULL DEFAULT '[]',
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL,
+      last_modified_by TEXT,
+      coach_id INTEGER,
+      president_id INTEGER,
+      PRIMARY KEY (account_id, id)
+    );
+
+    CREATE TABLE IF NOT EXISTS stored_teams (
+      id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      roster_id TEXT,
+      name TEXT NOT NULL,
+      nickname TEXT,
+      color TEXT,
+      logo TEXT,
+      captain_player_id TEXT,
+      starters JSONB NOT NULL DEFAULT '[]',
+      substitutes JSONB NOT NULL DEFAULT '[]',
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL,
+      last_modified_by TEXT,
+      PRIMARY KEY (account_id, id)
+    );
+
+    CREATE TABLE IF NOT EXISTS players (
+      id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      number INTEGER,
+      positions JSONB DEFAULT '[]',
+      photo_url TEXT,
+      nationality VARCHAR,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL,
+      last_modified_by TEXT,
+      PRIMARY KEY (account_id, id)
+    );
+
+    CREATE TABLE IF NOT EXISTS player_stats (
+      id SERIAL PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      player_id TEXT NOT NULL,
+      points INTEGER DEFAULT 0,
+      essais INTEGER DEFAULT 0,
+      pied INTEGER DEFAULT 0,
+      taux_transfo INTEGER DEFAULT 0,
+      cartons INTEGER DEFAULT 0,
+      drops INTEGER DEFAULT 0,
+      matchs_2526 INTEGER DEFAULT 0,
+      titularisations_2526 INTEGER DEFAULT 0,
+      updated_at TIMESTAMPTZ,
+      UNIQUE (account_id, player_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS titles (
+      id SERIAL PRIMARY KEY,
+      account_id TEXT,
+      roster_id TEXT,
+      competition TEXT,
+      ranking VARCHAR,
+      year INTEGER,
+      last_modified_by TEXT,
+      UNIQUE (account_id, roster_id, competition, year)
+    );
+
+    CREATE TABLE IF NOT EXISTS matches (
+      id TEXT PRIMARY KEY,
+      account_id TEXT,
+      championship TEXT,
+      match_day INTEGER,
+      team1_id TEXT,
+      team1_name TEXT,
+      team2_id TEXT,
+      team2_name TEXT,
+      scores JSONB,
+      events JSONB,
+      stats JSONB,
+      snapshot JSONB,
+      referee TEXT,
+      played_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL,
+      last_modified_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id BIGSERIAL PRIMARY KEY,
+      table_name TEXT NOT NULL,
+      row_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      "by" TEXT,
+      "at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "before" JSONB,
+      "after" JSONB
+    );
+
+    CREATE TABLE IF NOT EXISTS event_log (
+      id BIGSERIAL PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      schema_version INTEGER NOT NULL DEFAULT 1,
+      occurred_at TIMESTAMPTZ NOT NULL,
+      received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      source TEXT NOT NULL DEFAULT 'unknown',
+      correlation_id TEXT,
+      actor_account_id TEXT,
+      match_id TEXT,
+      payload JSONB NOT NULL
+    );
+
+    -- Indexes for structured tables --
+    CREATE INDEX IF NOT EXISTS idx_coaches_name ON coaches(name);
+    CREATE INDEX IF NOT EXISTS idx_presidents_name ON presidents(name);
+    CREATE INDEX IF NOT EXISTS idx_competitions_name ON competitions(name);
+    CREATE INDEX IF NOT EXISTS idx_stored_rosters_account_id ON stored_rosters(account_id);
+    CREATE INDEX IF NOT EXISTS idx_stored_teams_account_id ON stored_teams(account_id);
+    CREATE INDEX IF NOT EXISTS idx_stored_teams_roster_id ON stored_teams(account_id, roster_id);
+    CREATE INDEX IF NOT EXISTS idx_players_account_id ON players(account_id);
+    CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
+    CREATE INDEX IF NOT EXISTS idx_player_stats_account_id ON player_stats(account_id);
+    CREATE INDEX IF NOT EXISTS idx_player_stats_player_id ON player_stats(account_id, player_id);
+    CREATE INDEX IF NOT EXISTS idx_titles_roster ON titles(account_id, roster_id);
+    CREATE INDEX IF NOT EXISTS idx_titles_competition ON titles(competition);
+    CREATE INDEX IF NOT EXISTS idx_titles_year ON titles(year);
+    CREATE INDEX IF NOT EXISTS idx_titles_ranking ON titles(ranking);
+    CREATE INDEX IF NOT EXISTS idx_event_log_event_type ON event_log(event_type);
+    CREATE INDEX IF NOT EXISTS idx_event_log_match_id ON event_log(match_id);
+    CREATE INDEX IF NOT EXISTS idx_event_log_occurred_at ON event_log(occurred_at);
   `);
+
+  // Add FK constraints (ignore if they already exist)
+  await addForeignKeyIfMissing(pool, "fk_stored_rosters_account", "stored_rosters", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
+  await addForeignKeyIfMissing(pool, "fk_stored_rosters_coach", "stored_rosters", "FOREIGN KEY (coach_id) REFERENCES coaches(id)");
+  await addForeignKeyIfMissing(pool, "fk_stored_rosters_president", "stored_rosters", "FOREIGN KEY (president_id) REFERENCES presidents(id)");
+  await addForeignKeyIfMissing(pool, "fk_stored_rosters_competition", "stored_rosters", "FOREIGN KEY (category) REFERENCES competitions(name)");
+  await addForeignKeyIfMissing(pool, "fk_stored_teams_account", "stored_teams", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
+  await addForeignKeyIfMissing(pool, "fk_stored_teams_roster", "stored_teams", "FOREIGN KEY (account_id, roster_id) REFERENCES stored_rosters(account_id, id)");
+  await addForeignKeyIfMissing(pool, "fk_players_account", "players", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
+  await addForeignKeyIfMissing(pool, "fk_player_stats_account", "player_stats", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
+  await addForeignKeyIfMissing(pool, "fk_player_stats_player", "player_stats", "FOREIGN KEY (account_id, player_id) REFERENCES players(account_id, id)");
+  await addForeignKeyIfMissing(pool, "fk_titles_roster", "titles", "FOREIGN KEY (account_id, roster_id) REFERENCES stored_rosters(account_id, id)");
+  await addForeignKeyIfMissing(pool, "fk_titles_competition", "titles", "FOREIGN KEY (competition) REFERENCES competitions(name)");
+  await addForeignKeyIfMissing(pool, "fk_matches_account", "matches", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
+  await addForeignKeyIfMissing(pool, "fk_summaries_account", "summaries", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
 
   await pool.query(
     `UPDATE accounts
@@ -443,6 +643,349 @@ async function initializeSchema(pool: Pool) {
   await pool.query(`ALTER TABLE match_day_selections DROP CONSTRAINT IF EXISTS match_day_selections_pkey`);
   await pool.query(`ALTER TABLE match_day_selections ALTER COLUMN account_id SET NOT NULL`);
   await pool.query(`ALTER TABLE match_day_selections ADD PRIMARY KEY (account_id, championship, match_day)`);
+}
+
+// ---------------------------------------------------------------------------
+// Structured sync: roster blob → relational tables
+// ---------------------------------------------------------------------------
+
+async function syncRosterDataToTables(
+  pool: Pool,
+  accountId: string,
+  payload: RosterStatePayload
+): Promise<void> {
+  if (isAnonymousScopeId(accountId)) return;
+
+  const rosters = Array.isArray(payload.rosters)
+    ? (payload.rosters as Record<string, unknown>[])
+    : [];
+  const teams = Array.isArray(payload.teams)
+    ? (payload.teams as Record<string, unknown>[])
+    : [];
+  const nowIso = new Date().toISOString();
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // 1. Collect all unique competition names (from category + titles)
+    const competitionNames = new Set<string>();
+    for (const r of rosters) {
+      if (r.category && typeof r.category === "string") {
+        competitionNames.add(r.category);
+      }
+      const rTitles = Array.isArray(r.titles) ? (r.titles as Record<string, unknown>[]) : [];
+      for (const t of rTitles) {
+        if (t.competition && typeof t.competition === "string") {
+          competitionNames.add(t.competition);
+        }
+      }
+    }
+    for (const name of competitionNames) {
+      await client.query(
+        `INSERT INTO competitions (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+        [name]
+      );
+    }
+
+    // 2. Upsert coaches → collect name→id
+    const coachIdMap = new Map<string, number>();
+    for (const r of rosters) {
+      const coachName = r.coach;
+      if (coachName && typeof coachName === "string" && !coachIdMap.has(coachName)) {
+        const res = await client.query<{ id: number }>(
+          `INSERT INTO coaches (name, last_modified_by)
+           VALUES ($1, $2)
+           ON CONFLICT (name) DO UPDATE SET last_modified_by = EXCLUDED.last_modified_by
+           RETURNING id`,
+          [coachName, accountId]
+        );
+        coachIdMap.set(coachName, res.rows[0].id);
+      }
+    }
+
+    // 3. Upsert presidents → collect name→id
+    const presidentIdMap = new Map<string, number>();
+    for (const r of rosters) {
+      const presName = r.president;
+      if (presName && typeof presName === "string" && !presidentIdMap.has(presName)) {
+        const res = await client.query<{ id: number }>(
+          `INSERT INTO presidents (name, last_modified_by)
+           VALUES ($1, $2)
+           ON CONFLICT (name) DO UPDATE SET last_modified_by = EXCLUDED.last_modified_by
+           RETURNING id`,
+          [presName, accountId]
+        );
+        presidentIdMap.set(presName, res.rows[0].id);
+      }
+    }
+
+    // 4. Delete existing data for this account (respecting FK order)
+    await client.query("DELETE FROM player_stats WHERE account_id = $1", [accountId]);
+    await client.query("DELETE FROM titles WHERE account_id = $1", [accountId]);
+    await client.query("DELETE FROM stored_teams WHERE account_id = $1", [accountId]);
+    await client.query("DELETE FROM players WHERE account_id = $1", [accountId]);
+    await client.query("DELETE FROM stored_rosters WHERE account_id = $1", [accountId]);
+
+    // 5. Insert stored_rosters
+    for (const r of rosters) {
+      const rid = r.id as string | undefined;
+      const rname = r.name as string | undefined;
+      if (!rid || !rname) continue;
+
+      const coachName = typeof r.coach === "string" ? r.coach : null;
+      const presName = typeof r.president === "string" ? r.president : null;
+      const coachId = coachName ? coachIdMap.get(coachName) ?? null : null;
+      const presidentId = presName ? presidentIdMap.get(presName) ?? null : null;
+      const rPlayers = Array.isArray(r.players) ? r.players : [];
+      const rTitles = Array.isArray(r.titles) ? r.titles : [];
+
+      await client.query(
+        `INSERT INTO stored_rosters
+         (id, account_id, name, nickname, color, logo, coach, president, category,
+          founded_in, players, titles, created_at, updated_at, last_modified_by,
+          coach_id, president_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13,$14,$15,$16)`,
+        [
+          rid,
+          accountId,
+          rname,
+          (r.nickname as string) ?? null,
+          (r.color as string) ?? null,
+          (r.logo as string) ?? null,
+          coachName,
+          presName,
+          (r.category as string) ?? null,
+          typeof r.founded_in === "number" ? r.founded_in : null,
+          JSON.stringify(rPlayers),
+          JSON.stringify(rTitles),
+          nowIso,
+          accountId,
+          coachId,
+          presidentId,
+        ]
+      );
+
+      // 6. Insert players from this roster
+      for (const p of rPlayers as Record<string, unknown>[]) {
+        const pid = p.id as string | undefined;
+        const pname = p.name as string | undefined;
+        if (!pid || !pname) continue;
+
+        await client.query(
+          `INSERT INTO players
+           (id, account_id, name, number, positions, photo_url, nationality,
+            created_at, updated_at, last_modified_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8,$9)
+           ON CONFLICT (account_id, id) DO UPDATE SET
+             name = EXCLUDED.name,
+             number = EXCLUDED.number,
+             positions = EXCLUDED.positions,
+             photo_url = EXCLUDED.photo_url,
+             nationality = EXCLUDED.nationality,
+             updated_at = EXCLUDED.updated_at`,
+          [
+            pid,
+            accountId,
+            pname,
+            typeof p.number === "number" ? p.number : null,
+            JSON.stringify(Array.isArray(p.positions) ? p.positions : []),
+            (p.photoUrl as string) ?? null,
+            (p.nationality as string) ?? null,
+            nowIso,
+            accountId,
+          ]
+        );
+
+        // 7. Insert player_stats if present
+        const stats = p.stats as Record<string, unknown> | undefined;
+        if (stats && typeof stats === "object") {
+          await client.query(
+            `INSERT INTO player_stats
+             (account_id, player_id, points, essais, pied, taux_transfo,
+              cartons, drops, matchs_2526, titularisations_2526, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+             ON CONFLICT (account_id, player_id) DO UPDATE SET
+               points = EXCLUDED.points,
+               essais = EXCLUDED.essais,
+               pied = EXCLUDED.pied,
+               taux_transfo = EXCLUDED.taux_transfo,
+               cartons = EXCLUDED.cartons,
+               drops = EXCLUDED.drops,
+               matchs_2526 = EXCLUDED.matchs_2526,
+               titularisations_2526 = EXCLUDED.titularisations_2526,
+               updated_at = EXCLUDED.updated_at`,
+            [
+              accountId,
+              pid,
+              typeof stats.points === "number" ? stats.points : 0,
+              typeof stats.essais === "number" ? stats.essais : 0,
+              typeof stats.pied === "number" ? stats.pied : 0,
+              typeof stats.tauxTransfo === "number" ? stats.tauxTransfo : 0,
+              typeof stats.cartons === "number" ? stats.cartons : 0,
+              typeof stats.drops === "number" ? stats.drops : 0,
+              typeof stats.matchs2526 === "number" ? stats.matchs2526 : 0,
+              typeof stats.titularisations2526 === "number" ? stats.titularisations2526 : 0,
+              nowIso,
+            ]
+          );
+        }
+      }
+
+      // 8. Insert titles from this roster
+      for (const t of rTitles as Record<string, unknown>[]) {
+        const comp = t.competition as string | undefined;
+        const yr = t.year as number | undefined;
+        if (!comp || typeof yr !== "number") continue;
+
+        await client.query(
+          `INSERT INTO titles
+           (account_id, roster_id, competition, ranking, year, last_modified_by)
+           VALUES ($1,$2,$3,$4,$5,$6)
+           ON CONFLICT (account_id, roster_id, competition, year) DO UPDATE SET
+             ranking = EXCLUDED.ranking,
+             last_modified_by = EXCLUDED.last_modified_by`,
+          [accountId, rid, comp, (t.ranking as string) ?? null, yr, accountId]
+        );
+      }
+    }
+
+    // 9. Insert stored_teams
+    for (const team of teams as Record<string, unknown>[]) {
+      const tid = team.id as string | undefined;
+      const tname = team.name as string | undefined;
+      if (!tid || !tname) continue;
+
+      await client.query(
+        `INSERT INTO stored_teams
+         (id, account_id, roster_id, name, nickname, color, logo,
+          captain_player_id, starters, substitutes,
+          created_at, updated_at, last_modified_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12)`,
+        [
+          tid,
+          accountId,
+          (team.rosterId as string) ?? null,
+          tname,
+          (team.nickname as string) ?? null,
+          (team.color as string) ?? null,
+          (team.logo as string) ?? null,
+          (team.captainPlayerId as string) ?? null,
+          JSON.stringify(Array.isArray(team.starters) ? team.starters : []),
+          JSON.stringify(Array.isArray(team.substitutes) ? team.substitutes : []),
+          nowIso,
+          accountId,
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("[syncRosterDataToTables] Sync failed (JSON blob was saved):", err);
+  } finally {
+    client.release();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Structured sync: summary blob → matches + event_log
+// ---------------------------------------------------------------------------
+
+async function syncSummaryDataToTables(
+  pool: Pool,
+  summary: StoredSummary
+): Promise<void> {
+  if (isAnonymousScopeId(summary.accountId)) return;
+
+  const summaryTeams = Array.isArray(summary.teams) ? summary.teams : [];
+  const team1 = summaryTeams[0] ?? null;
+  const team2 = summaryTeams[1] ?? null;
+  const events = Array.isArray(summary.events)
+    ? (summary.events as Record<string, unknown>[])
+    : [];
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Upsert match record
+    await client.query(
+      `INSERT INTO matches
+       (id, account_id, championship, match_day,
+        team1_id, team1_name, team2_id, team2_name,
+        scores, events, stats, played_at,
+        created_at, updated_at, last_modified_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NULL,$11,$11,$11,$12)
+       ON CONFLICT (id) DO UPDATE SET
+         events = EXCLUDED.events,
+         scores = EXCLUDED.scores,
+         updated_at = EXCLUDED.updated_at`,
+      [
+        summary.id,
+        summary.accountId,
+        null,
+        summary.matchDay ?? null,
+        team1?.id ?? null,
+        team1?.name ?? null,
+        team2?.id ?? null,
+        team2?.name ?? null,
+        JSON.stringify(summary.summary ?? {}),
+        JSON.stringify(events),
+        summary.createdAt,
+        summary.accountId,
+      ]
+    );
+
+    // Replace event_log entries for this match
+    await client.query(
+      `DELETE FROM event_log WHERE match_id = $1`,
+      [summary.id]
+    );
+
+    for (let i = 0; i < events.length; i++) {
+      const evt = events[i];
+      const eventType = (evt.type as string) ?? "unknown";
+      const eventTime = typeof evt.time === "number" ? evt.time : 0;
+      const occurredAt = new Date(
+        new Date(summary.createdAt).getTime() + eventTime * 1000
+      ).toISOString();
+
+      await client.query(
+        `INSERT INTO event_log
+         (event_id, event_type, schema_version, occurred_at,
+          source, actor_account_id, match_id, payload)
+         VALUES ($1,$2,1,$3,'tracker',$4,$5,$6)`,
+        [
+          `${summary.id}_${i}`,
+          eventType,
+          occurredAt,
+          summary.accountId,
+          summary.id,
+          JSON.stringify(evt),
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("[syncSummaryDataToTables] Sync failed (JSON blob was saved):", err);
+  } finally {
+    client.release();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Remove structured data for a deleted summary
+// ---------------------------------------------------------------------------
+
+async function removeSummaryStructuredData(
+  pool: Pool,
+  summaryId: string
+): Promise<void> {
+  await pool.query(`DELETE FROM event_log WHERE match_id = $1`, [summaryId]);
+  await pool.query(`DELETE FROM matches WHERE id = $1`, [summaryId]);
 }
 
 async function migrateFromJsonFiles(pool: Pool) {
@@ -601,6 +1144,9 @@ export async function saveRostersStateForAccount(accountId: string, payload: Ros
      ON CONFLICT(account_id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at`,
     [accountId, JSON.stringify(payload), new Date().toISOString()]
   );
+
+  // Sync to structured relational tables
+  await syncRosterDataToTables(pool, accountId, payload);
 }
 
 export async function getAccountById(accountId: string): Promise<Account | null> {
@@ -998,9 +1544,20 @@ export async function deleteAccountByAdmin(accountId: string): Promise<void> {
   const pool = getPool();
   await cleanupExpiredAnonymousData(pool);
 
+  // Delete structured relational data (FK order)
+  await pool.query(`DELETE FROM event_log WHERE actor_account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM matches WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM player_stats WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM titles WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM stored_teams WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM players WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM stored_rosters WHERE account_id = $1`, [accountId]);
+
+  // Delete blob data
   await pool.query(`DELETE FROM account_rosters_state WHERE account_id = $1`, [accountId]);
   await pool.query(`DELETE FROM match_day_selections WHERE account_id = $1`, [accountId]);
   await pool.query(`DELETE FROM summaries WHERE account_id = $1`, [accountId]);
+  await pool.query(`DELETE FROM account_password_resets WHERE account_id = $1`, [accountId]);
   await pool.query(`DELETE FROM accounts WHERE id = $1`, [accountId]);
 }
 
@@ -1148,6 +1705,9 @@ export async function insertSummary(summary: StoredSummary): Promise<void> {
     JSON.stringify(summary),
     summary.accountId,
   ]);
+
+  // Sync to structured relational tables
+  await syncSummaryDataToTables(pool, summary);
 }
 
 export async function deleteSummary(summaryId: string, accountId: string): Promise<void> {
@@ -1155,6 +1715,9 @@ export async function deleteSummary(summaryId: string, accountId: string): Promi
   const pool = getPool();
   await cleanupExpiredAnonymousData(pool);
   await pool.query(`DELETE FROM summaries WHERE id = $1 AND account_id = $2`, [summaryId, accountId]);
+
+  // Clean structured data
+  await removeSummaryStructuredData(pool, summaryId);
 }
 
 function mapLiveMatchRow(row: {
