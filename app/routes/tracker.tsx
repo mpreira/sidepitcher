@@ -587,18 +587,18 @@ export default function Tracker() {
                 <p></p>
                 <div className="flex items-center gap-2">
                     <button
-                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        className={`px-2 sm:px-3 py-2 rounded border text-sm font-medium transition-colors ${
                             actionTab === "events"
                                 ? "border-blue-500 bg-blue-500/20 text-blue-300"
                                 : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
                         }`}
                         onClick={() => setActionTab("events")}
                     >
-                        <FontAwesomeIcon icon={faListCheck} className="mr-1" />
-                        Événements
+                        <FontAwesomeIcon icon={faListCheck} className="sm:mr-1" />
+                        <span className="hidden sm:inline"> Événements</span>
                     </button>
                     <button
-                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        className={`px-2 sm:px-3 py-2 rounded border text-sm font-medium transition-colors ${
                             actionTab === "stats"
                                 ? "border-blue-500 bg-blue-500/20 text-blue-300"
                                 : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
@@ -608,11 +608,11 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
-                        <FontAwesomeIcon icon={faChartLine} className="mr-1" />
-                        Statistiques
+                        <FontAwesomeIcon icon={faChartLine} className="sm:mr-1" />
+                        <span className="hidden sm:inline"> Statistiques</span>
                     </button>
                     <button
-                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        className={`px-2 sm:px-3 py-2 rounded border text-sm font-medium transition-colors ${
                             actionTab === "teams"
                                 ? "border-blue-500 bg-blue-500/20 text-blue-300"
                                 : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
@@ -622,11 +622,11 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
-                        <FontAwesomeIcon icon={faUsers} className="mr-1" />
-                        Équipes
+                        <FontAwesomeIcon icon={faUsers} className="sm:mr-1" />
+                        <span className="hidden sm:inline"> Équipes</span>
                     </button>
                     <button
-                        className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        className={`px-2 sm:px-3 py-2 rounded border text-sm font-medium transition-colors ${
                             actionTab === "notes"
                                 ? "border-blue-500 bg-blue-500/20 text-blue-300"
                                 : "border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800"
@@ -636,8 +636,8 @@ export default function Tracker() {
                             setActiveCommand(null);
                         }}
                     >
-                        <FontAwesomeIcon icon={faClipboard} className="mr-1" />
-                        Notes
+                        <FontAwesomeIcon icon={faClipboard} className="sm:mr-1" />
+                        <span className="hidden sm:inline"> Notes</span>
                     </button>
                 </div>
             </section>
