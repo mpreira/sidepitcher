@@ -6,6 +6,7 @@ interface Props {
 const COMMAND_ICON_MAP: Record<string, string> = {
     "Essai": "🏉",
     "Transformation": "🎯",
+    "Transformation manquée": "❌",
     "Pénalité réussie": "✅",
     "Drop": "🦶",
     "Essai de pénalité": "✅",
