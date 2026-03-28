@@ -157,10 +157,10 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
       subject: "Reinitialisation de ton mot de passe Match Reporter",
       text:
         `Bonjour ${input.accountName},\n\n` +
-        "Tu as demande la reinitialisation de ton mot de passe.\n\n" +
-        `Clique sur ce lien pour definir un nouveau mot de passe : ${input.resetUrl}\n\n` +
+        "Tu as demandé la réinitialisation de ton mot de passe.\n\n" +
+        `Clique sur ce lien pour définir un nouveau mot de passe : ${input.resetUrl}\n\n` +
         "Ce lien expire dans 30 minutes.\n" +
-        "Si tu n'es pas a l'origine de cette demande, tu peux ignorer cet email.",
+        "Si tu n'es pas à l'origine de cette demande, tu peux ignorer cet email.",
     }),
   });
 
@@ -204,7 +204,7 @@ export async function sendAccountApprovedEmail(input: AccountApprovedEmailInput)
       subject: "Ton compte Match Reporter est actif !",
       text:
         `Bonjour ${input.accountName},\n\n` +
-        "Bonne nouvelle: ton compte Match Reporter vient d'etre activé par un administrateur.\n\n" +
+        "Bonne nouvelle : ton compte Match Reporter vient d'etre activé par un administrateur.\n\n" +
         "Tu peux maintenant te connecter avec ton email et ton mot de passe.",
     }),
   });
