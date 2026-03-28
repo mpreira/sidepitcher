@@ -201,10 +201,10 @@ export async function sendAccountApprovedEmail(input: AccountApprovedEmailInput)
     body: JSON.stringify({
       from,
       to: [input.accountEmail],
-      subject: "Ton compte Match Reporter est active",
+      subject: "Ton compte Match Reporter est actif !",
       text:
         `Bonjour ${input.accountName},\n\n` +
-        "Bonne nouvelle: ton compte Match Reporter vient d'etre active par un administrateur.\n\n" +
+        "Bonne nouvelle: ton compte Match Reporter vient d'etre activé par un administrateur.\n\n" +
         "Tu peux maintenant te connecter avec ton email et ton mot de passe.",
     }),
   });
