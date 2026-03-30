@@ -14,12 +14,12 @@ export function meta({ params }: Route.MetaArgs) {
   return [{ title: "Vue effectif" }];
 }
 
-function getRosterBackPath(rosterId: string | undefined): string {
+function getRosterBackPath(rosterId: string | null | undefined): string {
   if (!rosterId) return "/roster";
   return `/r/${toShortId(rosterId)}`;
 }
 
-function getPlayerProfilePath(rosterId: string | undefined, playerId: string): string {
+function getPlayerProfilePath(rosterId: string | null | undefined, playerId: string): string {
   if (!rosterId) return "/roster";
   return `/r/${toShortId(rosterId)}/p/${toShortId(playerId)}`;
 }

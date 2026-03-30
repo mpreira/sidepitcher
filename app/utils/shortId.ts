@@ -3,7 +3,7 @@
  * @param id Full UUID (e.g., "e525c291-be7d-4176-8f0c-c8e741b80642")
  * @returns Short ID (e.g., "e525c291")
  */
-export function toShortId(id: string | undefined): string {
+export function toShortId(id: string | undefined | null): string {
   if (!id) return "";
   return id.slice(0, 8);
 }

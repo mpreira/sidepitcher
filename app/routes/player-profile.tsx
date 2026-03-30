@@ -40,7 +40,7 @@ export function meta({ params }: Route.MetaArgs) {
 
 
 
-function getRosterBackPath(rosterId: string | undefined): string {
+function getRosterBackPath(rosterId: string | null | undefined): string {
   if (!rosterId) return "/roster";
   return `/r/${rosterId}`;
 }
