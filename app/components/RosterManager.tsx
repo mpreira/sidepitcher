@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Team, Player, Roster, Title } from "~/types/tracker";
+import { toShortId } from "~/utils/shortId";
 import { useTeams } from "~/context/TeamsContext";
 import {
     createNewRoster,
@@ -399,7 +400,7 @@ export default function RosterManager({
     }
 
     function getRosterPath(roster: Roster) {
-        return `/r/${roster.id}`;
+        return `/r/${toShortId(roster.id)}`;
     }
 
     const { matchDay, championship } = useTeams();

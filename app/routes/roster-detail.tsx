@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
+import { toShortId, findFullId } from "~/utils/shortId";
 import { PLAYER_POSITIONS, type PlayerPosition, type Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
@@ -71,7 +72,7 @@ function comparePlayersByPositionThenName(
 }
 
 export default function RosterDetailPage() {
-    const { rosterId } = useParams();
+    const { rosterId: shortRosterId } = useParams();
     const {
         rosters,
         teams,
@@ -115,6 +116,12 @@ export default function RosterDetailPage() {
         setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
         setIsEditingCoach(false);
     }
+
+    // Convert short ID to full ID
+    const rosterId = useMemo(
+        () => findFullId(shortRosterId, rosters),
+        [shortRosterId, rosters]
+    );
 
     const roster = useMemo(
         () => rosters.find((r) => r.id === rosterId) ?? null,
@@ -222,12 +229,12 @@ export default function RosterDetailPage() {
 
     function getPlayerProfilePath(playerId: string): string {
         if (!rosterId) return "/roster";
-        return `/r/${rosterId}/p/${playerId}`;
+        return `/r/${toShortId(rosterId)}/p/${toShortId(playerId)}`;
     }
 
     function getRosterProfilePath(): string {
         if (!rosterId) return "/roster";
-        return `/r/${rosterId}/team`;
+        return `/r/${toShortId(rosterId)}/team`;
     }
 
     function addTeam() {

@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-profile";
 import { useMemo, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { toShortId, findFullId } from "~/utils/shortId";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
@@ -15,12 +16,12 @@ export function meta({ params }: Route.MetaArgs) {
 
 function getRosterBackPath(rosterId: string | undefined): string {
   if (!rosterId) return "/roster";
-  return `/r/${rosterId}`;
+  return `/r/${toShortId(rosterId)}`;
 }
 
 function getPlayerProfilePath(rosterId: string | undefined, playerId: string): string {
   if (!rosterId) return "/roster";
-  return `/r/${rosterId}/p/${playerId}`;
+  return `/r/${toShortId(rosterId)}/p/${toShortId(playerId)}`;
 }
 
 
@@ -66,8 +67,14 @@ function comparePlayersByPositionThenName(
 }
 
 export default function RosterProfilePage() {
-  const { rosterId } = useParams();
+  const { rosterId: shortRosterId } = useParams();
   const { rosters, teams, setRosters } = useTeams();
+
+  // Convert short ID to full ID
+  const rosterId = useMemo(
+    () => findFullId(shortRosterId, rosters),
+    [shortRosterId, rosters]
+  );
 
   const roster = useMemo(
     () => rosters.find((item) => item.id === rosterId) ?? null,

@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/player-profile";
 import { useEffect, useMemo, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { toShortId, findFullId } from "~/utils/shortId";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl, getCountryByCode } from "~/utils/countries";
@@ -45,8 +46,18 @@ function getRosterBackPath(rosterId: string | undefined): string {
 }
 
 export default function PlayerProfilePage() {
-  const { rosterId, playerId } = useParams();
+  const { rosterId: shortRosterId, playerId: shortPlayerId } = useParams();
   const { rosters, teams, setRosters } = useTeams();
+  
+  // Convert short IDs to full IDs
+  const rosterId = useMemo(
+    () => findFullId(shortRosterId, rosters),
+    [shortRosterId, rosters]
+  );
+  const playerId = useMemo(
+    () => findFullId(shortPlayerId, rosters.flatMap(r => r.players)),
+    [shortPlayerId, rosters]
+  );
   const [isEditingStats, setIsEditingStats] = useState(false);
   const [statsMessage, setStatsMessage] = useState("");
   const [statsDraft, setStatsDraft] = useState<PlayerStats>({
@@ -126,7 +137,7 @@ export default function PlayerProfilePage() {
     setIsEditingStats(false);
   }
 
-  const backPath = getRosterBackPath(rosterId);
+  const backPath = getRosterBackPath(rosterId ? toShortId(rosterId) : undefined);
 
   if (!roster || !player) {
     return (
