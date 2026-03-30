@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
+import { toShortId, findFullId } from "~/utils/shortId";
 import { PLAYER_POSITIONS, type PlayerPosition, type Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
@@ -21,26 +22,12 @@ import { COUNTRIES, getFlagUrl } from "~/utils/countries";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function meta({ params }: Route.MetaArgs) {
-    const rosterSlugId = params.rosterSlugId;
-    if (!rosterSlugId) {
+    const rosterId = params.rosterId;
+    if (!rosterId) {
         return [{ title: "Détail effectif" }];
     }
 
-    const idx = rosterSlugId.lastIndexOf("_");
-    const rawSlug = idx === -1 ? rosterSlugId : rosterSlugId.slice(0, idx);
-    const rosterName = rawSlug
-        .replace(/_/g, " ")
-        .trim()
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-
-    return [{ title: rosterName || "Détail effectif" }];
-}
-
-function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
-    if (!rosterSlugId) return null;
-    const idx = rosterSlugId.lastIndexOf("_");
-    if (idx === -1) return rosterSlugId;
-    return rosterSlugId.slice(idx + 1);
+    return [{ title: "Détail effectif" }];
 }
 
 function getSortableFirstName(fullName: string): string {
@@ -85,7 +72,7 @@ function comparePlayersByPositionThenName(
 }
 
 export default function RosterDetailPage() {
-    const { rosterSlugId, championshipSlug } = useParams();
+    const { rosterId: shortRosterId } = useParams();
     const {
         rosters,
         teams,
@@ -130,7 +117,12 @@ export default function RosterDetailPage() {
         setIsEditingCoach(false);
     }
 
-    const rosterId = getRosterIdFromParam(rosterSlugId);
+    // Convert short ID to full ID
+    const rosterId = useMemo(
+        () => findFullId(shortRosterId, rosters),
+        [shortRosterId, rosters]
+    );
+
     const roster = useMemo(
         () => rosters.find((r) => r.id === rosterId) ?? null,
         [rosters, rosterId]
@@ -236,19 +228,13 @@ export default function RosterDetailPage() {
     }
 
     function getPlayerProfilePath(playerId: string): string {
-        if (!rosterSlugId) return "/roster";
-        if (championshipSlug) {
-            return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
-        }
-        return `/roster/${rosterSlugId}/player/${playerId}`;
+        if (!rosterId) return "/roster";
+        return `/r/${toShortId(rosterId)}/p/${toShortId(playerId)}`;
     }
 
     function getRosterProfilePath(): string {
-        if (!rosterSlugId) return "/roster";
-        if (championshipSlug) {
-            return `/roster/${championshipSlug}/${rosterSlugId}/effectif`;
-        }
-        return `/roster/${rosterSlugId}/effectif`;
+        if (!rosterId) return "/roster";
+        return `/r/${toShortId(rosterId)}/team`;
     }
 
     function addTeam() {

@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-profile";
 import { useMemo, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { toShortId, findFullId } from "~/utils/shortId";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
@@ -10,36 +11,19 @@ import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular
 import type { PlayerPosition } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
-  const rosterSlugId = params.rosterSlugId;
-  return [{ title: rosterSlugId ? "Vue effectif" : "Effectif" }];
+  return [{ title: "Vue effectif" }];
 }
 
-function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
-  if (!rosterSlugId) return null;
-  const idx = rosterSlugId.lastIndexOf("_");
-  if (idx === -1) return rosterSlugId;
-  return rosterSlugId.slice(idx + 1);
+function getRosterBackPath(rosterId: string | null | undefined): string {
+  if (!rosterId) return "/roster";
+  return `/r/${toShortId(rosterId)}`;
 }
 
-function getRosterBackPath(rosterSlugId: string | undefined, championshipSlug: string | undefined): string {
-  if (!rosterSlugId) return "/roster";
-  if (championshipSlug) {
-    return `/roster/${championshipSlug}/${rosterSlugId}`;
-  }
-  return `/roster/${rosterSlugId}`;
+function getPlayerProfilePath(rosterId: string | null | undefined, playerId: string): string {
+  if (!rosterId) return "/roster";
+  return `/r/${toShortId(rosterId)}/p/${toShortId(playerId)}`;
 }
 
-function getPlayerProfilePath(
-  rosterSlugId: string | undefined,
-  championshipSlug: string | undefined,
-  playerId: string
-): string {
-  if (!rosterSlugId) return "/roster";
-  if (championshipSlug) {
-    return `/roster/${championshipSlug}/${rosterSlugId}/player/${playerId}`;
-  }
-  return `/roster/${rosterSlugId}/player/${playerId}`;
-}
 
 function getSortableFirstName(fullName: string): string {
   const { first, last } = parsePlayerName(fullName.trim());
@@ -83,10 +67,15 @@ function comparePlayersByPositionThenName(
 }
 
 export default function RosterProfilePage() {
-  const { rosterSlugId, championshipSlug } = useParams();
+  const { rosterId: shortRosterId } = useParams();
   const { rosters, teams, setRosters } = useTeams();
 
-  const rosterId = getRosterIdFromParam(rosterSlugId);
+  // Convert short ID to full ID
+  const rosterId = useMemo(
+    () => findFullId(shortRosterId, rosters),
+    [shortRosterId, rosters]
+  );
+
   const roster = useMemo(
     () => rosters.find((item) => item.id === rosterId) ?? null,
     [rosters, rosterId]
@@ -142,7 +131,7 @@ export default function RosterProfilePage() {
     setIsEditingCoach(false);
   }
 
-  const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
+  const backPath = getRosterBackPath(rosterId);
 
   if (!roster) {
     return (
@@ -240,7 +229,7 @@ export default function RosterProfilePage() {
                   <div className="min-w-0">
                     <p className="font-semibold truncate">
                       <Link
-                        to={getPlayerProfilePath(rosterSlugId, championshipSlug, row.player.id)}
+                        to={getPlayerProfilePath(rosterId, row.player.id)}
                         className="hover:text-sky-300 underline-offset-2 hover:underline"
                       >
                         {row.player.name}

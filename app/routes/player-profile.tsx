@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/player-profile";
 import { useEffect, useMemo, useState } from "react";
 import { useTeams } from "~/context/TeamsContext";
+import { toShortId, findFullId } from "~/utils/shortId";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl, getCountryByCode } from "~/utils/countries";
@@ -37,24 +38,26 @@ export function meta({ params }: Route.MetaArgs) {
   return [{ title: playerId ? "Profil joueur" : "Joueur" }];
 }
 
-function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
-  if (!rosterSlugId) return null;
-  const idx = rosterSlugId.lastIndexOf("_");
-  if (idx === -1) return rosterSlugId;
-  return rosterSlugId.slice(idx + 1);
-}
 
-function getRosterBackPath(rosterSlugId: string | undefined, championshipSlug: string | undefined): string {
-  if (!rosterSlugId) return "/roster";
-  if (championshipSlug) {
-    return `/roster/${championshipSlug}/${rosterSlugId}`;
-  }
-  return `/roster/${rosterSlugId}`;
+
+function getRosterBackPath(rosterId: string | null | undefined): string {
+  if (!rosterId) return "/roster";
+  return `/r/${rosterId}`;
 }
 
 export default function PlayerProfilePage() {
-  const { rosterSlugId, championshipSlug, playerId } = useParams();
+  const { rosterId: shortRosterId, playerId: shortPlayerId } = useParams();
   const { rosters, teams, setRosters } = useTeams();
+  
+  // Convert short IDs to full IDs
+  const rosterId = useMemo(
+    () => findFullId(shortRosterId, rosters),
+    [shortRosterId, rosters]
+  );
+  const playerId = useMemo(
+    () => findFullId(shortPlayerId, rosters.flatMap(r => r.players)),
+    [shortPlayerId, rosters]
+  );
   const [isEditingStats, setIsEditingStats] = useState(false);
   const [statsMessage, setStatsMessage] = useState("");
   const [statsDraft, setStatsDraft] = useState<PlayerStats>({
@@ -68,7 +71,6 @@ export default function PlayerProfilePage() {
     titularisations2526: 0,
   });
 
-  const rosterId = getRosterIdFromParam(rosterSlugId);
   const roster = useMemo(
     () => rosters.find((item) => item.id === rosterId) ?? null,
     [rosters, rosterId]
@@ -135,7 +137,7 @@ export default function PlayerProfilePage() {
     setIsEditingStats(false);
   }
 
-  const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
+  const backPath = getRosterBackPath(rosterId ? toShortId(rosterId) : undefined);
 
   if (!roster || !player) {
     return (
@@ -167,7 +169,7 @@ export default function PlayerProfilePage() {
             <strong>Postes:</strong>{" "}
             {player.positions && player.positions.length > 0
               ? player.positions.join(" / ")
-              : "Non renseignes"}
+              : "Non renseignés"}
           </p>
           {player.nationality && (() => {
             const country = getCountryByCode(player.nationality);

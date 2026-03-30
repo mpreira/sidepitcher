@@ -128,6 +128,105 @@
         }
       ],
       "category": "Pro D2"
+    },
+    {
+      "id": "f7a1c3d5-8b2e-4f6a-9c7d-2e5a8f3b1d9a",
+      "name": "Racing 92",
+      "nickname": "Racing",
+      "color": "#1E90FF",
+      "players": [
+        {
+          "id": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6",
+          "name": "Antoine Dupont",
+          "number": 9,
+          "positions": ["demi de mêlée"]
+        },
+        {
+          "id": "b2c3d4e5-f6a7-48b9-c0d1-e2f3a4b5c6d7",
+          "name": "Finn Russell",
+          "number": 10,
+          "positions": ["demi d'ouverture"]
+        },
+        {
+          "id": "c3d4e5f6-a7b8-49ca-d1e2-f3a4b5c6d7e8",
+          "name": "Juan Imhoff",
+          "number": 14,
+          "positions": ["ailier"]
+        },
+        {
+          "id": "d4e5f6a7-b8c9-4adb-e2f3-a4b5c6d7e8f9",
+          "name": "Leone Nakarawa",
+          "number": 4,
+          "positions": ["deuxième ligne"]
+        },
+        {
+          "id": "e5f6a7b8-c9da-4bec-f3a4-b5c6d7e8f9a0",
+          "name": "Dominic Bird",
+          "number": 1,
+          "positions": ["première ligne"]
+        },
+        {
+          "id": "f6a7b8c9-daeb-4cfd-a4b5-c6d7e8f9a0b1",
+          "name": "Teddy Thomas",
+          "number": 11,
+          "positions": ["ailier"]
+        },
+        {
+          "id": "a7b8c9da-ebfc-4dae-b5c6-d7e8f9a0b1c2",
+          "name": "Gareth Evans",
+          "number": 6,
+          "positions": ["troisième ligne"]
+        },
+        {
+          "id": "b8c9daeb-fcad-4ebf-c6d7-e8f9a0b1c2d3",
+          "name": "Jacopo Mazzariol",
+          "number": 8,
+          "positions": ["troisième ligne"]
+        },
+        {
+          "id": "c9daebfc-adae-4fc0-d7e8-f9a0b1c2d3e4",
+          "name": "Nicolas Sanchez",
+          "number": 3,
+          "positions": ["talonneur"]
+        },
+        {
+          "id": "daebfcad-afbf-4ad1-e8f9-a0b1c2d3e4f5",
+          "name": "Yoan Tanga",
+          "number": 2,
+          "positions": ["première ligne"]
+        },
+        {
+          "id": "ebfcadaf-agc0-4be2-f9a0-b1c2d3e4f5a6",
+          "name": "Maxime Joatton",
+          "number": 15,
+          "positions": ["arrière"]
+        },
+        {
+          "id": "fcadafbc-ahd1-4cf3-a0b1-c2d3e4f5a6b7",
+          "name": "Jordan Joseph-Meyandje",
+          "number": 5,
+          "positions": ["deuxième ligne"]
+        },
+        {
+          "id": "adafbchd-ai2e-4dg4-b1c2-d3e4f5a6b7c8",
+          "name": "Jason Woodman",
+          "number": 7,
+          "positions": ["troisième ligne"]
+        },
+        {
+          "id": "dafbchd2-aj3f-4eh5-c2d3-e4f5a6b7c8d9",
+          "name": "Grégoire Alldritt",
+          "number": 13,
+          "positions": ["centre"]
+        },
+        {
+          "id": "ecfacid3-ak4g-4fi6-d3e4-f5a6b7c8d9ea",
+          "name": "Laurent Palis",
+          "number": 12,
+          "positions": ["centre"]
+        }
+      ],
+      "category": "Top 14"
     }
   ],
   "teams": [
@@ -362,6 +461,234 @@
       "rosterId": "98c78bec-4652-4958-aca4-6b55ec719182",
       "starters": [],
       "substitutes": []
+    },
+    {
+      "id": "Racing_92_J13",
+      "name": "Racing 92 J13",
+      "rosterId": "f7a1c3d5-8b2e-4f6a-9c7d-2e5a8f3b1d9a",
+      "starters": [
+        {
+          "player": {
+            "id": "e5f6a7b8-c9da-4bec-f3a4-b5c6d7e8f9a0",
+            "name": "Dominic Bird"
+          },
+          "number": 1
+        },
+        {
+          "player": {
+            "id": "c9daebfc-adae-4fc0-d7e8-f9a0b1c2d3e4",
+            "name": "Nicolas Sanchez"
+          },
+          "number": 3
+        },
+        {
+          "player": {
+            "id": "daebfcad-afbf-4ad1-e8f9-a0b1c2d3e4f5",
+            "name": "Yoan Tanga"
+          },
+          "number": 2
+        },
+        {
+          "player": {
+            "id": "d4e5f6a7-b8c9-4adb-e2f3-a4b5c6d7e8f9",
+            "name": "Leone Nakarawa"
+          },
+          "number": 4
+        },
+        {
+          "player": {
+            "id": "fcadafbc-ahd1-4cf3-a0b1-c2d3e4f5a6b7",
+            "name": "Jordan Joseph-Meyandje"
+          },
+          "number": 5
+        },
+        {
+          "player": {
+            "id": "a7b8c9da-ebfc-4dae-b5c6-d7e8f9a0b1c2",
+            "name": "Gareth Evans"
+          },
+          "number": 6
+        },
+        {
+          "player": {
+            "id": "adafbchd-ai2e-4dg4-b1c2-d3e4f5a6b7c8",
+            "name": "Jason Woodman"
+          },
+          "number": 7
+        },
+        {
+          "player": {
+            "id": "b8c9daeb-fcad-4ebf-c6d7-e8f9a0b1c2d3",
+            "name": "Jacopo Mazzariol"
+          },
+          "number": 8
+        },
+        {
+          "player": {
+            "id": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6",
+            "name": "Antoine Dupont"
+          },
+          "number": 9
+        },
+        {
+          "player": {
+            "id": "b2c3d4e5-f6a7-48b9-c0d1-e2f3a4b5c6d7",
+            "name": "Finn Russell"
+          },
+          "number": 10
+        },
+        {
+          "player": {
+            "id": "f6a7b8c9-daeb-4cfd-a4b5-c6d7e8f9a0b1",
+            "name": "Teddy Thomas"
+          },
+          "number": 11
+        },
+        {
+          "player": {
+            "id": "dafbchd2-aj3f-4eh5-c2d3-e4f5a6b7c8d9",
+            "name": "Grégoire Alldritt"
+          },
+          "number": 12
+        },
+        {
+          "player": {
+            "id": "ecfacid3-ak4g-4fi6-d3e4-f5a6b7c8d9ea",
+            "name": "Laurent Palis"
+          },
+          "number": 13
+        },
+        {
+          "player": {
+            "id": "c3d4e5f6-a7b8-49ca-d1e2-f3a4b5c6d7e8",
+            "name": "Juan Imhoff"
+          },
+          "number": 14
+        },
+        {
+          "player": {
+            "id": "ebfcadaf-agc0-4be2-f9a0-b1c2d3e4f5a6",
+            "name": "Maxime Joatton"
+          },
+          "number": 15
+        }
+      ],
+      "substitutes": [],
+      "captainPlayerId": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6"
+    },
+    {
+      "id": "Racing_92_J14",
+      "name": "Racing 92 J14",
+      "rosterId": "f7a1c3d5-8b2e-4f6a-9c7d-2e5a8f3b1d9a",
+      "starters": [
+        {
+          "player": {
+            "id": "e5f6a7b8-c9da-4bec-f3a4-b5c6d7e8f9a0",
+            "name": "Dominic Bird"
+          },
+          "number": 1
+        },
+        {
+          "player": {
+            "id": "c9daebfc-adae-4fc0-d7e8-f9a0b1c2d3e4",
+            "name": "Nicolas Sanchez"
+          },
+          "number": 3
+        },
+        {
+          "player": {
+            "id": "daebfcad-afbf-4ad1-e8f9-a0b1c2d3e4f5",
+            "name": "Yoan Tanga"
+          },
+          "number": 2
+        },
+        {
+          "player": {
+            "id": "d4e5f6a7-b8c9-4adb-e2f3-a4b5c6d7e8f9",
+            "name": "Leone Nakarawa"
+          },
+          "number": 4
+        },
+        {
+          "player": {
+            "id": "fcadafbc-ahd1-4cf3-a0b1-c2d3e4f5a6b7",
+            "name": "Jordan Joseph-Meyandje"
+          },
+          "number": 5
+        },
+        {
+          "player": {
+            "id": "a7b8c9da-ebfc-4dae-b5c6-d7e8f9a0b1c2",
+            "name": "Gareth Evans"
+          },
+          "number": 6
+        },
+        {
+          "player": {
+            "id": "adafbchd-ai2e-4dg4-b1c2-d3e4f5a6b7c8",
+            "name": "Jason Woodman"
+          },
+          "number": 7
+        },
+        {
+          "player": {
+            "id": "b8c9daeb-fcad-4ebf-c6d7-e8f9a0b1c2d3",
+            "name": "Jacopo Mazzariol"
+          },
+          "number": 8
+        },
+        {
+          "player": {
+            "id": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6",
+            "name": "Antoine Dupont"
+          },
+          "number": 9
+        },
+        {
+          "player": {
+            "id": "b2c3d4e5-f6a7-48b9-c0d1-e2f3a4b5c6d7",
+            "name": "Finn Russell"
+          },
+          "number": 10
+        },
+        {
+          "player": {
+            "id": "f6a7b8c9-daeb-4cfd-a4b5-c6d7e8f9a0b1",
+            "name": "Teddy Thomas"
+          },
+          "number": 11
+        },
+        {
+          "player": {
+            "id": "dafbchd2-aj3f-4eh5-c2d3-e4f5a6b7c8d9",
+            "name": "Grégoire Alldritt"
+          },
+          "number": 12
+        },
+        {
+          "player": {
+            "id": "ecfacid3-ak4g-4fi6-d3e4-f5a6b7c8d9ea",
+            "name": "Laurent Palis"
+          },
+          "number": 13
+        },
+        {
+          "player": {
+            "id": "c3d4e5f6-a7b8-49ca-d1e2-f3a4b5c6d7e8",
+            "name": "Juan Imhoff"
+          },
+          "number": 14
+        },
+        {
+          "player": {
+            "id": "ebfcadaf-agc0-4be2-f9a0-b1c2d3e4f5a6",
+            "name": "Maxime Joatton"
+          },
+          "number": 15
+        }
+      ],
+      "substitutes": [],
+      "captainPlayerId": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6"
     }
   ],
   "activeRosterId": "eca9fe9d-be30-47d9-8896-09b8691821f7",

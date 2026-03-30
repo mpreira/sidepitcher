@@ -5,8 +5,12 @@ import {
     deleteSummary,
     insertSummary,
     listSummaries,
+    getRostersStateForAccount,
+    saveRostersStateForAccount,
     type StoredSummary,
 } from "~/utils/database.server";
+import { updatePlayerStatsFromEvents } from "~/utils/PlayerStatsSync";
+import type { Roster, Event } from "~/types/tracker";
 
 interface SummariesData {
     summaries: StoredSummary[];
@@ -43,6 +47,34 @@ export const action: ActionFunction = async ({ request }) => {
             matchDay: payload.matchDay,
         };
         await insertSummary(summary);
+
+        // Update player stats from events
+        try {
+            const rostersState = await getRostersStateForAccount(scope.scopeId);
+            const rosters = rostersState.rosters;
+            
+            // Type guard: verify rosters is an array before processing
+            if (Array.isArray(rosters)) {
+                const events = payload.events as Event[] | unknown;
+                const eventsArray = Array.isArray(events) ? events : [];
+                const teams = payload.teams || [];
+                
+                const updatedRosters = updatePlayerStatsFromEvents(
+                    rosters as Roster[],
+                    eventsArray as Event[],
+                    teams
+                );
+                
+                await saveRostersStateForAccount(scope.scopeId, {
+                    ...rostersState,
+                    rosters: updatedRosters,
+                });
+            }
+        } catch (error) {
+            // Log error but don't fail the summary save
+            console.error("Error updating player stats:", error);
+        }
+
         if (!scope.setCookieHeader) {
             return { ok: true, id: summary.id };
         }

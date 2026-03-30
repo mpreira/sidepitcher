@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Team, Player, Roster, Title } from "~/types/tracker";
+import { toShortId } from "~/utils/shortId";
 import { useTeams } from "~/context/TeamsContext";
 import {
     createNewRoster,
@@ -399,13 +400,7 @@ export default function RosterManager({
     }
 
     function getRosterPath(roster: Roster) {
-        const championshipSlug = roster.category === 'Pro D2' ? 'prod2' : 'top14';
-        const slug = roster.name
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, "_")
-            .replace(/^_+|_+$/g, "");
-        return `/roster/${championshipSlug}/${slug}_${roster.id}`;
+        return `/r/${toShortId(roster.id)}`;
     }
 
     const { matchDay, championship } = useTeams();

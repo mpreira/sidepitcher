@@ -31,6 +31,7 @@ export function meta({}: Route.MetaArgs) {
 const COMMAND_TYPES = [
     "Essai",
     "Transformation",
+    "Transformation manquée",
     "Pénalité réussie",
     "Drop",
     "Essai de pénalité",
@@ -582,9 +583,8 @@ export default function Tracker() {
                     setRunning(false);
                 }}
             />
-
+            {/* onglets */}
             <section className="space-y-2">
-                <p></p>
                 <div className="flex items-center gap-2">
                     <button
                         className={`px-2 sm:px-3 py-2 rounded border text-sm font-medium transition-colors ${
@@ -641,7 +641,7 @@ export default function Tracker() {
                     </button>
                 </div>
             </section>
-
+            {/* toggle des onglets */}
             {actionTab === "teams" && (
                 <section className="space-y-3">
                     <TrackerTeamsPanel
