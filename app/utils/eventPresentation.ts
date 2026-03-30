@@ -18,6 +18,7 @@ type TimelineEvent = {
 export const EVENT_ICONS: Record<string, string> = {
   "Essai": "🏉",
   "Transformation": "🎯",
+  "Transformation manquée": "❌",
   "Pénalité réussie": "✅",
   "Pénalité manquée": "❌",
   "Drop": "🦶",
@@ -66,15 +67,15 @@ export function getEventLabel(event: Pick<TimelineEvent, "type" | "videoReason">
 
 export function formatSummaryStatLabel(label: string, value: number): string {
   const forms: Record<string, { singular: string; plural: string }> = {
-    "Essais": { singular: "Essai", plural: "Essais" },
-    "Pénalités": { singular: "Pénalité", plural: "Pénalités" },
-    "En-avants": { singular: "En-avant", plural: "En-avants" },
-    "Touches volées": { singular: "Touche volée", plural: "Touches volées" },
-    "Touches perdues": { singular: "Touche perdue", plural: "Touches perdues" },
-    "Mêlées gagnées": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
-    "Mêlées perdues": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
-    "Turnovers": { singular: "Turnover", plural: "Turnovers" },
-    "Offloads": { singular: "Offload", plural: "Offloads" },
+    "Essai": { singular: "Essai", plural: "Essais" },
+    "Pénalité": { singular: "Pénalité", plural: "Pénalités" },
+    "En-avant": { singular: "En-avant", plural: "En-avants" },
+    "Touche volée": { singular: "Touche volée", plural: "Touches volées" },
+    "Touche perdue": { singular: "Touche perdue", plural: "Touches perdues" },
+    "Mêlée gagnée": { singular: "Mêlée gagnée", plural: "Mêlées gagnées" },
+    "Mêlée perdue": { singular: "Mêlée perdue", plural: "Mêlées perdues" },
+    "Turnover": { singular: "Turnover", plural: "Turnovers" },
+    "Offload": { singular: "Offload", plural: "Offloads" },
     "Jeu au pied": { singular: "Jeu au pied", plural: "Jeux au pied" },
   };
 

@@ -167,7 +167,7 @@ export default function PlayerProfilePage() {
             <strong>Postes:</strong>{" "}
             {player.positions && player.positions.length > 0
               ? player.positions.join(" / ")
-              : "Non renseignes"}
+              : "Non renseignés"}
           </p>
           {player.nationality && (() => {
             const country = getCountryByCode(player.nationality);
