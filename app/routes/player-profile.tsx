@@ -37,23 +37,15 @@ export function meta({ params }: Route.MetaArgs) {
   return [{ title: playerId ? "Profil joueur" : "Joueur" }];
 }
 
-function getRosterIdFromParam(rosterSlugId: string | undefined): string | null {
-  if (!rosterSlugId) return null;
-  const idx = rosterSlugId.lastIndexOf("_");
-  if (idx === -1) return rosterSlugId;
-  return rosterSlugId.slice(idx + 1);
-}
 
-function getRosterBackPath(rosterSlugId: string | undefined, championshipSlug: string | undefined): string {
-  if (!rosterSlugId) return "/roster";
-  if (championshipSlug) {
-    return `/roster/${championshipSlug}/${rosterSlugId}`;
-  }
-  return `/roster/${rosterSlugId}`;
+
+function getRosterBackPath(rosterId: string | undefined): string {
+  if (!rosterId) return "/roster";
+  return `/r/${rosterId}`;
 }
 
 export default function PlayerProfilePage() {
-  const { rosterSlugId, championshipSlug, playerId } = useParams();
+  const { rosterId, playerId } = useParams();
   const { rosters, teams, setRosters } = useTeams();
   const [isEditingStats, setIsEditingStats] = useState(false);
   const [statsMessage, setStatsMessage] = useState("");
@@ -68,7 +60,6 @@ export default function PlayerProfilePage() {
     titularisations2526: 0,
   });
 
-  const rosterId = getRosterIdFromParam(rosterSlugId);
   const roster = useMemo(
     () => rosters.find((item) => item.id === rosterId) ?? null,
     [rosters, rosterId]
@@ -135,7 +126,7 @@ export default function PlayerProfilePage() {
     setIsEditingStats(false);
   }
 
-  const backPath = getRosterBackPath(rosterSlugId, championshipSlug);
+  const backPath = getRosterBackPath(rosterId);
 
   if (!roster || !player) {
     return (

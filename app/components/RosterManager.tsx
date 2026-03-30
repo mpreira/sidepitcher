@@ -399,13 +399,7 @@ export default function RosterManager({
     }
 
     function getRosterPath(roster: Roster) {
-        const championshipSlug = roster.category === 'Pro D2' ? 'prod2' : 'top14';
-        const slug = roster.name
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, "_")
-            .replace(/^_+|_+$/g, "");
-        return `/roster/${championshipSlug}/${slug}_${roster.id}`;
+        return `/r/${roster.id}`;
     }
 
     const { matchDay, championship } = useTeams();
