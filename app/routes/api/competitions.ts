@@ -1,4 +1,5 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 import {
   listCompetitions,
   getCompetitionById,
@@ -15,6 +16,7 @@ import {
 // GET /api/competitions        → list all competitions
 // GET /api/competitions?id=xxx → get a single competition by ID
 export const loader: LoaderFunction = async ({ request }) => {
+  await resolveDataScopeFromRequest(request);
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
@@ -32,6 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 // PATCH  → update competition (requires ?id=xxx)
 // DELETE → delete competition (requires ?id=xxx)
 export const action: ActionFunction = async ({ request }) => {
+  const scope = await resolveDataScopeFromRequest(request);
   const method = request.method.toUpperCase();
   const url = new URL(request.url);
   const id = url.searchParams.get("id");

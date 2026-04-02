@@ -4,7 +4,7 @@ import {
   listMatchDaySelections,
   listSummaries,
 } from "~/utils/database.server";
-import { resolveDataScopeFromRequest } from "~/utils/account.server";
+import { requireAdmin, resolveDataScopeFromRequest } from "~/utils/account.server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft} from "@fortawesome/free-solid-svg-icons";
 
@@ -13,6 +13,7 @@ export function meta() {
 }
 
 export async function loader({ request }: { request: Request }) {
+  await requireAdmin(request);
   const scope = await resolveDataScopeFromRequest(request);
   const rostersState = await getRostersStateForAccount(scope.scopeId);
   const selections = await listMatchDaySelections(scope.scopeId);

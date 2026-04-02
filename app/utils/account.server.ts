@@ -287,3 +287,40 @@ export async function requestPasswordReset(email: string): Promise<void> {
 export async function resetPasswordFromToken(input: { token: string; password: string }): Promise<boolean> {
   return resetPasswordWithToken(input);
 }
+
+// ---------------------------------------------------------------------------
+// Auth guards — throw Response on failure, safe to use in loaders/actions
+// ---------------------------------------------------------------------------
+
+/**
+ * Require a connected (non-anonymous) account. Returns the Account or throws 401.
+ */
+export async function requireAuth(request: Request): Promise<Account> {
+  const account = await getConnectedAccountFromRequest(request);
+  if (!account) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+  return account;
+}
+
+/**
+ * Require a connected admin account. Returns the Account or throws 401/403.
+ */
+export async function requireAdmin(request: Request): Promise<Account> {
+  const account = await requireAuth(request);
+  if (!account.isAdmin) {
+    throw new Response("Forbidden", { status: 403 });
+  }
+  return account;
+}
+
+/**
+ * Require a non-anonymous scope. Resolves scope normally but rejects anon users.
+ */
+export async function requireAuthScope(request: Request): Promise<DataScope> {
+  const scope = await resolveDataScopeFromRequest(request);
+  if (scope.isAnonymous) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+  return scope;
+}
