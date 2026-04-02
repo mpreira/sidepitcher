@@ -11,6 +11,7 @@ import {
 } from "~/utils/database.server";
 import { updatePlayerStatsFromEvents } from "~/utils/PlayerStatsSync";
 import type { Roster, Event } from "~/types/tracker";
+import { summaryCreateSchema, summaryDeleteSchema, parsePayload } from "~/utils/schemas.server";
 
 interface SummariesData {
     summaries: StoredSummary[];
@@ -35,7 +36,11 @@ export const action: ActionFunction = async ({ request }) => {
     const scope = await resolveDataScopeFromRequest(request);
 
     if (request.method === "POST") {
-        const payload = (await request.json()) as Omit<StoredSummary, "id" | "createdAt" | "accountId">;
+        const raw = await request.json();
+        const parsed = parsePayload(summaryCreateSchema, raw);
+        if (!parsed.success) return parsed.response;
+        const payload = parsed.data;
+
         const summary: StoredSummary = {
             accountId: scope.scopeId,
             id: crypto.randomUUID(),
@@ -89,9 +94,10 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     if (request.method === "DELETE") {
-        const payload = (await request.json()) as { id?: string };
-        if (!payload.id) return { ok: false };
-        await deleteSummary(payload.id, scope.scopeId);
+        const raw = await request.json();
+        const parsed = parsePayload(summaryDeleteSchema, raw);
+        if (!parsed.success) return parsed.response;
+        await deleteSummary(parsed.data.id, scope.scopeId);
 
         if (!scope.setCookieHeader) {
             return { ok: true };

@@ -3,8 +3,8 @@ import { resolveDataScopeFromRequest } from "~/utils/account.server";
 import {
     getRostersStateForAccount,
     saveRostersStateForAccount,
-    type RosterStatePayload,
 } from "~/utils/database.server";
+import { rosterStatePayloadSchema, parsePayload } from "~/utils/schemas.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const scope = await resolveDataScopeFromRequest(request);
@@ -23,8 +23,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const action: ActionFunction = async ({ request }) => {
     const scope = await resolveDataScopeFromRequest(request);
-    const data: RosterStatePayload = await request.json();
-    await saveRostersStateForAccount(scope.scopeId, data);
+    const raw = await request.json();
+    const parsed = parsePayload(rosterStatePayloadSchema, raw);
+    if (!parsed.success) return parsed.response;
+    await saveRostersStateForAccount(scope.scopeId, parsed.data);
 
     if (!scope.setCookieHeader) {
         return null;

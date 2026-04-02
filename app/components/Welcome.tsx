@@ -8,12 +8,13 @@ import { faCircleUser } from "@fortawesome/free-solid-svg-icons";
 
 export function Welcome() {
   const { account, connected, logout } = useAccount();
-  const { matchDay, sport, championship, setMatchDay, setSport, setChampionship } = useTeams();
+  const { matchDay, season, sport, championship, setMatchDay, setSeason, setSport, setChampionship } = useTeams();
   const [successMessage, setSuccessMessage] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
 
   const sportOptions = ["Rugby", "Football"] as const;
   const championshipOptions = ["Top 14", "Pro D2"] as const;
+  const seasonOptions = ["2025/2026", "2024/2025", "2023/2024"] as const;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -115,6 +116,21 @@ export function Welcome() {
                 }
               >
                 {championshipOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="sp-input-shell">
+              <label className="sp-input-label" htmlFor="seasonSelect">Saison</label>
+              <select
+                id="seasonSelect"
+                className="sp-input-control"
+                value={season}
+                onChange={(e) => setSeason(e.target.value)}
+              >
+                {seasonOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>

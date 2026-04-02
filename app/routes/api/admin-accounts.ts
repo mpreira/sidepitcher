@@ -5,6 +5,7 @@ import {
   listAdminAccounts,
   updateManagedAccount,
 } from "~/utils/account.server";
+import { adminDeleteSchema, adminPatchSchema, parsePayload } from "~/utils/schemas.server";
 
 async function requireAdmin(request: Request) {
   const account = await getConnectedAccountFromRequest(request);
@@ -27,18 +28,10 @@ export const action: ActionFunction = async ({ request }) => {
   const admin = await requireAdmin(request);
 
   if (request.method === "PATCH") {
-    const body = (await request.json()) as {
-      accountId?: string;
-      name?: string;
-      email?: string;
-      password?: string;
-      isAdmin?: boolean;
-      isApproved?: boolean;
-    };
-
-    if (!body.accountId) {
-      return Response.json({ ok: false, error: "missing-account-id" }, { status: 400 });
-    }
+    const raw = await request.json();
+    const parsed = parsePayload(adminPatchSchema, raw);
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
 
     const account = await updateManagedAccount({
       accountId: body.accountId,
@@ -53,10 +46,10 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (request.method === "DELETE") {
-    const body = (await request.json()) as { accountId?: string };
-    if (!body.accountId) {
-      return Response.json({ ok: false, error: "missing-account-id" }, { status: 400 });
-    }
+    const raw = await request.json();
+    const parsed = parsePayload(adminDeleteSchema, raw);
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
 
     if (body.accountId === admin.id) {
       return Response.json({ ok: false, error: "cannot-delete-self" }, { status: 400 });
