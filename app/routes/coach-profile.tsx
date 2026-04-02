@@ -47,8 +47,10 @@ export default function CoachProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<Coach>({ name: "" });
+  const [formMessage, setFormMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   function startEditing() {
+    setFormMessage(null);
     setDraft({
       name: coachData?.name ?? "",
       photoUrl: coachData?.photoUrl ?? "",
@@ -61,7 +63,10 @@ export default function CoachProfilePage() {
   function save() {
     if (!roster) return;
     const trimmedName = draft.name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName) {
+      setFormMessage({ type: "error", text: "Le nom est obligatoire." });
+      return;
+    }
     const updated: Coach = {
       name: trimmedName,
       photoUrl: draft.photoUrl?.trim() || undefined,
@@ -90,6 +95,8 @@ export default function CoachProfilePage() {
       }),
     );
     setIsEditing(false);
+    setFormMessage({ type: "success", text: "Entraîneur mis à jour." });
+    setTimeout(() => setFormMessage(null), 3000);
   }
 
   async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -223,11 +230,16 @@ export default function CoachProfilePage() {
                 <button
                   type="button"
                   className="sp-button sp-button-xs sp-button-light"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => { setIsEditing(false); setFormMessage(null); }}
                 >
                   Annuler
                 </button>
               </div>
+              {formMessage && (
+                <p className={`text-sm ${formMessage.type === "error" ? "text-red-400" : "text-emerald-400"}`}>
+                  {formMessage.text}
+                </p>
+              )}
             </div>
           ) : (
             <>

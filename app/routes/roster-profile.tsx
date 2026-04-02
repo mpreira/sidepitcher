@@ -171,6 +171,12 @@ export default function RosterProfilePage() {
   const [titlesDraft, setTitlesDraft] = useState<Title[]>([]);
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [calendarSyncResult, setCalendarSyncResult] = useState<string | null>(null);
+  const [inlineMessage, setInlineMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+
+  function showInlineMessage(type: "error" | "success", text: string) {
+    setInlineMessage({ type, text });
+    if (type === "success") setTimeout(() => setInlineMessage(null), 3000);
+  }
 
   async function syncCalendar() {
     if (!roster || isSyncingCalendar) return;
@@ -227,6 +233,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingCoach(false);
+    showInlineMessage("success", "Entraîneur mis à jour.");
   }
 
   function savePresident() {
@@ -247,6 +254,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingPresident(false);
+    showInlineMessage("success", "Président mis à jour.");
   }
 
   function saveFoundedIn() {
@@ -259,6 +267,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingFoundedIn(false);
+    showInlineMessage("success", "Année de fondation mise à jour.");
   }
 
   function startEditingTitles() {
@@ -289,6 +298,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingTitles(false);
+    showInlineMessage("success", "Palmarès mis à jour.");
   }
 
   function getCoachProfilePath(coachIndex?: number): string {
@@ -324,8 +334,11 @@ export default function RosterProfilePage() {
         <Link to={backPath} className="sp-link-muted">
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
           Retour à l'effectif
-        </Link>
-      </div>
+        </Link>        {inlineMessage && (
+          <p className={`text-sm ${inlineMessage.type === "error" ? "text-red-400" : "text-emerald-400"}`}>
+            {inlineMessage.text}
+          </p>
+        )}      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
         <section className="sp-panel space-y-3 md:col-span-2">
