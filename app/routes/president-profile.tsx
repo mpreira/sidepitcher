@@ -20,6 +20,11 @@ export default function PresidentProfilePage() {
   const { rosterId: shortRosterId } = useParams();
   const { rosters, setRosters } = useTeams();
 
+  const rosterNames = useMemo(
+    () => rosters.map((r) => r.name).filter(Boolean).sort((a, b) => a.localeCompare(b, "fr")),
+    [rosters],
+  );
+
   const rosterId = useMemo(
     () => findFullId(shortRosterId, rosters),
     [shortRosterId, rosters],
@@ -157,12 +162,17 @@ export default function PresidentProfilePage() {
               </div>
               <div className="sp-input-shell">
                 <label className="sp-input-label" htmlFor="presidentClub">Club</label>
-                <input
+                <select
                   id="presidentClub"
                   className="sp-input-control"
                   value={draft.club ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, club: e.target.value }))}
-                />
+                >
+                  <option value="">— Non renseigné —</option>
+                  {rosterNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
               <div className="sp-input-shell">
                 <label className="sp-input-label" htmlFor="presidentPhotoUrl">Photo (URL)</label>

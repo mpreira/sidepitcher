@@ -21,6 +21,11 @@ export default function CoachProfilePage() {
   const { rosterId: shortRosterId } = useParams();
   const { rosters, setRosters } = useTeams();
 
+  const rosterNames = useMemo(
+    () => rosters.map((r) => r.name).filter(Boolean).sort((a, b) => a.localeCompare(b, "fr")),
+    [rosters],
+  );
+
   const rosterId = useMemo(
     () => findFullId(shortRosterId, rosters),
     [shortRosterId, rosters],
@@ -158,12 +163,17 @@ export default function CoachProfilePage() {
               </div>
               <div className="sp-input-shell">
                 <label className="sp-input-label" htmlFor="coachClub">Club</label>
-                <input
+                <select
                   id="coachClub"
                   className="sp-input-control"
                   value={draft.club ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, club: e.target.value }))}
-                />
+                >
+                  <option value="">— Non renseigné —</option>
+                  {rosterNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
               <div className="sp-input-shell">
                 <label className="sp-input-label" htmlFor="coachPhotoUrl">Photo (URL)</label>

@@ -273,7 +273,7 @@ export default function RosterProfilePage() {
             {isEditingFoundedIn ? (
               <input
                 type="number"
-                className="sp-input-control flex-1 text-sm"
+                className="sp-input-control flex-1 text-sm border-l-2 border-l-sky-500"
                 autoFocus
                 min={1800}
                 max={new Date().getFullYear()}
@@ -394,7 +394,7 @@ export default function RosterProfilePage() {
             {isCurrentSeason && isEditingCoach ? (
               <input
                 type="text"
-                className="sp-input-control flex-1 text-sm"
+                className="sp-input-control flex-1 text-sm border-l-2 border-l-sky-500"
                 autoFocus
                 value={coachInput}
                 onChange={(e) => setCoachInput(e.target.value)}
@@ -432,7 +432,7 @@ export default function RosterProfilePage() {
             {isCurrentSeason && isEditingPresident ? (
               <input
                 type="text"
-                className="sp-input-control flex-1 text-sm"
+                className="sp-input-control flex-1 text-sm border-l-2 border-l-sky-500"
                 autoFocus
                 value={presidentInput}
                 onChange={(e) => setPresidentInput(e.target.value)}
