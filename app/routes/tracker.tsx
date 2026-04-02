@@ -46,6 +46,7 @@ const COMMAND_TYPES = [
 ];
 
 const TRACKER_ACTION_TAB_STORAGE_KEY = "sidepitcher.tracker.actionTab";
+const TRACKER_REFEREE_STORAGE_KEY = "sidepitcher.tracker.referee";
 
 export default function Tracker() {
     const { account } = useAccount();
@@ -158,15 +159,26 @@ export default function Tracker() {
     }, [actionTab]);
 
     useEffect(() => {
+        const stored = window.localStorage.getItem(TRACKER_REFEREE_STORAGE_KEY);
+        if (stored) {
+            setReferee(stored);
+            setRefereeInput(stored);
+        }
+    }, []);
+
+    useEffect(() => {
         const knownRef = events.find((event) => event.ref)?.ref;
         if (knownRef && knownRef !== referee) {
             setReferee(knownRef);
             setRefereeInput(knownRef);
+            window.localStorage.setItem(TRACKER_REFEREE_STORAGE_KEY, knownRef);
         }
     }, [events, referee]);
 
     function applyReferee() {
-        setReferee(refereeInput.trim());
+        const value = refereeInput.trim();
+        setReferee(value);
+        window.localStorage.setItem(TRACKER_REFEREE_STORAGE_KEY, value);
     }
 
     // Charge la sélection d'équipes sauvegardée pour le championnat + la journée en cours.
@@ -210,11 +222,16 @@ export default function Tracker() {
         resetStats();
         clearLiveState();
         setSavedTrackingSignature(null);
+        setReferee("");
+        setRefereeInput("");
+        window.localStorage.removeItem(TRACKER_REFEREE_STORAGE_KEY);
     }
 
     // Détecte un changement de contexte (championnat / journée / sport) après le premier rendu.
     // On utilise des refs pour comparer les valeurs précédentes sans déclencher de boucle.
     // Si le contexte change, on remet à zéro tous les événements, la minuterie et les stats.
+    // On ignore la transition initiale (valeurs par défaut → valeurs chargées du serveur)
+    // pour ne pas effacer les données persistées en localStorage (ex. arbitre).
     useEffect(() => {
         if (!contextInitializedRef.current) {
             // Premier rendu : on mémorise le contexte initial sans réinitialiser
@@ -234,7 +251,9 @@ export default function Tracker() {
             prev.championship !== championship ||
             prev.sport !== sport;
 
-        if (contextChanged) {
+        // Si matchDay précédent est vide, c'est le chargement initial depuis le serveur,
+        // pas un vrai changement de contexte de l'utilisateur.
+        if (contextChanged && prev.matchDay !== "") {
             resetTrackerInfos();
         }
 

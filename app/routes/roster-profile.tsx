@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown, faPlus, faSync, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
-import { CURRENT_SEASON, type MatchFixture, type PlayerPosition, type Title } from "~/types/tracker";
+import { CURRENT_SEASON, type MatchFixture, type PlayerPosition, type Result, type Title } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: "Vue effectif" }];
@@ -171,6 +171,21 @@ export default function RosterProfilePage() {
   const [titlesDraft, setTitlesDraft] = useState<Title[]>([]);
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [calendarSyncResult, setCalendarSyncResult] = useState<string | null>(null);
+  const [inlineMessage, setInlineMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const [isEditingRanking, setIsEditingRanking] = useState(false);
+  const [rankingInput, setRankingInput] = useState("");
+  const [pointsInput, setPointsInput] = useState("");
+  const [isEditingLastFive, setIsEditingLastFive] = useState(false);
+  const [lastFiveDraft, setLastFiveDraft] = useState<Result[]>([]);
+  const [isEditingSeasonRecord, setIsEditingSeasonRecord] = useState(false);
+  const [seasonVInput, setSeasonVInput] = useState("");
+  const [seasonDInput, setSeasonDInput] = useState("");
+  const [seasonNInput, setSeasonNInput] = useState("");
+
+  function showInlineMessage(type: "error" | "success", text: string) {
+    setInlineMessage({ type, text });
+    if (type === "success") setTimeout(() => setInlineMessage(null), 3000);
+  }
 
   async function syncCalendar() {
     if (!roster || isSyncingCalendar) return;
@@ -227,6 +242,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingCoach(false);
+    showInlineMessage("success", "Entraîneur mis à jour.");
   }
 
   function savePresident() {
@@ -247,6 +263,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingPresident(false);
+    showInlineMessage("success", "Président mis à jour.");
   }
 
   function saveFoundedIn() {
@@ -259,6 +276,7 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingFoundedIn(false);
+    showInlineMessage("success", "Année de fondation mise à jour.");
   }
 
   function startEditingTitles() {
@@ -289,6 +307,88 @@ export default function RosterProfilePage() {
       ),
     );
     setIsEditingTitles(false);
+    showInlineMessage("success", "Palmarès mis à jour.");
+  }
+
+  function saveRanking() {
+    if (!roster) return;
+    const ranking = parseInt(rankingInput, 10);
+    const points = parseInt(pointsInput, 10);
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? {
+              ...item,
+              currentRanking: Number.isFinite(ranking) && ranking > 0 ? ranking : undefined,
+              currentPoints: Number.isFinite(points) && points >= 0 ? points : undefined,
+            }
+          : item,
+      ),
+    );
+    setIsEditingRanking(false);
+    showInlineMessage("success", "Classement mis à jour.");
+  }
+
+  function startEditingLastFive() {
+    setLastFiveDraft(
+      roster?.lastFiveMatches && roster.lastFiveMatches.length > 0
+        ? roster.lastFiveMatches.map((r) => ({ ...r }))
+        : [],
+    );
+    setIsEditingLastFive(true);
+  }
+
+  function addLastFiveRow() {
+    setLastFiveDraft((prev) => [
+      ...prev,
+      { outcome: "victory", resultText: "", opponent: "" },
+    ]);
+  }
+
+  function removeLastFiveRow(index: number) {
+    setLastFiveDraft((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateLastFiveDraft(index: number, field: keyof Result, value: string) {
+    setLastFiveDraft((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)),
+    );
+  }
+
+  function saveLastFive() {
+    if (!roster) return;
+    const cleaned = lastFiveDraft.filter((r) => r.opponent.trim());
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? { ...item, lastFiveMatches: cleaned.length > 0 ? cleaned : undefined }
+          : item,
+      ),
+    );
+    setIsEditingLastFive(false);
+    showInlineMessage("success", "Série mise à jour.");
+  }
+
+  function saveSeasonRecord() {
+    if (!roster) return;
+    const v = parseInt(seasonVInput, 10);
+    const d = parseInt(seasonDInput, 10);
+    const n = parseInt(seasonNInput, 10);
+    const hasValue = [v, d, n].some((x) => Number.isFinite(x) && x >= 0);
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? {
+              ...item,
+              seasonRecord: hasValue
+                ? { victories: v || 0, defeats: d || 0, draws: n || 0 }
+                : undefined,
+            }
+          : item,
+      ),
+    );
+    setIsEditingSeasonRecord(false);
+    showInlineMessage("success", "Bilan saison mis à jour.");
   }
 
   function getCoachProfilePath(coachIndex?: number): string {
@@ -324,7 +424,14 @@ export default function RosterProfilePage() {
         <Link to={backPath} className="sp-link-muted">
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs mr-1" />
           Retour à l'effectif
-        </Link>
+        </Link>{" "}
+        {inlineMessage && (
+          <p
+            className={`text-sm ${inlineMessage.type === "error" ? "text-red-400" : "text-emerald-400"}`}
+          >
+            {inlineMessage.text}
+          </p>
+        )}{" "}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
@@ -351,7 +458,8 @@ export default function RosterProfilePage() {
               />
             ) : (
               <p className="text-sm text-neutral-200">
-                <strong>Création :</strong> {roster.founded_in || "Non renseigné"}
+                <strong>Création :</strong>{" "}
+                {roster.founded_in || "Non renseigné"}
               </p>
             )}
             {!isEditingFoundedIn && (
@@ -389,7 +497,9 @@ export default function RosterProfilePage() {
                     : "Non renseigné"}
                 </p>
               ) : (
-                <p className="text-sm text-neutral-200 font-semibold">Palmarès</p>
+                <p className="text-sm text-neutral-200 font-semibold">
+                  Palmarès
+                </p>
               )}
               {!isEditingTitles && (
                 <button
@@ -410,12 +520,16 @@ export default function RosterProfilePage() {
                       className="sp-input-control text-sm flex-1"
                       placeholder="Compétition"
                       value={title.competition}
-                      onChange={(e) => updateTitleDraft(index, "competition", e.target.value)}
+                      onChange={(e) =>
+                        updateTitleDraft(index, "competition", e.target.value)
+                      }
                     />
                     <select
                       className="sp-input-control text-sm w-32"
                       value={title.ranking}
-                      onChange={(e) => updateTitleDraft(index, "ranking", e.target.value)}
+                      onChange={(e) =>
+                        updateTitleDraft(index, "ranking", e.target.value)
+                      }
                     >
                       <option value="Vainqueur">Vainqueur</option>
                       <option value="Finaliste">Finaliste</option>
@@ -425,7 +539,13 @@ export default function RosterProfilePage() {
                       className="sp-input-control text-sm w-20"
                       placeholder="Année"
                       value={title.year}
-                      onChange={(e) => updateTitleDraft(index, "year", parseInt(e.target.value, 10) || 0)}
+                      onChange={(e) =>
+                        updateTitleDraft(
+                          index,
+                          "year",
+                          parseInt(e.target.value, 10) || 0,
+                        )
+                      }
                     />
                     <button
                       type="button"
@@ -446,7 +566,11 @@ export default function RosterProfilePage() {
                   Ajouter un titre
                 </button>
                 <div className="flex items-center gap-2 mt-1">
-                  <button type="button" className="sp-button sp-button-xs sp-button-blue" onClick={saveTitles}>
+                  <button
+                    type="button"
+                    className="sp-button sp-button-xs sp-button-blue"
+                    onClick={saveTitles}
+                  >
                     Enregistrer
                   </button>
                   <button
@@ -477,19 +601,25 @@ export default function RosterProfilePage() {
             ) : (
               <p className="text-sm text-neutral-200">
                 <strong>Entraineur :</strong>{" "}
-                {seasonCoach ? (
-                  (() => {
-                    const names = seasonCoach.split(",").map((n) => n.trim()).filter(Boolean);
-                    return names.map((name, idx) => (
-                      <span key={name}>
-                        {idx > 0 && ", "}
-                        <Link to={getCoachProfilePath(idx)} className="hover:text-sky-300 underline-offset-2 hover:underline">
-                          {name}
-                        </Link>
-                      </span>
-                    ));
-                  })()
-                ) : "Non renseigné"}
+                {seasonCoach
+                  ? (() => {
+                      const names = seasonCoach
+                        .split(",")
+                        .map((n) => n.trim())
+                        .filter(Boolean);
+                      return names.map((name, idx) => (
+                        <span key={name}>
+                          {idx > 0 && ", "}
+                          <Link
+                            to={getCoachProfilePath(idx)}
+                            className="hover:text-sky-300 underline-offset-2 hover:underline"
+                          >
+                            {name}
+                          </Link>
+                        </span>
+                      ));
+                    })()
+                  : "Non renseigné"}
               </p>
             )}
             {isCurrentSeason && !isEditingCoach && (
@@ -524,10 +654,15 @@ export default function RosterProfilePage() {
               <p className="text-sm text-neutral-200">
                 <strong>Président :</strong>{" "}
                 {roster.president ? (
-                  <Link to={getPresidentProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                  <Link
+                    to={getPresidentProfilePath()}
+                    className="hover:text-sky-300 underline-offset-2 hover:underline"
+                  >
                     {roster.president}
                   </Link>
-                ) : "Non renseigné"}
+                ) : (
+                  "Non renseigné"
+                )}
               </p>
             )}
             {isCurrentSeason && !isEditingPresident && (
@@ -544,8 +679,255 @@ export default function RosterProfilePage() {
               </button>
             )}
           </div>
+          <div className="flex items-center justify-between">
+            {isEditingRanking ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-20 border-l-2 border-l-sky-500"
+                  autoFocus
+                  min={1}
+                  placeholder="Rang"
+                  value={rankingInput}
+                  onChange={(e) => setRankingInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveRanking();
+                    if (e.key === "Escape") setIsEditingRanking(false);
+                  }}
+                />
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-20 border-l-2 border-l-sky-500"
+                  min={0}
+                  placeholder="Points"
+                  value={pointsInput}
+                  onChange={(e) => setPointsInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveRanking();
+                    if (e.key === "Escape") setIsEditingRanking(false);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-blue"
+                  onClick={saveRanking}
+                >
+                  Enregistrer
+                </button>
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-light"
+                  onClick={() => setIsEditingRanking(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Classement:</strong>{" "}
+                {roster.currentRanking != null ? `${roster.currentRanking}e` : "Non renseigné"}{" "}
+                ({roster.currentPoints != null ? `${roster.currentPoints} pts` : "X pts"})
+              </p>
+            )}
+            {!isEditingRanking && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => {
+                  setRankingInput(roster.currentRanking?.toString() ?? "");
+                  setPointsInput(roster.currentPoints?.toString() ?? "");
+                  setIsEditingRanking(true);
+                }}
+                aria-label="Modifier le classement"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              {!isEditingLastFive ? (
+                <p className="text-sm text-neutral-200">
+                  <strong>Série (5 derniers matchs):</strong>{" "}
+                  {roster.lastFiveMatches && roster.lastFiveMatches.length > 0
+                    ? (() => {
+                        const v = roster.lastFiveMatches.filter((r) => r.outcome === "victory").length;
+                        const d = roster.lastFiveMatches.filter((r) => r.outcome === "defeat").length;
+                        const n = roster.lastFiveMatches.filter((r) => r.outcome === "draw").length;
+                        return (
+                          <>
+                            {roster.lastFiveMatches.map((r, i) => (
+                              <span
+                                key={i}
+                                className={`inline-block w-5 h-5 rounded text-center text-xs font-bold leading-5 mr-0.5 ${r.outcome === "victory" ? "bg-emerald-600 text-white" : r.outcome === "defeat" ? "bg-red-600 text-white" : "bg-neutral-500 text-white"}`}
+                                title={r.resultText || r.opponent}
+                              >
+                                {r.outcome === "victory" ? "V" : r.outcome === "defeat" ? "D" : "N"}
+                              </span>
+                            ))}
+                          </>
+                        );
+                      })()
+                    : "Non renseigné"}
+                </p>
+              ) : (
+                <p className="text-sm text-neutral-200 font-semibold">Série (5 derniers matchs)</p>
+              )}
+              {!isEditingLastFive && (
+                <button
+                  type="button"
+                  className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                  onClick={startEditingLastFive}
+                  aria-label="Modifier la série"
+                >
+                  <FontAwesomeIcon icon={faPenToSquareRegular} />
+                </button>
+              )}
+            </div>
+            {isEditingLastFive && (
+              <div className="mt-2 space-y-2">
+                {lastFiveDraft.map((result, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <select
+                      className="sp-input-control text-sm w-28"
+                      value={result.outcome}
+                      onChange={(e) => updateLastFiveDraft(index, "outcome", e.target.value)}
+                    >
+                      <option value="victory">Victoire</option>
+                      <option value="defeat">Défaite</option>
+                      <option value="draw">Nul</option>
+                    </select>
+                    <input
+                      className="sp-input-control text-sm flex-1"
+                      placeholder="Adversaire"
+                      value={result.opponent}
+                      onChange={(e) => updateLastFiveDraft(index, "opponent", e.target.value)}
+                    />
+                    <input
+                      className="sp-input-control text-sm w-36"
+                      placeholder="Score (ex: 28-14)"
+                      value={result.resultText}
+                      onChange={(e) => updateLastFiveDraft(index, "resultText", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="sp-button sp-button-xs sp-button-red sp-button-icon"
+                      onClick={() => removeLastFiveRow(index)}
+                      aria-label="Supprimer ce résultat"
+                    >
+                      <FontAwesomeIcon icon={faTrashCan} />
+                    </button>
+                  </div>
+                ))}
+                {lastFiveDraft.length < 5 && (
+                  <button
+                    type="button"
+                    className="sp-button sp-button-xs sp-button-blue"
+                    onClick={addLastFiveRow}
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="mr-1" />
+                    Ajouter un résultat
+                  </button>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    type="button"
+                    className="sp-button sp-button-xs sp-button-blue"
+                    onClick={saveLastFive}
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    type="button"
+                    className="sp-button sp-button-xs sp-button-light"
+                    onClick={() => setIsEditingLastFive(false)}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-between">
+            {isEditingSeasonRecord ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-16 border-l-2 border-l-emerald-500"
+                  autoFocus
+                  min={0}
+                  placeholder="V"
+                  value={seasonVInput}
+                  onChange={(e) => setSeasonVInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSeasonRecord();
+                    if (e.key === "Escape") setIsEditingSeasonRecord(false);
+                  }}
+                />
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-16 border-l-2 border-l-red-500"
+                  min={0}
+                  placeholder="D"
+                  value={seasonDInput}
+                  onChange={(e) => setSeasonDInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSeasonRecord();
+                    if (e.key === "Escape") setIsEditingSeasonRecord(false);
+                  }}
+                />
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-16 border-l-2 border-l-neutral-500"
+                  min={0}
+                  placeholder="N"
+                  value={seasonNInput}
+                  onChange={(e) => setSeasonNInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSeasonRecord();
+                    if (e.key === "Escape") setIsEditingSeasonRecord(false);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-blue"
+                  onClick={saveSeasonRecord}
+                >
+                  Enregistrer
+                </button>
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-light"
+                  onClick={() => setIsEditingSeasonRecord(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Matchs:</strong>{" "}
+                {roster.seasonRecord
+                  ? <span className="text-neutral-400 text-xs">{roster.seasonRecord.victories}V {roster.seasonRecord.defeats}D {roster.seasonRecord.draws}N</span>
+                  : "Non renseigné"}
+              </p>
+            )}
+            {!isEditingSeasonRecord && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => {
+                  setSeasonVInput(roster.seasonRecord?.victories?.toString() ?? "");
+                  setSeasonDInput(roster.seasonRecord?.defeats?.toString() ?? "");
+                  setSeasonNInput(roster.seasonRecord?.draws?.toString() ?? "");
+                  setIsEditingSeasonRecord(true);
+                }}
+                aria-label="Modifier le bilan saison"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
+          </div>
           <p className="text-sm text-neutral-200">
-            <strong>Joueurs dans l'effectif:</strong> {seasonPlayers.length}
           </p>
         </section>
 
@@ -583,7 +965,9 @@ export default function RosterProfilePage() {
           <h2 className="font-semibold">Calendrier</h2>
           <div className="flex items-center gap-2">
             {calendarSyncResult && (
-              <span className="text-xs text-neutral-400">{calendarSyncResult}</span>
+              <span className="text-xs text-neutral-400">
+                {calendarSyncResult}
+              </span>
             )}
             <button
               type="button"
@@ -622,9 +1006,14 @@ export default function RosterProfilePage() {
                           month: "short",
                         })
                       : "—";
-                    const homeTeam = match.isHome ? roster.name : match.opponent;
-                    const awayTeam = match.isHome ? match.opponent : roster.name;
-                    const hasScore = match.scoreHome != null && match.scoreAway != null;
+                    const homeTeam = match.isHome
+                      ? roster.name
+                      : match.opponent;
+                    const awayTeam = match.isHome
+                      ? match.opponent
+                      : roster.name;
+                    const hasScore =
+                      match.scoreHome != null && match.scoreAway != null;
                     const isCancelled = match.status === "cancelled";
                     return (
                       <tr
@@ -633,13 +1022,22 @@ export default function RosterProfilePage() {
                       >
                         <td className="py-1.5 pr-3 text-neutral-300 whitespace-nowrap">
                           {dateStr}
-                          {match.time && <span className="ml-1 text-neutral-500">{match.time}</span>}
+                          {match.time && (
+                            <span className="ml-1 text-neutral-500">
+                              {match.time}
+                            </span>
+                          )}
                         </td>
                         <td className="py-1.5 pr-3 text-neutral-200">
-                          {homeTeam} <span className="text-neutral-500">-</span> {awayTeam}
+                          {homeTeam} <span className="text-neutral-500">-</span>{" "}
+                          {awayTeam}
                         </td>
-                        <td className="py-1.5 pr-3 text-neutral-400">{match.competition || "—"}</td>
-                        <td className="py-1.5 pr-3 text-neutral-400">{match.location || "—"}</td>
+                        <td className="py-1.5 pr-3 text-neutral-400">
+                          {match.competition || "—"}
+                        </td>
+                        <td className="py-1.5 pr-3 text-neutral-400">
+                          {match.location || "—"}
+                        </td>
                         <td className="py-1.5 text-right text-neutral-200 whitespace-nowrap">
                           {hasScore
                             ? `${match.scoreHome} - ${match.scoreAway}`
@@ -654,7 +1052,10 @@ export default function RosterProfilePage() {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-neutral-400">Aucun match synchronisé. Cliquez sur Synchroniser pour importer le calendrier.</p>
+          <p className="text-sm text-neutral-400">
+            Aucun match synchronisé. Cliquez sur Synchroniser pour importer le
+            calendrier.
+          </p>
         )}
       </section>
 
@@ -674,13 +1075,16 @@ export default function RosterProfilePage() {
             >
               {tab.label}
               <span className="ml-1 text-neutral-500">
-                ({tab.key === "all"
+                (
+                {tab.key === "all"
                   ? playerRows.length
-                  : playerRows.filter((r) =>
-                      r.player.positions?.some((p) =>
-                        ("positions" in tab ? tab.positions : []).includes(p),
-                      ) ?? false,
-                    ).length})
+                  : playerRows.filter(
+                      (r) =>
+                        r.player.positions?.some((p) =>
+                          ("positions" in tab ? tab.positions : []).includes(p),
+                        ) ?? false,
+                    ).length}
+                )
               </span>
             </button>
           ))}
@@ -690,7 +1094,9 @@ export default function RosterProfilePage() {
             Aucun joueur dans cette catégorie.
           </p>
         ) : (
-          <ul className={`space-y-2 ${filteredPlayerRows.length > 10 ? "max-h-[32rem] overflow-y-auto pr-1" : ""}`}>
+          <ul
+            className={`space-y-2 ${filteredPlayerRows.length > 10 ? "max-h-[32rem] overflow-y-auto pr-1" : ""}`}
+          >
             {filteredPlayerRows.map((row) => (
               <li
                 key={row.player.id}

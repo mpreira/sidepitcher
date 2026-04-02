@@ -36,8 +36,7 @@ describe("safeString()", () => {
     expect(schema.parse("Éric Müller-Østgaard")).toBe("Éric Müller-Østgaard");
   });
 
-  it("preserves angle brackets in non-tag contexts", () => {
-    // Mathematical comparisons like "5 > 3" — the > is not inside a tag
+  it("preserves plain text without angle brackets", () => {
     expect(schema.parse("score 5")).toBe("score 5");
   });
 });

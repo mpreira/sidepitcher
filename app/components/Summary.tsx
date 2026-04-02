@@ -1,6 +1,6 @@
 import { faCopy, faDownload, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
+import React, { useState } from "react";
 import type { Event, Team } from "~/types/tracker";
 import { buildEventSummary, exportSummaryToClipboard, exportSummaryToPdf } from "~/utils/EventUtils";
 
@@ -14,6 +14,8 @@ interface Props {
 
 export default function Summary({ events, currentTime, teams, matchDay, onSaved }: Props) {
     const summary = buildEventSummary(events);
+    const [saveMessage, setSaveMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+    const [saving, setSaving] = useState(false);
     const teamLabel = teams.length >= 2
         ? `${teams[0].name.replace(/\s+J\d+$/, "")} vs ${teams[1].name.replace(/\s+J\d+$/, "")}`
         : teams.length === 1
@@ -22,8 +24,10 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
     const summaryTitle = matchDay ? `J${matchDay} - ${teamLabel}` : teamLabel;
 
     async function saveSummary() {
+        setSaving(true);
+        setSaveMessage(null);
         try {
-            await fetch("/api/summaries", {
+            const res = await fetch("/api/summaries", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -34,10 +38,17 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                     matchDay,
                 }),
             });
+            if (!res.ok) {
+                setSaveMessage({ type: "error", text: "Impossible de sauvegarder la synthèse." });
+                return;
+            }
             onSaved?.();
-            alert("Synthèse sauvegardée.");
-        } catch (e) {
-            alert("Impossible de sauvegarder la synthèse.");
+            setSaveMessage({ type: "success", text: "Synthèse sauvegardée." });
+            setTimeout(() => setSaveMessage(null), 3000);
+        } catch {
+            setSaveMessage({ type: "error", text: "Erreur réseau. Réessayez." });
+        } finally {
+            setSaving(false);
         }
     }
 
@@ -47,9 +58,10 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                 <button
                     className="sp-button sp-button-md sp-button-green w-full sm:w-auto"
                     onClick={saveSummary}
+                    disabled={saving}
                 >
                     <FontAwesomeIcon icon={faFloppyDisk} className="mr-2" />
-                    Sauvegarder la synthèse
+                    {saving ? "Sauvegarde..." : "Sauvegarder la synthèse"}
                 </button>
                 <button
                     className="sp-button sp-button-md sp-button-indigo w-full sm:w-auto"
@@ -71,6 +83,11 @@ export default function Summary({ events, currentTime, teams, matchDay, onSaved 
                     Télécharger PDF
                 </button>
             </div>
+            {saveMessage && (
+                <p className={`text-sm text-center ${saveMessage.type === "error" ? "text-red-400" : "text-emerald-400"}`}>
+                    {saveMessage.text}
+                </p>
+            )}
         </section>
     );
 }

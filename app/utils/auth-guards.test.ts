@@ -17,9 +17,6 @@ import {
   requireAdmin,
   requireAuthScope,
 } from "~/utils/account.server";
-import { getAccountById } from "~/utils/database.server";
-
-const mockedGetAccountById = vi.mocked(getAccountById);
 
 function buildRequest(cookieHeader?: string): Request {
   const headers = new Headers();

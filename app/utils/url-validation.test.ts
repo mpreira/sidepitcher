@@ -13,49 +13,40 @@ describe("validateIcsUrl()", () => {
 
   // --- Blocked protocols ---
   it("rejects http:// URLs", () => {
-    const result = validateIcsUrl("http://example.com/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("http://example.com/cal.ics").ok).toBe(false);
   });
 
   it("rejects file:// URLs", () => {
-    const result = validateIcsUrl("file:///etc/passwd");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("file:///etc/passwd").ok).toBe(false);
   });
 
   it("rejects ftp:// URLs", () => {
-    const result = validateIcsUrl("ftp://evil.com/data");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("ftp://evil.com/data").ok).toBe(false);
   });
 
   it("rejects javascript: URLs", () => {
-    const result = validateIcsUrl("javascript:alert(1)");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("javascript:alert(1)").ok).toBe(false);
   });
 
   // --- SSRF: private and internal IPs ---
   it("blocks localhost", () => {
-    const result = validateIcsUrl("https://localhost/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://localhost/cal.ics").ok).toBe(false);
   });
 
   it("blocks 127.0.0.1", () => {
-    const result = validateIcsUrl("https://127.0.0.1/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://127.0.0.1/cal.ics").ok).toBe(false);
   });
 
   it("blocks [::1]", () => {
-    const result = validateIcsUrl("https://[::1]/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://[::1]/cal.ics").ok).toBe(false);
   });
 
   it("blocks 10.x.x.x", () => {
-    const result = validateIcsUrl("https://10.0.0.1/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://10.0.0.1/cal.ics").ok).toBe(false);
   });
 
   it("blocks 192.168.x.x", () => {
-    const result = validateIcsUrl("https://192.168.1.1/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://192.168.1.1/cal.ics").ok).toBe(false);
   });
 
   it("blocks 172.16-31.x.x", () => {
@@ -69,28 +60,23 @@ describe("validateIcsUrl()", () => {
   });
 
   it("blocks .local domains", () => {
-    const result = validateIcsUrl("https://myserver.local/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://myserver.local/cal.ics").ok).toBe(false);
   });
 
   it("blocks 0.0.0.0", () => {
-    const result = validateIcsUrl("https://0.0.0.0/cal.ics");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://0.0.0.0/cal.ics").ok).toBe(false);
   });
 
   it("blocks AWS metadata endpoint", () => {
-    const result = validateIcsUrl("https://169.254.169.254/latest/meta-data/");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("https://169.254.169.254/latest/meta-data/").ok).toBe(false);
   });
 
   // --- Invalid URLs ---
   it("rejects garbage strings", () => {
-    const result = validateIcsUrl("not-a-url");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("not-a-url").ok).toBe(false);
   });
 
   it("rejects empty string", () => {
-    const result = validateIcsUrl("");
-    expect(result.ok).toBe(false);
+    expect(validateIcsUrl("").ok).toBe(false);
   });
 });

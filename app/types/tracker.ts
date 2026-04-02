@@ -59,6 +59,15 @@ export interface Title {
     year: number;
 }
 
+export interface Result {
+    outcome: "victory" | "defeat" | "draw";
+    resultText: string; // e.g. "Victoire 28-14", "Défaite 10-12", "Nul 21-21"
+    opponent: string;
+    competition?: string;
+    date?: string; // ISO date string (YYYY-MM-DD)
+    homeOrAway?: "home" | "away";
+}
+
 export interface MatchFixture {
     date: string;           // ISO date string (YYYY-MM-DD)
     time?: string;          // HH:MM
@@ -95,6 +104,10 @@ export interface Roster {
     category?: 'Top 14' | 'Pro D2';
     founded_in?: number; // year of creation
     titles?: Title[]; // list of titles won
+    currentRanking?: number; // current league ranking
+    currentPoints?: number; // current league points
+    lastFiveMatches?: Result[];
+    seasonRecord?: { victories: number; defeats: number; draws: number };
 }
 
 export interface Team {
