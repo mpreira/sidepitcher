@@ -5,7 +5,7 @@ import { useTeams } from "~/context/TeamsContext";
 import { toShortId, findFullId } from "~/utils/shortId";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faCrown, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faCrown, faPlus, faSync, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
 import { CURRENT_SEASON, type MatchFixture, type PlayerPosition, type Title } from "~/types/tracker";
@@ -169,6 +169,37 @@ export default function RosterProfilePage() {
   const [foundedInInput, setFoundedInInput] = useState("");
   const [isEditingTitles, setIsEditingTitles] = useState(false);
   const [titlesDraft, setTitlesDraft] = useState<Title[]>([]);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [calendarSyncResult, setCalendarSyncResult] = useState<string | null>(null);
+
+  async function syncCalendar() {
+    if (!roster || isSyncingCalendar) return;
+    setIsSyncingCalendar(true);
+    setCalendarSyncResult(null);
+    try {
+      const res = await fetch("/api/calendar-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rosterId: roster.id,
+          icsUrl: "https://ics.ecal.com/ecal-sub/69cdf65b776b530002545e5e/Ligue%20Nationale%20De%20Rugby.ics",
+          season: selectedSeason,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCalendarSyncResult(`${data.matchCount} match(s) synchronisé(s)`);
+        // Reload page data to get updated calendar
+        window.location.reload();
+      } else {
+        setCalendarSyncResult(data.error || "Erreur de synchronisation");
+      }
+    } catch {
+      setCalendarSyncResult("Erreur réseau");
+    } finally {
+      setIsSyncingCalendar(false);
+    }
+  }
 
   function saveCoach() {
     if (!roster) return;
@@ -528,9 +559,28 @@ export default function RosterProfilePage() {
       </nav>
 
       {/* Calendar section */}
-      {seasonCalendar.length > 0 && (
-        <section className="sp-panel space-y-3">
+      <section className="sp-panel space-y-3">
+        <div className="flex items-center justify-between">
           <h2 className="font-semibold">Calendrier</h2>
+          <div className="flex items-center gap-2">
+            {calendarSyncResult && (
+              <span className="text-xs text-neutral-400">{calendarSyncResult}</span>
+            )}
+            <button
+              type="button"
+              className="sp-button sp-button-xs sp-button-blue"
+              onClick={syncCalendar}
+              disabled={isSyncingCalendar}
+            >
+              <FontAwesomeIcon
+                icon={faSync}
+                className={`mr-1 ${isSyncingCalendar ? "animate-spin" : ""}`}
+              />
+              {isSyncingCalendar ? "Sync…" : "Synchroniser"}
+            </button>
+          </div>
+        </div>
+        {seasonCalendar.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
@@ -584,8 +634,10 @@ export default function RosterProfilePage() {
               </tbody>
             </table>
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="text-sm text-neutral-400">Aucun match synchronisé. Cliquez sur Synchroniser pour importer le calendrier.</p>
+        )}
+      </section>
 
       {/* Player list with position tabs */}
       <section className="sp-panel space-y-3">
