@@ -439,6 +439,12 @@ async function initializeSchema(pool: Pool) {
     ALTER TABLE live_matches ADD COLUMN IF NOT EXISTS admin_token_hash TEXT;
     ALTER TABLE live_matches ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
     ALTER TABLE live_matches ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ;
+    ALTER TABLE live_matches ADD COLUMN IF NOT EXISTS last_modified_by TEXT;
+
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS last_modified_by TEXT;
+    ALTER TABLE summaries ADD COLUMN IF NOT EXISTS last_modified_by TEXT;
+    ALTER TABLE match_day_selections ADD COLUMN IF NOT EXISTS last_modified_by TEXT;
+    ALTER TABLE player_stats ADD COLUMN IF NOT EXISTS last_modified_by TEXT;
 
     CREATE INDEX IF NOT EXISTS idx_live_matches_public_slug ON live_matches(public_slug);
     CREATE INDEX IF NOT EXISTS idx_live_matches_expires_at ON live_matches(expires_at);
@@ -647,6 +653,7 @@ async function initializeSchema(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_event_log_correlation ON event_log(correlation_id);
     CREATE INDEX IF NOT EXISTS idx_audit_log_table_row ON audit_log(table_name, row_id);
     CREATE INDEX IF NOT EXISTS idx_audit_log_at ON audit_log("at" DESC);
+    CREATE INDEX IF NOT EXISTS idx_audit_log_by ON audit_log("by");
     CREATE INDEX IF NOT EXISTS idx_account_rosters_state_updated ON account_rosters_state(updated_at);
   `);
 
@@ -1496,7 +1503,13 @@ export async function updateAccountByAdmin(input: {
   if (!row) {
     throw new Error("Account not found");
   }
-  return mapAccountRow(row);
+  const updated = mapAccountRow(row);
+  await insertAuditLog(pool, {
+    tableName: "accounts", rowId: input.accountId, action: "UPDATE", by: "admin",
+    before: { name: existing.name, email: existing.email, isAdmin: existing.isAdmin, isApproved: existing.isApproved },
+    after: { name: updated.name, email: updated.email, isAdmin: updated.isAdmin, isApproved: updated.isApproved, passwordChanged: !!nextPasswordHash },
+  });
+  return updated;
 }
 
 export async function updateAccountCredentials(input: {
@@ -1671,6 +1684,8 @@ export async function deleteAccountByAdmin(accountId: string): Promise<void> {
   const pool = getPool();
   await cleanupExpiredAnonymousData(pool);
 
+  const before = await getAccountById(accountId);
+
   // Delete structured relational data (FK order)
   await pool.query(`DELETE FROM event_log WHERE actor_account_id = $1`, [accountId]);
   await pool.query(`DELETE FROM matches WHERE account_id = $1`, [accountId]);
@@ -1686,6 +1701,13 @@ export async function deleteAccountByAdmin(accountId: string): Promise<void> {
   await pool.query(`DELETE FROM summaries WHERE account_id = $1`, [accountId]);
   await pool.query(`DELETE FROM account_password_resets WHERE account_id = $1`, [accountId]);
   await pool.query(`DELETE FROM accounts WHERE id = $1`, [accountId]);
+
+  if (before) {
+    await insertAuditLog(pool, {
+      tableName: "accounts", rowId: accountId, action: "DELETE", by: "admin",
+      before: { name: before.name, email: before.email, isAdmin: before.isAdmin, isApproved: before.isApproved },
+    });
+  }
 }
 
 export async function getMatchDaySelection(
@@ -2238,7 +2260,9 @@ export async function createPlayer(accountId: string, input: {
     [input.id, accountId, input.name, input.number ?? null, JSON.stringify(input.positions ?? []),
      input.photoUrl ?? null, input.nationality ?? null, now, accountId]
   );
-  return mapPlayerRow(result.rows[0]);
+  const player = mapPlayerRow(result.rows[0]);
+  await insertAuditLog(pool, { tableName: "players", rowId: input.id, action: "INSERT", by: accountId, after: player as unknown as Record<string, unknown> });
+  return player;
 }
 
 export async function updatePlayer(accountId: string, playerId: string, input: {
@@ -2247,6 +2271,7 @@ export async function updatePlayer(accountId: string, playerId: string, input: {
 }): Promise<DbPlayer | null> {
   await ensureInitialized();
   const pool = getPool();
+  const before = await getPlayerById(accountId, playerId);
   const now = new Date().toISOString();
   const result = await pool.query(
     `UPDATE players SET
@@ -2263,18 +2288,26 @@ export async function updatePlayer(accountId: string, playerId: string, input: {
      input.photoUrl ?? null, input.nationality ?? null, now]
   );
   const row = result.rows[0];
-  return row ? mapPlayerRow(row) : null;
+  if (!row) return null;
+  const after = mapPlayerRow(row);
+  await insertAuditLog(pool, { tableName: "players", rowId: playerId, action: "UPDATE", by: accountId, before: before as unknown as Record<string, unknown>, after: after as unknown as Record<string, unknown> });
+  return after;
 }
 
 export async function deletePlayer(accountId: string, playerId: string): Promise<boolean> {
   await ensureInitialized();
   const pool = getPool();
+  const before = await getPlayerById(accountId, playerId);
   await pool.query("DELETE FROM player_stats WHERE account_id = $1 AND player_id = $2", [accountId, playerId]);
   const result = await pool.query(
     "DELETE FROM players WHERE account_id = $1 AND id = $2",
     [accountId, playerId]
   );
-  return (result.rowCount ?? 0) > 0;
+  const deleted = (result.rowCount ?? 0) > 0;
+  if (deleted) {
+    await insertAuditLog(pool, { tableName: "players", rowId: playerId, action: "DELETE", by: accountId, before: before as unknown as Record<string, unknown> });
+  }
+  return deleted;
 }
 
 export async function searchPlayers(accountId: string, query: string): Promise<DbPlayer[]> {
@@ -2285,6 +2318,37 @@ export async function searchPlayers(accountId: string, query: string): Promise<D
     [accountId, `%${query}%`]
   );
   return result.rows.map(mapPlayerRow);
+}
+
+// ---------------------------------------------------------------------------
+// Audit helper
+// ---------------------------------------------------------------------------
+
+type AuditableClient = Pick<Pool, "query"> | { query: Pool["query"] };
+
+async function insertAuditLog(
+  client: AuditableClient,
+  entry: {
+    tableName: string;
+    rowId: string;
+    action: "INSERT" | "UPDATE" | "DELETE";
+    by?: string | null;
+    before?: Record<string, unknown> | null;
+    after?: Record<string, unknown> | null;
+  },
+): Promise<void> {
+  await client.query(
+    `INSERT INTO audit_log (table_name, row_id, action, "by", "at", "before", "after")
+     VALUES ($1, $2, $3, $4, NOW(), $5, $6)`,
+    [
+      entry.tableName,
+      entry.rowId,
+      entry.action,
+      entry.by ?? null,
+      entry.before ? JSON.stringify(entry.before) : null,
+      entry.after ? JSON.stringify(entry.after) : null,
+    ],
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -2335,7 +2399,9 @@ export async function createCoach(input: {
      RETURNING *`,
     [input.name, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
   );
-  return mapCoachRow(result.rows[0]);
+  const coach = mapCoachRow(result.rows[0]);
+  await insertAuditLog(pool, { tableName: "coaches", rowId: String(coach.id), action: "INSERT", by: modifiedBy, after: coach as unknown as Record<string, unknown> });
+  return coach;
 }
 
 export async function updateCoach(id: number, input: {
@@ -2343,6 +2409,7 @@ export async function updateCoach(id: number, input: {
 }, modifiedBy?: string): Promise<DbCoach | null> {
   await ensureInitialized();
   const pool = getPool();
+  const before = await getCoachById(id);
   const result = await pool.query(
     `UPDATE coaches SET
        name = COALESCE($2, name),
@@ -2355,14 +2422,22 @@ export async function updateCoach(id: number, input: {
     [id, input.name ?? null, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
   );
   const row = result.rows[0];
-  return row ? mapCoachRow(row) : null;
+  if (!row) return null;
+  const after = mapCoachRow(row);
+  await insertAuditLog(pool, { tableName: "coaches", rowId: String(id), action: "UPDATE", by: modifiedBy, before: before as unknown as Record<string, unknown>, after: after as unknown as Record<string, unknown> });
+  return after;
 }
 
-export async function deleteCoach(id: number): Promise<boolean> {
+export async function deleteCoach(id: number, modifiedBy?: string): Promise<boolean> {
   await ensureInitialized();
   const pool = getPool();
+  const before = await getCoachById(id);
   const result = await pool.query("DELETE FROM coaches WHERE id = $1", [id]);
-  return (result.rowCount ?? 0) > 0;
+  const deleted = (result.rowCount ?? 0) > 0;
+  if (deleted) {
+    await insertAuditLog(pool, { tableName: "coaches", rowId: String(id), action: "DELETE", by: modifiedBy, before: before as unknown as Record<string, unknown> });
+  }
+  return deleted;
 }
 
 export async function searchCoaches(query: string): Promise<DbCoach[]> {
@@ -2423,7 +2498,9 @@ export async function createPresident(input: {
      RETURNING *`,
     [input.name, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
   );
-  return mapPresidentRow(result.rows[0]);
+  const president = mapPresidentRow(result.rows[0]);
+  await insertAuditLog(pool, { tableName: "presidents", rowId: String(president.id), action: "INSERT", by: modifiedBy, after: president as unknown as Record<string, unknown> });
+  return president;
 }
 
 export async function updatePresident(id: number, input: {
@@ -2431,6 +2508,7 @@ export async function updatePresident(id: number, input: {
 }, modifiedBy?: string): Promise<DbPresident | null> {
   await ensureInitialized();
   const pool = getPool();
+  const before = await getPresidentById(id);
   const result = await pool.query(
     `UPDATE presidents SET
        name = COALESCE($2, name),
@@ -2443,14 +2521,22 @@ export async function updatePresident(id: number, input: {
     [id, input.name ?? null, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
   );
   const row = result.rows[0];
-  return row ? mapPresidentRow(row) : null;
+  if (!row) return null;
+  const after = mapPresidentRow(row);
+  await insertAuditLog(pool, { tableName: "presidents", rowId: String(id), action: "UPDATE", by: modifiedBy, before: before as unknown as Record<string, unknown>, after: after as unknown as Record<string, unknown> });
+  return after;
 }
 
-export async function deletePresident(id: number): Promise<boolean> {
+export async function deletePresident(id: number, modifiedBy?: string): Promise<boolean> {
   await ensureInitialized();
   const pool = getPool();
+  const before = await getPresidentById(id);
   const result = await pool.query("DELETE FROM presidents WHERE id = $1", [id]);
-  return (result.rowCount ?? 0) > 0;
+  const deleted = (result.rowCount ?? 0) > 0;
+  if (deleted) {
+    await insertAuditLog(pool, { tableName: "presidents", rowId: String(id), action: "DELETE", by: modifiedBy, before: before as unknown as Record<string, unknown> });
+  }
+  return deleted;
 }
 
 export async function searchPresidents(query: string): Promise<DbPresident[]> {
