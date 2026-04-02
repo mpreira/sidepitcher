@@ -58,9 +58,22 @@ export interface Title {
     year: number;
 }
 
+export interface MatchFixture {
+    date: string;           // ISO date string (YYYY-MM-DD)
+    time?: string;          // HH:MM
+    opponent: string;
+    competition?: string;
+    isHome: boolean;
+    location?: string;
+    scoreHome?: number;
+    scoreAway?: number;
+    status?: "upcoming" | "played" | "cancelled";
+}
+
 export interface SeasonData {
     players: Player[];
     coach?: string;
+    calendar?: MatchFixture[];
 }
 
 export const CURRENT_SEASON = "2025/2026";
@@ -73,6 +86,7 @@ export interface Roster {
     logo?: string;
     coach?: Coach["name"];
     coachData?: Coach;
+    coachesData?: Coach[];  // multi-coach: when coach field contains multiple names separated by comma
     president?: President["name"];
     presidentData?: President;
     players: Player[]; // effectif global (mirrors current season)

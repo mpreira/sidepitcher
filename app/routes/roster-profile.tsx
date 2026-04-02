@@ -5,10 +5,10 @@ import { useTeams } from "~/context/TeamsContext";
 import { toShortId, findFullId } from "~/utils/shortId";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faCrown, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faCrown, faPlus, faSync, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
-import { CURRENT_SEASON, type PlayerPosition, type Title } from "~/types/tracker";
+import { CURRENT_SEASON, type MatchFixture, type PlayerPosition, type Title } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: "Vue effectif" }];
@@ -104,6 +104,19 @@ export default function RosterProfilePage() {
     return roster.seasons?.[selectedSeason]?.coach;
   }, [roster, selectedSeason, isCurrentSeason]);
 
+  const seasonCalendar = useMemo((): MatchFixture[] => {
+    if (!roster) return [];
+    return roster.seasons?.[selectedSeason]?.calendar ?? [];
+  }, [roster, selectedSeason]);
+
+  const POSITION_TABS = [
+    { key: "all", label: "Tous" },
+    { key: "avants", label: "Avants", positions: ["première ligne", "talonneur", "deuxième ligne", "troisième ligne"] as PlayerPosition[] },
+    { key: "arrieres", label: "Arrières", positions: ["demi de mêlée", "demi d'ouverture", "centre", "ailier", "arrière"] as PlayerPosition[] },
+  ] as const;
+
+  const [selectedPositionTab, setSelectedPositionTab] = useState<string>("all");
+
   const rosterTeams = useMemo(() => {
     if (!roster) return [];
     return teams.filter((item) => item.rosterId === roster.id);
@@ -139,6 +152,15 @@ export default function RosterProfilePage() {
     }));
   }, [sortedPlayers, roster, rosterTeams]);
 
+  const filteredPlayerRows = useMemo(() => {
+    if (selectedPositionTab === "all") return playerRows;
+    const tab = POSITION_TABS.find((t) => t.key === selectedPositionTab);
+    if (!tab || !("positions" in tab)) return playerRows;
+    return playerRows.filter((row) =>
+      row.player.positions?.some((p) => tab.positions.includes(p)) ?? false,
+    );
+  }, [playerRows, selectedPositionTab]);
+
   const [isEditingCoach, setIsEditingCoach] = useState(false);
   const [coachInput, setCoachInput] = useState("");
   const [isEditingPresident, setIsEditingPresident] = useState(false);
@@ -147,18 +169,56 @@ export default function RosterProfilePage() {
   const [foundedInInput, setFoundedInInput] = useState("");
   const [isEditingTitles, setIsEditingTitles] = useState(false);
   const [titlesDraft, setTitlesDraft] = useState<Title[]>([]);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [calendarSyncResult, setCalendarSyncResult] = useState<string | null>(null);
+
+  async function syncCalendar() {
+    if (!roster || isSyncingCalendar) return;
+    setIsSyncingCalendar(true);
+    setCalendarSyncResult(null);
+    try {
+      const res = await fetch("/api/calendar-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rosterId: roster.id,
+          icsUrl: "https://ics.ecal.com/ecal-sub/69cdf65b776b530002545e5e/Ligue%20Nationale%20De%20Rugby.ics",
+          season: selectedSeason,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCalendarSyncResult(`${data.matchCount} match(s) synchronisé(s)`);
+        // Reload page data to get updated calendar
+        window.location.reload();
+      } else {
+        setCalendarSyncResult(data.error || "Erreur de synchronisation");
+      }
+    } catch {
+      setCalendarSyncResult("Erreur réseau");
+    } finally {
+      setIsSyncingCalendar(false);
+    }
+  }
 
   function saveCoach() {
     if (!roster) return;
     const name = coachInput.trim() || undefined;
+    const names = name ? name.split(",").map((n) => n.trim()).filter(Boolean) : [];
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
           ? {
               ...item,
               coach: name,
-              coachData: name
-                ? { ...(item.coachData ?? {}), name }
+              coachData: names[0]
+                ? { ...(item.coachData ?? {}), name: names[0] }
+                : undefined,
+              coachesData: names.length > 1
+                ? names.map((n, i) => ({
+                    ...(item.coachesData?.[i] ?? {}),
+                    name: n,
+                  }))
                 : undefined,
             }
           : item,
@@ -228,9 +288,10 @@ export default function RosterProfilePage() {
     setIsEditingTitles(false);
   }
 
-  function getCoachProfilePath(): string {
+  function getCoachProfilePath(coachIndex?: number): string {
     if (!rosterId) return "#";
-    return `/r/${toShortId(rosterId)}/coach`;
+    const base = `/r/${toShortId(rosterId)}/coach`;
+    return coachIndex != null && coachIndex > 0 ? `${base}?idx=${coachIndex}` : base;
   }
 
   function getPresidentProfilePath(): string {
@@ -414,9 +475,17 @@ export default function RosterProfilePage() {
               <p className="text-sm text-neutral-200">
                 <strong>Entraineur :</strong>{" "}
                 {seasonCoach ? (
-                  <Link to={getCoachProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
-                    {seasonCoach}
-                  </Link>
+                  (() => {
+                    const names = seasonCoach.split(",").map((n) => n.trim()).filter(Boolean);
+                    return names.map((name, idx) => (
+                      <span key={name}>
+                        {idx > 0 && ", "}
+                        <Link to={getCoachProfilePath(idx)} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                          {name}
+                        </Link>
+                      </span>
+                    ));
+                  })()
                 ) : "Non renseigné"}
               </p>
             )}
@@ -505,15 +574,121 @@ export default function RosterProfilePage() {
         ))}
       </nav>
 
+      {/* Calendar section */}
+      <section className="sp-panel space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Calendrier</h2>
+          <div className="flex items-center gap-2">
+            {calendarSyncResult && (
+              <span className="text-xs text-neutral-400">{calendarSyncResult}</span>
+            )}
+            <button
+              type="button"
+              className="sp-button sp-button-xs sp-button-blue"
+              onClick={syncCalendar}
+              disabled={isSyncingCalendar}
+            >
+              <FontAwesomeIcon
+                icon={faSync}
+                className={`mr-1 ${isSyncingCalendar ? "animate-spin" : ""}`}
+              />
+              {isSyncingCalendar ? "Sync…" : "Synchroniser"}
+            </button>
+          </div>
+        </div>
+        {seasonCalendar.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="text-xs text-neutral-400 border-b border-neutral-700">
+                  <th className="pb-2 pr-3">Date</th>
+                  <th className="pb-2 pr-3">Match</th>
+                  <th className="pb-2 pr-3">Compétition</th>
+                  <th className="pb-2 pr-3">Lieu</th>
+                  <th className="pb-2 text-right">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {seasonCalendar
+                  .slice()
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((match, idx) => {
+                    const dateStr = match.date
+                      ? new Date(match.date).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : "—";
+                    const homeTeam = match.isHome ? roster.name : match.opponent;
+                    const awayTeam = match.isHome ? match.opponent : roster.name;
+                    const hasScore = match.scoreHome != null && match.scoreAway != null;
+                    const isCancelled = match.status === "cancelled";
+                    return (
+                      <tr
+                        key={`${match.date}-${match.opponent}-${idx}`}
+                        className={`border-b border-neutral-700/50 ${isCancelled ? "opacity-50 line-through" : ""}`}
+                      >
+                        <td className="py-1.5 pr-3 text-neutral-300 whitespace-nowrap">
+                          {dateStr}
+                          {match.time && <span className="ml-1 text-neutral-500">{match.time}</span>}
+                        </td>
+                        <td className="py-1.5 pr-3 text-neutral-200">
+                          {homeTeam} <span className="text-neutral-500">-</span> {awayTeam}
+                        </td>
+                        <td className="py-1.5 pr-3 text-neutral-400">{match.competition || "—"}</td>
+                        <td className="py-1.5 pr-3 text-neutral-400">{match.location || "—"}</td>
+                        <td className="py-1.5 text-right text-neutral-200 whitespace-nowrap">
+                          {hasScore
+                            ? `${match.scoreHome} - ${match.scoreAway}`
+                            : isCancelled
+                              ? "Annulé"
+                              : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-neutral-400">Aucun match synchronisé. Cliquez sur Synchroniser pour importer le calendrier.</p>
+        )}
+      </section>
+
+      {/* Player list with position tabs */}
       <section className="sp-panel space-y-3">
         <h2 className="font-semibold">Joueurs de l'effectif</h2>
-        {playerRows.length === 0 ? (
+        <nav className="flex gap-1 border-b border-neutral-700 pb-0">
+          {POSITION_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                selectedPositionTab === tab.key
+                  ? "border-b-2 border-sky-500 text-sky-400"
+                  : "text-neutral-400 hover:text-neutral-200"
+              }`}
+              onClick={() => setSelectedPositionTab(tab.key)}
+            >
+              {tab.label}
+              <span className="ml-1 text-neutral-500">
+                ({tab.key === "all"
+                  ? playerRows.length
+                  : playerRows.filter((r) =>
+                      r.player.positions?.some((p) =>
+                        ("positions" in tab ? tab.positions : []).includes(p),
+                      ) ?? false,
+                    ).length})
+              </span>
+            </button>
+          ))}
+        </nav>
+        {filteredPlayerRows.length === 0 ? (
           <p className="text-sm text-neutral-400">
-            Aucun joueur dans cet effectif.
+            Aucun joueur dans cette catégorie.
           </p>
         ) : (
-          <ul className="space-y-2">
-            {playerRows.map((row) => (
+          <ul className={`space-y-2 ${filteredPlayerRows.length > 10 ? "max-h-[32rem] overflow-y-auto pr-1" : ""}`}>
+            {filteredPlayerRows.map((row) => (
               <li
                 key={row.player.id}
                 className="rounded border border-neutral-700 bg-neutral-800/40 px-3 py-2 text-sm text-neutral-200"

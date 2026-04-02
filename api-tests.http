@@ -194,3 +194,19 @@ Content-Type: application/json
 
 ### Recherche sans paramètres (erreur attendue)
 GET {{base}}/api/search
+
+### ===========================
+### DB PERFORMANCE (admin only)
+### ===========================
+
+### Toutes les stats de performance
+GET {{base}}/api/admin/db-stats
+
+### Requêtes les plus lentes
+GET {{base}}/api/admin/db-stats?section=slow-queries&limit=10
+
+### Utilisation des index
+GET {{base}}/api/admin/db-stats?section=index-usage
+
+### Taille des tables
+GET {{base}}/api/admin/db-stats?section=table-sizes
