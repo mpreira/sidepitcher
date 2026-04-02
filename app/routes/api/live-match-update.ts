@@ -1,4 +1,5 @@
 import type { ActionFunction } from "react-router";
+import type { LiveSnapshot } from "~/types/live";
 import { updateLiveMatchState } from "~/utils/database.server";
 import { publishLiveMatch } from "~/utils/live-broker.server";
 import { liveMatchUpdateSchema, parsePayload } from "~/utils/schemas.server";
@@ -22,7 +23,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   const updated = await updateLiveMatchState({
     matchId,
     adminToken,
-    state: parsed.data.state,
+    state: parsed.data.state as LiveSnapshot,
   });
 
   if (!updated.record) {

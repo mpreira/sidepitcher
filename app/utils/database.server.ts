@@ -1108,7 +1108,7 @@ async function backfillStructuredTables(pool: Pool): Promise<void> {
       console.warn(`[backfill] Skipping invalid roster blob for account ${row.account_id}:`, validated.error.issues);
       continue;
     }
-    await syncRosterDataToTables(pool, row.account_id, validated.data);
+    await syncRosterDataToTables(pool, row.account_id, validated.data as RosterStatePayload);
   }
 
   console.log("[backfill] Syncing existing summary blobs to structured tables…");
