@@ -37,4 +37,5 @@ export default [
     route("api/titles", "routes/api/titles.ts"),
     route("api/search", "routes/api/search.ts"),
     route("api/calendar-sync", "routes/api/calendar-sync.ts"),
+    route("api/admin/db-stats", "routes/api/admin-db-stats.ts"),
 ] satisfies RouteConfig;
