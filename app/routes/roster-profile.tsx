@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
-import { CURRENT_SEASON, type PlayerPosition, type Title } from "~/types/tracker";
+import { CURRENT_SEASON, type MatchFixture, type PlayerPosition, type Title } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: "Vue effectif" }];
@@ -104,6 +104,19 @@ export default function RosterProfilePage() {
     return roster.seasons?.[selectedSeason]?.coach;
   }, [roster, selectedSeason, isCurrentSeason]);
 
+  const seasonCalendar = useMemo((): MatchFixture[] => {
+    if (!roster) return [];
+    return roster.seasons?.[selectedSeason]?.calendar ?? [];
+  }, [roster, selectedSeason]);
+
+  const POSITION_TABS = [
+    { key: "all", label: "Tous" },
+    { key: "avants", label: "Avants", positions: ["première ligne", "talonneur", "deuxième ligne", "troisième ligne"] as PlayerPosition[] },
+    { key: "arrieres", label: "Arrières", positions: ["demi de mêlée", "demi d'ouverture", "centre", "ailier", "arrière"] as PlayerPosition[] },
+  ] as const;
+
+  const [selectedPositionTab, setSelectedPositionTab] = useState<string>("all");
+
   const rosterTeams = useMemo(() => {
     if (!roster) return [];
     return teams.filter((item) => item.rosterId === roster.id);
@@ -138,6 +151,15 @@ export default function RosterProfilePage() {
       compositions: (compositionsByPlayerId.get(player.id) ?? []).sort((first, second) => first.number - second.number),
     }));
   }, [sortedPlayers, roster, rosterTeams]);
+
+  const filteredPlayerRows = useMemo(() => {
+    if (selectedPositionTab === "all") return playerRows;
+    const tab = POSITION_TABS.find((t) => t.key === selectedPositionTab);
+    if (!tab || !("positions" in tab)) return playerRows;
+    return playerRows.filter((row) =>
+      row.player.positions?.some((p) => tab.positions.includes(p)) ?? false,
+    );
+  }, [playerRows, selectedPositionTab]);
 
   const [isEditingCoach, setIsEditingCoach] = useState(false);
   const [coachInput, setCoachInput] = useState("");
@@ -505,15 +527,100 @@ export default function RosterProfilePage() {
         ))}
       </nav>
 
+      {/* Calendar section */}
+      {seasonCalendar.length > 0 && (
+        <section className="sp-panel space-y-3">
+          <h2 className="font-semibold">Calendrier</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="text-xs text-neutral-400 border-b border-neutral-700">
+                  <th className="pb-2 pr-3">Date</th>
+                  <th className="pb-2 pr-3">Match</th>
+                  <th className="pb-2 pr-3">Compétition</th>
+                  <th className="pb-2 pr-3">Lieu</th>
+                  <th className="pb-2 text-right">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {seasonCalendar
+                  .slice()
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((match, idx) => {
+                    const dateStr = match.date
+                      ? new Date(match.date).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                        })
+                      : "—";
+                    const homeTeam = match.isHome ? roster.name : match.opponent;
+                    const awayTeam = match.isHome ? match.opponent : roster.name;
+                    const hasScore = match.scoreHome != null && match.scoreAway != null;
+                    const isCancelled = match.status === "cancelled";
+                    return (
+                      <tr
+                        key={`${match.date}-${match.opponent}-${idx}`}
+                        className={`border-b border-neutral-700/50 ${isCancelled ? "opacity-50 line-through" : ""}`}
+                      >
+                        <td className="py-1.5 pr-3 text-neutral-300 whitespace-nowrap">
+                          {dateStr}
+                          {match.time && <span className="ml-1 text-neutral-500">{match.time}</span>}
+                        </td>
+                        <td className="py-1.5 pr-3 text-neutral-200">
+                          {homeTeam} <span className="text-neutral-500">-</span> {awayTeam}
+                        </td>
+                        <td className="py-1.5 pr-3 text-neutral-400">{match.competition || "—"}</td>
+                        <td className="py-1.5 pr-3 text-neutral-400">{match.location || "—"}</td>
+                        <td className="py-1.5 text-right text-neutral-200 whitespace-nowrap">
+                          {hasScore
+                            ? `${match.scoreHome} - ${match.scoreAway}`
+                            : isCancelled
+                              ? "Annulé"
+                              : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* Player list with position tabs */}
       <section className="sp-panel space-y-3">
         <h2 className="font-semibold">Joueurs de l'effectif</h2>
-        {playerRows.length === 0 ? (
+        <nav className="flex gap-1 border-b border-neutral-700 pb-0">
+          {POSITION_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                selectedPositionTab === tab.key
+                  ? "border-b-2 border-sky-500 text-sky-400"
+                  : "text-neutral-400 hover:text-neutral-200"
+              }`}
+              onClick={() => setSelectedPositionTab(tab.key)}
+            >
+              {tab.label}
+              <span className="ml-1 text-neutral-500">
+                ({tab.key === "all"
+                  ? playerRows.length
+                  : playerRows.filter((r) =>
+                      r.player.positions?.some((p) =>
+                        ("positions" in tab ? tab.positions : []).includes(p),
+                      ) ?? false,
+                    ).length})
+              </span>
+            </button>
+          ))}
+        </nav>
+        {filteredPlayerRows.length === 0 ? (
           <p className="text-sm text-neutral-400">
-            Aucun joueur dans cet effectif.
+            Aucun joueur dans cette catégorie.
           </p>
         ) : (
           <ul className="space-y-2">
-            {playerRows.map((row) => (
+            {filteredPlayerRows.map((row) => (
               <li
                 key={row.player.id}
                 className="rounded border border-neutral-700 bg-neutral-800/40 px-3 py-2 text-sm text-neutral-200"

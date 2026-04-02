@@ -52,9 +52,22 @@ const titleSchema = z.object({
   year: z.number(),
 }).passthrough();
 
+const matchFixtureSchema = z.object({
+  date: z.string().min(1),
+  time: z.string().nullable().optional(),
+  opponent: z.string().min(1),
+  competition: z.string().nullable().optional(),
+  isHome: z.boolean(),
+  location: z.string().nullable().optional(),
+  scoreHome: z.number().nullable().optional(),
+  scoreAway: z.number().nullable().optional(),
+  status: z.string().nullable().optional(),
+}).passthrough();
+
 const seasonDataSchema = z.object({
   players: z.array(playerSchema),
   coach: z.string().nullable().optional(),
+  calendar: z.array(matchFixtureSchema).nullable().optional(),
 }).passthrough();
 
 const rosterSchema = z.object({
