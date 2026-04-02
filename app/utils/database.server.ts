@@ -669,12 +669,11 @@ async function syncRosterDataToTables(
     // 1. Collect all unique competition names (from category + titles)
     const competitionNames = new Set<string>();
     for (const r of rosters) {
-      if (r.category && typeof r.category === "string") {
+      if (r.category) {
         competitionNames.add(r.category);
       }
-      const rTitles = Array.isArray(r.titles) ? (r.titles as Record<string, unknown>[]) : [];
-      for (const t of rTitles) {
-        if (t.competition && typeof t.competition === "string") {
+      for (const t of r.titles ?? []) {
+        if (t.competition) {
           competitionNames.add(t.competition);
         }
       }
@@ -690,7 +689,7 @@ async function syncRosterDataToTables(
     const coachIdMap = new Map<string, number>();
     for (const r of rosters) {
       const coachName = r.coach;
-      if (coachName && typeof coachName === "string" && !coachIdMap.has(coachName)) {
+      if (coachName && !coachIdMap.has(coachName)) {
         const res = await client.query<{ id: number }>(
           `INSERT INTO coaches (name, last_modified_by)
            VALUES ($1, $2)
@@ -706,7 +705,7 @@ async function syncRosterDataToTables(
     const presidentIdMap = new Map<string, number>();
     for (const r of rosters) {
       const presName = r.president;
-      if (presName && typeof presName === "string" && !presidentIdMap.has(presName)) {
+      if (presName && !presidentIdMap.has(presName)) {
         const res = await client.query<{ id: number }>(
           `INSERT INTO presidents (name, last_modified_by)
            VALUES ($1, $2)
