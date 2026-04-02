@@ -5,10 +5,10 @@ import { useTeams } from "~/context/TeamsContext";
 import { toShortId, findFullId } from "~/utils/shortId";
 import { parsePlayerName } from "~/utils/RosterUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faCrown, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
-import { CURRENT_SEASON, type PlayerPosition } from "~/types/tracker";
+import { CURRENT_SEASON, type PlayerPosition, type Title } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: "Vue effectif" }];
@@ -141,17 +141,101 @@ export default function RosterProfilePage() {
 
   const [isEditingCoach, setIsEditingCoach] = useState(false);
   const [coachInput, setCoachInput] = useState("");
+  const [isEditingPresident, setIsEditingPresident] = useState(false);
+  const [presidentInput, setPresidentInput] = useState("");
+  const [isEditingFoundedIn, setIsEditingFoundedIn] = useState(false);
+  const [foundedInInput, setFoundedInInput] = useState("");
+  const [isEditingTitles, setIsEditingTitles] = useState(false);
+  const [titlesDraft, setTitlesDraft] = useState<Title[]>([]);
 
   function saveCoach() {
     if (!roster) return;
+    const name = coachInput.trim() || undefined;
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
-          ? { ...item, coach: coachInput.trim() || undefined }
-          : item
-      )
+          ? {
+              ...item,
+              coach: name,
+              coachData: name
+                ? { ...(item.coachData ?? {}), name }
+                : undefined,
+            }
+          : item,
+      ),
     );
     setIsEditingCoach(false);
+  }
+
+  function savePresident() {
+    if (!roster) return;
+    const name = presidentInput.trim() || undefined;
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? {
+              ...item,
+              president: name,
+              presidentData: name
+                ? { ...(item.presidentData ?? {}), name }
+                : undefined,
+            }
+          : item,
+      ),
+    );
+    setIsEditingPresident(false);
+  }
+
+  function saveFoundedIn() {
+    if (!roster) return;
+    const parsed = parseInt(foundedInInput, 10);
+    const value = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id ? { ...item, founded_in: value } : item,
+      ),
+    );
+    setIsEditingFoundedIn(false);
+  }
+
+  function startEditingTitles() {
+    setTitlesDraft(roster?.titles ? roster.titles.map((t) => ({ ...t })) : []);
+    setIsEditingTitles(true);
+  }
+
+  function addTitleRow() {
+    setTitlesDraft((prev) => [...prev, { competition: "", ranking: "Vainqueur", year: new Date().getFullYear() }]);
+  }
+
+  function removeTitleRow(index: number) {
+    setTitlesDraft((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateTitleDraft(index: number, field: keyof Title, value: string | number) {
+    setTitlesDraft((prev) =>
+      prev.map((t, i) => (i === index ? { ...t, [field]: value } : t)),
+    );
+  }
+
+  function saveTitles() {
+    if (!roster) return;
+    const cleaned = titlesDraft.filter((t) => t.competition.trim() && t.year > 0);
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id ? { ...item, titles: cleaned.length > 0 ? cleaned : undefined } : item,
+      ),
+    );
+    setIsEditingTitles(false);
+  }
+
+  function getCoachProfilePath(): string {
+    if (!rosterId) return "#";
+    return `/r/${toShortId(rosterId)}/coach`;
+  }
+
+  function getPresidentProfilePath(): string {
+    if (!rosterId) return "#";
+    return `/r/${toShortId(rosterId)}/president`;
   }
 
   const backPath = getRosterBackPath(rosterId);
@@ -185,25 +269,138 @@ export default function RosterProfilePage() {
           <p className="text-sm text-neutral-200">
             <strong>Championnat:</strong> {roster.category || "Non renseigné"}
           </p>
-          <p className="text-sm text-neutral-200">
-            <strong>Création :</strong> {roster.founded_in || "Non renseigné"}
-          </p>
-          <p className="text-sm text-neutral-200">
-            <strong>Palmarès :</strong>{" "}
-            {roster.titles && roster.titles.length > 0
-              ? roster.titles
-                  .map(
-                    (title) =>
-                      `${title.ranking} ${title.competition} (${title.year})`,
-                  )
-                  .join(", ")
-              : "Non renseigné"}
-          </p>
+          <div className="flex items-center justify-between">
+            {isEditingFoundedIn ? (
+              <input
+                type="number"
+                className="sp-input-control flex-1 text-sm border-l-2 border-l-sky-500"
+                autoFocus
+                min={1800}
+                max={new Date().getFullYear()}
+                value={foundedInInput}
+                onChange={(e) => setFoundedInInput(e.target.value)}
+                onBlur={saveFoundedIn}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveFoundedIn();
+                  if (e.key === "Escape") setIsEditingFoundedIn(false);
+                }}
+              />
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Création :</strong> {roster.founded_in || "Non renseigné"}
+              </p>
+            )}
+            {!isEditingFoundedIn && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => {
+                  setFoundedInInput(roster.founded_in?.toString() ?? "");
+                  setIsEditingFoundedIn(true);
+                }}
+                aria-label="Modifier l'année de création"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              {!isEditingTitles ? (
+                <p className="text-sm text-neutral-200">
+                  <strong>Palmarès :</strong>{" "}
+                  {roster.titles && roster.titles.length > 0
+                    ? (() => {
+                        const grouped = new Map<string, string[]>();
+                        for (const t of roster.titles) {
+                          const key = `${t.competition} - ${t.ranking}`;
+                          const years = grouped.get(key) ?? [];
+                          years.push(t.year);
+                          grouped.set(key, years);
+                        }
+                        return Array.from(grouped.entries())
+                          .map(([key, years]) => `${key} (${years.join(", ")})`)
+                          .join(", ");
+                      })()
+                    : "Non renseigné"}
+                </p>
+              ) : (
+                <p className="text-sm text-neutral-200 font-semibold">Palmarès</p>
+              )}
+              {!isEditingTitles && (
+                <button
+                  type="button"
+                  className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                  onClick={startEditingTitles}
+                  aria-label="Modifier le palmarès"
+                >
+                  <FontAwesomeIcon icon={faPenToSquareRegular} />
+                </button>
+              )}
+            </div>
+            {isEditingTitles && (
+              <div className="mt-2 space-y-2">
+                {titlesDraft.map((title, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      className="sp-input-control text-sm flex-1"
+                      placeholder="Compétition"
+                      value={title.competition}
+                      onChange={(e) => updateTitleDraft(index, "competition", e.target.value)}
+                    />
+                    <select
+                      className="sp-input-control text-sm w-32"
+                      value={title.ranking}
+                      onChange={(e) => updateTitleDraft(index, "ranking", e.target.value)}
+                    >
+                      <option value="Vainqueur">Vainqueur</option>
+                      <option value="Finaliste">Finaliste</option>
+                    </select>
+                    <input
+                      type="number"
+                      className="sp-input-control text-sm w-20"
+                      placeholder="Année"
+                      value={title.year}
+                      onChange={(e) => updateTitleDraft(index, "year", parseInt(e.target.value, 10) || 0)}
+                    />
+                    <button
+                      type="button"
+                      className="sp-button sp-button-xs sp-button-red sp-button-icon"
+                      onClick={() => removeTitleRow(index)}
+                      aria-label="Supprimer ce titre"
+                    >
+                      <FontAwesomeIcon icon={faTrashCan} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-blue"
+                  onClick={addTitleRow}
+                >
+                  <FontAwesomeIcon icon={faPlus} className="mr-1" />
+                  Ajouter un titre
+                </button>
+                <div className="flex items-center gap-2 mt-1">
+                  <button type="button" className="sp-button sp-button-xs sp-button-blue" onClick={saveTitles}>
+                    Enregistrer
+                  </button>
+                  <button
+                    type="button"
+                    className="sp-button sp-button-xs sp-button-light"
+                    onClick={() => setIsEditingTitles(false)}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center justify-between">
             {isCurrentSeason && isEditingCoach ? (
               <input
                 type="text"
-                className="sp-input-control flex-1 text-sm"
+                className="sp-input-control flex-1 text-sm border-l-2 border-l-sky-500"
                 autoFocus
                 value={coachInput}
                 onChange={(e) => setCoachInput(e.target.value)}
@@ -215,7 +412,12 @@ export default function RosterProfilePage() {
               />
             ) : (
               <p className="text-sm text-neutral-200">
-                <strong>Entraineur :</strong> {seasonCoach || "Non renseigné"}
+                <strong>Entraineur :</strong>{" "}
+                {seasonCoach ? (
+                  <Link to={getCoachProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                    {seasonCoach}
+                  </Link>
+                ) : "Non renseigné"}
               </p>
             )}
             {isCurrentSeason && !isEditingCoach && (
@@ -232,9 +434,44 @@ export default function RosterProfilePage() {
               </button>
             )}
           </div>
-          <p className="text-sm text-neutral-200">
-            <strong>Président :</strong> {roster.president || "Non renseigné"}
-          </p>
+          <div className="flex items-center justify-between">
+            {isCurrentSeason && isEditingPresident ? (
+              <input
+                type="text"
+                className="sp-input-control flex-1 text-sm border-l-2 border-l-sky-500"
+                autoFocus
+                value={presidentInput}
+                onChange={(e) => setPresidentInput(e.target.value)}
+                onBlur={savePresident}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") savePresident();
+                  if (e.key === "Escape") setIsEditingPresident(false);
+                }}
+              />
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Président :</strong>{" "}
+                {roster.president ? (
+                  <Link to={getPresidentProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                    {roster.president}
+                  </Link>
+                ) : "Non renseigné"}
+              </p>
+            )}
+            {isCurrentSeason && !isEditingPresident && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => {
+                  setPresidentInput(roster.president || "");
+                  setIsEditingPresident(true);
+                }}
+                aria-label="Modifier le président"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
+          </div>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {seasonPlayers.length}
           </p>

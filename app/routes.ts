@@ -7,6 +7,8 @@ export default [
     route("roster", "routes/roster.tsx"),
     route("r/:rosterId/p/:playerId", "routes/player-profile.tsx"),
     route("r/:rosterId/team", "routes/roster-profile.tsx"),
+    route("r/:rosterId/coach", "routes/coach-profile.tsx"),
+    route("r/:rosterId/president", "routes/president-profile.tsx"),
     route("r/:rosterId", "routes/roster-detail.tsx"),
     route("syntheses", "routes/syntheses.tsx"),
     route("syntheses/:summaryId", "routes/synthese-detail.tsx"),

@@ -72,7 +72,9 @@ export interface Roster {
     color?: string;
     logo?: string;
     coach?: Coach["name"];
+    coachData?: Coach;
     president?: President["name"];
+    presidentData?: President;
     players: Player[]; // effectif global (mirrors current season)
     seasons?: Record<string, SeasonData>;
     category?: 'Top 14' | 'Pro D2';
