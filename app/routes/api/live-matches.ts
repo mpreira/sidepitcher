@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import type { ActionFunction } from "react-router";
+import type { LiveSnapshot } from "~/types/live";
 import { createLiveMatch } from "~/utils/database.server";
 import { liveMatchCreateSchema, parsePayload } from "~/utils/schemas.server";
 
@@ -32,7 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
     adminToken: createAdminToken(),
     championship: payload.championship,
     matchDay: toMatchDay(payload.matchDay),
-    state: payload.state,
+    state: payload.state as LiveSnapshot,
   });
 
   return {

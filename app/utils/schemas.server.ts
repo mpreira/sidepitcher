@@ -30,12 +30,12 @@ const playerStatsSchema = z.object({
 const playerSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  number: z.number().optional(),
-  positions: z.array(playerPositionSchema).optional(),
-  photoUrl: z.string().optional(),
-  nationality: z.string().optional(),
-  stats: playerStatsSchema.optional(),
-});
+  number: z.number().nullable().optional(),
+  positions: z.array(playerPositionSchema).nullable().optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  stats: playerStatsSchema.nullable().optional(),
+}).passthrough();
 
 const compositionEntrySchema = z.object({
   player: playerSchema,
@@ -44,16 +44,16 @@ const compositionEntrySchema = z.object({
 
 const coachSchema = z.object({
   name: z.string().min(1),
-  photoUrl: z.string().optional(),
-  nationality: z.string().optional(),
-  club: z.string().optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
 });
 
 const presidentSchema = z.object({
   name: z.string().min(1),
-  photoUrl: z.string().optional(),
-  nationality: z.string().optional(),
-  club: z.string().optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
 });
 
 const titleSchema = z.object({
@@ -70,31 +70,31 @@ const seasonDataSchema = z.object({
 const rosterSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  nickname: z.string().optional(),
-  color: z.string().optional(),
-  logo: z.string().optional(),
-  coach: z.string().optional(),
-  coachData: coachSchema.optional(),
-  president: z.string().optional(),
-  presidentData: presidentSchema.optional(),
+  nickname: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  logo: z.string().nullable().optional(),
+  coach: z.string().nullable().optional(),
+  coachData: coachSchema.nullable().optional(),
+  president: z.string().nullable().optional(),
+  presidentData: presidentSchema.nullable().optional(),
   players: z.array(playerSchema),
-  seasons: z.record(z.string(), seasonDataSchema).optional(),
-  category: z.enum(["Top 14", "Pro D2"]).optional(),
-  founded_in: z.number().optional(),
-  titles: z.array(titleSchema).optional(),
-});
+  seasons: z.record(z.string(), seasonDataSchema).nullable().optional(),
+  category: z.enum(["Top 14", "Pro D2"]).nullable().optional(),
+  founded_in: z.number().nullable().optional(),
+  titles: z.array(titleSchema).nullable().optional(),
+}).passthrough();
 
 const teamSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  nickname: z.string().optional(),
-  color: z.string().optional(),
-  logo: z.string().optional(),
+  nickname: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  logo: z.string().nullable().optional(),
   rosterId: z.string().min(1),
   captainPlayerId: z.string().nullable().optional(),
   starters: z.array(compositionEntrySchema),
   substitutes: z.array(compositionEntrySchema),
-});
+}).passthrough();
 
 // ---------------------------------------------------------------------------
 // API payload schemas

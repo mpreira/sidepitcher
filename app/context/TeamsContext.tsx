@@ -107,8 +107,13 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             championship,
         }),
         })
-        .catch(() => {
-            // ignore
+        .then((res) => {
+            if (!res.ok) {
+                res.json().then((data) => console.warn("[TeamsContext] sync rejected:", data)).catch(() => {});
+            }
+        })
+        .catch((err) => {
+            console.warn("[TeamsContext] sync failed:", err);
         })
         .finally(() => {
             lastSent.current = {
