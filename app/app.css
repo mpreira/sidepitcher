@@ -188,7 +188,7 @@ body {
   }
 
   .sp-input-control {
-    @apply h-auto w-full min-w-0 border-0 bg-transparent p-0 text-sm leading-5 text-neutral-200 shadow-none;
+    @apply h-auto w-full min-w-0 border-0 bg-transparent p-0 text-sm leading-5 text-neutral-200 shadow-none pl-0.5;
     @apply focus:outline-none focus:ring-0 focus:border-0;
   }
 }
