@@ -30,6 +30,7 @@ export interface Player {
     positions?: PlayerPosition[];
     photoUrl?: string;
     nationality?: string; // ISO 3166-1 alpha-2 code
+    club?: string;
     stats?: PlayerStats;
 }
 
