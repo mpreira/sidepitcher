@@ -204,14 +204,21 @@ export default function RosterProfilePage() {
   function saveCoach() {
     if (!roster) return;
     const name = coachInput.trim() || undefined;
+    const names = name ? name.split(",").map((n) => n.trim()).filter(Boolean) : [];
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
           ? {
               ...item,
               coach: name,
-              coachData: name
-                ? { ...(item.coachData ?? {}), name }
+              coachData: names[0]
+                ? { ...(item.coachData ?? {}), name: names[0] }
+                : undefined,
+              coachesData: names.length > 1
+                ? names.map((n, i) => ({
+                    ...(item.coachesData?.[i] ?? {}),
+                    name: n,
+                  }))
                 : undefined,
             }
           : item,
@@ -281,9 +288,10 @@ export default function RosterProfilePage() {
     setIsEditingTitles(false);
   }
 
-  function getCoachProfilePath(): string {
+  function getCoachProfilePath(coachIndex?: number): string {
     if (!rosterId) return "#";
-    return `/r/${toShortId(rosterId)}/coach`;
+    const base = `/r/${toShortId(rosterId)}/coach`;
+    return coachIndex != null && coachIndex > 0 ? `${base}?idx=${coachIndex}` : base;
   }
 
   function getPresidentProfilePath(): string {
@@ -467,9 +475,17 @@ export default function RosterProfilePage() {
               <p className="text-sm text-neutral-200">
                 <strong>Entraineur :</strong>{" "}
                 {seasonCoach ? (
-                  <Link to={getCoachProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
-                    {seasonCoach}
-                  </Link>
+                  (() => {
+                    const names = seasonCoach.split(",").map((n) => n.trim()).filter(Boolean);
+                    return names.map((name, idx) => (
+                      <span key={name}>
+                        {idx > 0 && ", "}
+                        <Link to={getCoachProfilePath(idx)} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                          {name}
+                        </Link>
+                      </span>
+                    ));
+                  })()
                 ) : "Non renseigné"}
               </p>
             )}

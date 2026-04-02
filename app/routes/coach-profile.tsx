@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useTeams } from "~/context/TeamsContext";
 import { toShortId, findFullId } from "~/utils/shortId";
@@ -19,6 +19,8 @@ function getRosterBackPath(rosterId: string | null | undefined): string {
 
 export default function CoachProfilePage() {
   const { rosterId: shortRosterId } = useParams();
+  const [searchParams] = useSearchParams();
+  const coachIdx = parseInt(searchParams.get("idx") ?? "0", 10) || 0;
   const { rosters, setRosters } = useTeams();
 
   const rosterNames = useMemo(
@@ -36,7 +38,12 @@ export default function CoachProfilePage() {
     [rosters, rosterId],
   );
 
-  const coachData: Coach | undefined = roster?.coachData ?? (roster?.coach ? { name: roster.coach } : undefined);
+  const coachData: Coach | undefined = (() => {
+    if (roster?.coachesData && coachIdx < roster.coachesData.length) {
+      return roster.coachesData[coachIdx];
+    }
+    return roster?.coachData ?? (roster?.coach ? { name: roster.coach } : undefined);
+  })();
 
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<Coach>({ name: "" });
@@ -61,12 +68,26 @@ export default function CoachProfilePage() {
       nationality: draft.nationality || undefined,
       club: draft.club?.trim() || undefined,
     };
+
     setRosters((current) =>
-      current.map((item) =>
-        item.id === roster.id
-          ? { ...item, coach: updated.name, coachData: updated }
-          : item,
-      ),
+      current.map((item) => {
+        if (item.id !== roster.id) return item;
+
+        // Multi-coach: update the correct slot
+        if (item.coachesData && coachIdx < item.coachesData.length) {
+          const newCoachesData = [...item.coachesData];
+          newCoachesData[coachIdx] = updated;
+          const newCoachStr = newCoachesData.map((c) => c.name).join(", ");
+          return {
+            ...item,
+            coach: newCoachStr,
+            coachData: newCoachesData[0],
+            coachesData: newCoachesData,
+          };
+        }
+
+        return { ...item, coach: updated.name, coachData: updated };
+      }),
     );
     setIsEditing(false);
   }

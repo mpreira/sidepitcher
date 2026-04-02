@@ -86,6 +86,7 @@ export interface Roster {
     logo?: string;
     coach?: Coach["name"];
     coachData?: Coach;
+    coachesData?: Coach[];  // multi-coach: when coach field contains multiple names separated by comma
     president?: President["name"];
     presidentData?: President;
     players: Player[]; // effectif global (mirrors current season)

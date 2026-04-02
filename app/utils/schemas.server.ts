@@ -78,6 +78,7 @@ const rosterSchema = z.object({
   logo: z.string().nullable().optional(),
   coach: z.string().nullable().optional(),
   coachData: coachSchema.nullable().optional(),
+  coachesData: z.array(coachSchema).nullable().optional(),
   president: z.string().nullable().optional(),
   presidentData: presidentSchema.nullable().optional(),
   players: z.array(playerSchema),
