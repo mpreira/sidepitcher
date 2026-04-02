@@ -107,6 +107,7 @@ export interface Roster {
     currentRanking?: number; // current league ranking
     currentPoints?: number; // current league points
     lastFiveMatches?: Result[];
+    seasonRecord?: { victories: number; defeats: number; draws: number };
 }
 
 export interface Team {

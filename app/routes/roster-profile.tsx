@@ -177,6 +177,10 @@ export default function RosterProfilePage() {
   const [pointsInput, setPointsInput] = useState("");
   const [isEditingLastFive, setIsEditingLastFive] = useState(false);
   const [lastFiveDraft, setLastFiveDraft] = useState<Result[]>([]);
+  const [isEditingSeasonRecord, setIsEditingSeasonRecord] = useState(false);
+  const [seasonVInput, setSeasonVInput] = useState("");
+  const [seasonDInput, setSeasonDInput] = useState("");
+  const [seasonNInput, setSeasonNInput] = useState("");
 
   function showInlineMessage(type: "error" | "success", text: string) {
     setInlineMessage({ type, text });
@@ -363,6 +367,28 @@ export default function RosterProfilePage() {
     );
     setIsEditingLastFive(false);
     showInlineMessage("success", "Série mise à jour.");
+  }
+
+  function saveSeasonRecord() {
+    if (!roster) return;
+    const v = parseInt(seasonVInput, 10);
+    const d = parseInt(seasonDInput, 10);
+    const n = parseInt(seasonNInput, 10);
+    const hasValue = [v, d, n].some((x) => Number.isFinite(x) && x >= 0);
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? {
+              ...item,
+              seasonRecord: hasValue
+                ? { victories: v || 0, defeats: d || 0, draws: n || 0 }
+                : undefined,
+            }
+          : item,
+      ),
+    );
+    setIsEditingSeasonRecord(false);
+    showInlineMessage("success", "Bilan saison mis à jour.");
   }
 
   function getCoachProfilePath(coachIndex?: number): string {
@@ -823,8 +849,86 @@ export default function RosterProfilePage() {
               </div>
             )}
           </div>
+          <div className="flex items-center justify-between">
+            {isEditingSeasonRecord ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-16 border-l-2 border-l-emerald-500"
+                  autoFocus
+                  min={0}
+                  placeholder="V"
+                  value={seasonVInput}
+                  onChange={(e) => setSeasonVInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSeasonRecord();
+                    if (e.key === "Escape") setIsEditingSeasonRecord(false);
+                  }}
+                />
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-16 border-l-2 border-l-red-500"
+                  min={0}
+                  placeholder="D"
+                  value={seasonDInput}
+                  onChange={(e) => setSeasonDInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSeasonRecord();
+                    if (e.key === "Escape") setIsEditingSeasonRecord(false);
+                  }}
+                />
+                <input
+                  type="number"
+                  className="sp-input-control text-sm w-16 border-l-2 border-l-neutral-500"
+                  min={0}
+                  placeholder="N"
+                  value={seasonNInput}
+                  onChange={(e) => setSeasonNInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveSeasonRecord();
+                    if (e.key === "Escape") setIsEditingSeasonRecord(false);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-blue"
+                  onClick={saveSeasonRecord}
+                >
+                  Enregistrer
+                </button>
+                <button
+                  type="button"
+                  className="sp-button sp-button-xs sp-button-light"
+                  onClick={() => setIsEditingSeasonRecord(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Matchs:</strong>{" "}
+                {roster.seasonRecord
+                  ? <span className="text-neutral-400 text-xs">{roster.seasonRecord.victories}V {roster.seasonRecord.defeats}D {roster.seasonRecord.draws}N</span>
+                  : "Non renseigné"}
+              </p>
+            )}
+            {!isEditingSeasonRecord && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => {
+                  setSeasonVInput(roster.seasonRecord?.victories?.toString() ?? "");
+                  setSeasonDInput(roster.seasonRecord?.defeats?.toString() ?? "");
+                  setSeasonNInput(roster.seasonRecord?.draws?.toString() ?? "");
+                  setIsEditingSeasonRecord(true);
+                }}
+                aria-label="Modifier le bilan saison"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
+          </div>
           <p className="text-sm text-neutral-200">
-            <strong>Joueurs dans l'effectif:</strong> {seasonPlayers.length}
           </p>
         </section>
 

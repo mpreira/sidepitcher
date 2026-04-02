@@ -522,6 +522,7 @@ async function initializeSchema(pool: Pool) {
     ALTER TABLE stored_rosters ADD COLUMN IF NOT EXISTS current_ranking INTEGER;
     ALTER TABLE stored_rosters ADD COLUMN IF NOT EXISTS current_points INTEGER;
     ALTER TABLE stored_rosters ADD COLUMN IF NOT EXISTS last_five_matches JSONB;
+    ALTER TABLE stored_rosters ADD COLUMN IF NOT EXISTS season_record JSONB;
 
     CREATE TABLE IF NOT EXISTS stored_teams (
       id TEXT NOT NULL,
@@ -864,8 +865,8 @@ async function syncRosterDataToTables(
         `INSERT INTO stored_rosters
          (id, account_id, name, nickname, color, logo, coach, president, category,
           founded_in, players, titles, created_at, updated_at, last_modified_by,
-          coach_id, president_id, current_ranking, current_points, last_five_matches)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13,$14,$15,$16,$17,$18,$19)`,
+          coach_id, president_id, current_ranking, current_points, last_five_matches, season_record)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13,$14,$15,$16,$17,$18,$19,$20)`,
         [
           r.id,
           accountId,
@@ -886,6 +887,7 @@ async function syncRosterDataToTables(
           r.currentRanking ?? null,
           r.currentPoints ?? null,
           r.lastFiveMatches ? JSON.stringify(r.lastFiveMatches) : null,
+          r.seasonRecord ? JSON.stringify(r.seasonRecord) : null,
         ]
       );
 
