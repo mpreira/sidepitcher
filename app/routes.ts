@@ -28,4 +28,12 @@ export default [
     route("api/live-matches/:matchId/close", "routes/api/live-match-close.ts"),
     route("api/live/:publicSlug/state", "routes/api/live-public-state.ts"),
     route("api/live/:publicSlug/stream", "routes/api/live-stream.ts"),
+
+    // CRUD API routes
+    route("api/players", "routes/api/players.ts"),
+    route("api/coaches", "routes/api/coaches.ts"),
+    route("api/presidents", "routes/api/presidents.ts"),
+    route("api/competitions", "routes/api/competitions.ts"),
+    route("api/titles", "routes/api/titles.ts"),
+    route("api/search", "routes/api/search.ts"),
 ] satisfies RouteConfig;
