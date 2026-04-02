@@ -128,7 +128,7 @@ export const rosterStatePayloadSchema = z.object({
 // POST /api/account — discriminated union by intent
 const accountCreateSchema = z.object({
   intent: z.literal("create"),
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
   email: z.string().email(),
   password: z.string().min(6),
 });
@@ -141,7 +141,7 @@ const accountLoginSchema = z.object({
 
 const accountRenameSchema = z.object({
   intent: z.literal("rename"),
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
 });
 
 const accountUpdateProfileSchema = z.object({
@@ -179,7 +179,7 @@ export const accountActionSchema = z.discriminatedUnion("intent", [
 // PATCH /api/admin-accounts
 export const adminPatchSchema = z.object({
   accountId: z.string().min(1),
-  name: z.string().optional(),
+  name: safeString().optional(),
   email: z.string().email().optional(),
   password: z.string().min(6).optional(),
   isAdmin: z.boolean().optional(),
@@ -301,21 +301,21 @@ export const liveMatchUpdateSchema = z.object({
 
 export const playerCreateApiSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
   number: z.number().nullable().optional(),
   positions: z.array(z.string()).nullable().optional(),
   photoUrl: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  club: z.string().nullable().optional(),
+  nationality: safeString().nullable().optional(),
+  club: safeString().nullable().optional(),
 });
 
 export const playerUpdateApiSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: safeString().pipe(z.string().min(1)).optional(),
   number: z.number().nullable().optional(),
   positions: z.array(z.string()).nullable().optional(),
   photoUrl: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  club: z.string().nullable().optional(),
+  nationality: safeString().nullable().optional(),
+  club: safeString().nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -323,17 +323,17 @@ export const playerUpdateApiSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const coachCreateApiSchema = z.object({
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
   photoUrl: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  club: z.string().nullable().optional(),
+  nationality: safeString().nullable().optional(),
+  club: safeString().nullable().optional(),
 });
 
 export const coachUpdateApiSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: safeString().pipe(z.string().min(1)).optional(),
   photoUrl: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  club: z.string().nullable().optional(),
+  nationality: safeString().nullable().optional(),
+  club: safeString().nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -341,17 +341,17 @@ export const coachUpdateApiSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const presidentCreateApiSchema = z.object({
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
   photoUrl: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  club: z.string().nullable().optional(),
+  nationality: safeString().nullable().optional(),
+  club: safeString().nullable().optional(),
 });
 
 export const presidentUpdateApiSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: safeString().pipe(z.string().min(1)).optional(),
   photoUrl: z.string().nullable().optional(),
-  nationality: z.string().nullable().optional(),
-  club: z.string().nullable().optional(),
+  nationality: safeString().nullable().optional(),
+  club: safeString().nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -359,11 +359,11 @@ export const presidentUpdateApiSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const competitionCreateApiSchema = z.object({
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
 });
 
 export const competitionUpdateApiSchema = z.object({
-  name: z.string().min(1),
+  name: safeString().pipe(z.string().min(1)),
 });
 
 // ---------------------------------------------------------------------------
@@ -372,14 +372,14 @@ export const competitionUpdateApiSchema = z.object({
 
 export const titleCreateApiSchema = z.object({
   rosterId: z.string().min(1),
-  competition: z.string().min(1),
-  ranking: z.string().nullable().optional(),
+  competition: safeString().pipe(z.string().min(1)),
+  ranking: safeString().nullable().optional(),
   year: z.number(),
 });
 
 export const titleUpdateApiSchema = z.object({
-  competition: z.string().min(1).optional(),
-  ranking: z.string().nullable().optional(),
+  competition: safeString().pipe(z.string().min(1)).optional(),
+  ranking: safeString().nullable().optional(),
   year: z.number().optional(),
 });
 

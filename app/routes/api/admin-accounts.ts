@@ -1,22 +1,11 @@
 import type { ActionFunction, LoaderFunction } from "react-router";
 import {
   deleteManagedAccount,
-  getConnectedAccountFromRequest,
   listAdminAccounts,
+  requireAdmin,
   updateManagedAccount,
 } from "~/utils/account.server";
 import { adminDeleteSchema, adminPatchSchema, parsePayload } from "~/utils/schemas.server";
-
-async function requireAdmin(request: Request) {
-  const account = await getConnectedAccountFromRequest(request);
-  if (!account) {
-    throw new Response("Unauthorized", { status: 401 });
-  }
-  if (!account.isAdmin) {
-    throw new Response("Forbidden", { status: 403 });
-  }
-  return account;
-}
 
 export const loader: LoaderFunction = async ({ request }) => {
   await requireAdmin(request);

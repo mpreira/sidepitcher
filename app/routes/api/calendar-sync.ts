@@ -5,6 +5,7 @@ import {
   saveRostersStateForAccount,
 } from "~/utils/database.server";
 import { buildCalendarForTeam } from "~/utils/ical.server";
+import { validateIcsUrl } from "~/utils/url-validation";
 import { CURRENT_SEASON } from "~/types/tracker";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -25,6 +26,12 @@ export const action: ActionFunction = async ({ request }) => {
       { error: "rosterId and icsUrl are required" },
       { status: 400 },
     );
+  }
+
+  // SSRF protection
+  const urlCheck = validateIcsUrl(icsUrl);
+  if (!urlCheck.ok) {
+    return Response.json({ error: urlCheck.reason }, { status: 400 });
   }
 
   const targetSeason = season || CURRENT_SEASON;
