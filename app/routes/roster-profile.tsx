@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faCrown } from "@fortawesome/free-solid-svg-icons";
 import { getFlagUrl } from "~/utils/countries";
 import { faPenToSquare as faPenToSquareRegular } from "@fortawesome/free-regular-svg-icons";
-import type { PlayerPosition } from "~/types/tracker";
+import { CURRENT_SEASON, type PlayerPosition } from "~/types/tracker";
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: "Vue effectif" }];
@@ -69,6 +69,7 @@ function comparePlayersByPositionThenName(
 export default function RosterProfilePage() {
   const { rosterId: shortRosterId } = useParams();
   const { rosters, teams, setRosters } = useTeams();
+  const [selectedSeason, setSelectedSeason] = useState(CURRENT_SEASON);
 
   // Convert short ID to full ID
   const rosterId = useMemo(
@@ -81,6 +82,28 @@ export default function RosterProfilePage() {
     [rosters, rosterId]
   );
 
+  // Available seasons, sorted descending
+  const availableSeasons = useMemo(() => {
+    if (!roster) return [CURRENT_SEASON];
+    const keys = Object.keys(roster.seasons ?? {});
+    if (!keys.includes(CURRENT_SEASON)) keys.push(CURRENT_SEASON);
+    return keys.sort().reverse();
+  }, [roster]);
+
+  const isCurrentSeason = selectedSeason === CURRENT_SEASON;
+
+  const seasonPlayers = useMemo(() => {
+    if (!roster) return [];
+    if (isCurrentSeason) return roster.players;
+    return roster.seasons?.[selectedSeason]?.players ?? [];
+  }, [roster, selectedSeason, isCurrentSeason]);
+
+  const seasonCoach = useMemo(() => {
+    if (!roster) return undefined;
+    if (isCurrentSeason) return roster.coach;
+    return roster.seasons?.[selectedSeason]?.coach;
+  }, [roster, selectedSeason, isCurrentSeason]);
+
   const rosterTeams = useMemo(() => {
     if (!roster) return [];
     return teams.filter((item) => item.rosterId === roster.id);
@@ -89,8 +112,8 @@ export default function RosterProfilePage() {
   const sortedPlayers = useMemo(() => {
     if (!roster) return [];
 
-    return [...roster.players].sort(comparePlayersByPositionThenName);
-  }, [roster]);
+    return [...seasonPlayers].sort(comparePlayersByPositionThenName);
+  }, [roster, seasonPlayers]);
 
   const playerRows = useMemo(() => {
     if (!roster) return [];
@@ -166,10 +189,18 @@ export default function RosterProfilePage() {
             <strong>Création :</strong> {roster.founded_in || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Palmarès :</strong> {roster.titles && roster.titles.length > 0 ? roster.titles.map((title) => `${title.ranking} ${title.competition} (${title.year})`).join(", ") : "Non renseigné"}
+            <strong>Palmarès :</strong>{" "}
+            {roster.titles && roster.titles.length > 0
+              ? roster.titles
+                  .map(
+                    (title) =>
+                      `${title.ranking} ${title.competition} (${title.year})`,
+                  )
+                  .join(", ")
+              : "Non renseigné"}
           </p>
           <div className="flex items-center justify-between">
-            {isEditingCoach ? (
+            {isCurrentSeason && isEditingCoach ? (
               <input
                 type="text"
                 className="sp-input-control flex-1 text-sm"
@@ -177,18 +208,24 @@ export default function RosterProfilePage() {
                 value={coachInput}
                 onChange={(e) => setCoachInput(e.target.value)}
                 onBlur={saveCoach}
-                onKeyDown={(e) => { if (e.key === "Enter") saveCoach(); if (e.key === "Escape") setIsEditingCoach(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveCoach();
+                  if (e.key === "Escape") setIsEditingCoach(false);
+                }}
               />
             ) : (
               <p className="text-sm text-neutral-200">
-                <strong>Entraineur :</strong> {roster.coach || "Non renseigné"}
+                <strong>Entraineur :</strong> {seasonCoach || "Non renseigné"}
               </p>
             )}
-            {!isEditingCoach && (
+            {isCurrentSeason && !isEditingCoach && (
               <button
                 type="button"
                 className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
-                onClick={() => { setCoachInput(roster.coach || ""); setIsEditingCoach(true); }}
+                onClick={() => {
+                  setCoachInput(roster.coach || "");
+                  setIsEditingCoach(true);
+                }}
                 aria-label="Modifier l'entraîneur"
               >
                 <FontAwesomeIcon icon={faPenToSquareRegular} />
@@ -199,7 +236,7 @@ export default function RosterProfilePage() {
             <strong>Président :</strong> {roster.president || "Non renseigné"}
           </p>
           <p className="text-sm text-neutral-200">
-            <strong>Joueurs dans l'effectif:</strong> {roster.players.length}
+            <strong>Joueurs dans l'effectif:</strong> {seasonPlayers.length}
           </p>
         </section>
 
@@ -214,10 +251,29 @@ export default function RosterProfilePage() {
         )}
       </div>
 
+      {/* Season tabs */}
+      <nav className="flex gap-1 border-b border-neutral-700 pb-0">
+        {availableSeasons.map((season) => (
+          <button
+            key={season}
+            className={`px-4 py-2 text-sm font-semibold transition-colors ${
+              selectedSeason === season
+                ? "border-b-2 border-sky-500 text-sky-400"
+                : "text-neutral-400 hover:text-neutral-200"
+            }`}
+            onClick={() => setSelectedSeason(season)}
+          >
+            {season}
+          </button>
+        ))}
+      </nav>
+
       <section className="sp-panel space-y-3">
         <h2 className="font-semibold">Joueurs de l'effectif</h2>
         {playerRows.length === 0 ? (
-          <p className="text-sm text-neutral-400">Aucun joueur dans cet effectif.</p>
+          <p className="text-sm text-neutral-400">
+            Aucun joueur dans cet effectif.
+          </p>
         ) : (
           <ul className="space-y-2">
             {playerRows.map((row) => (
@@ -253,21 +309,24 @@ export default function RosterProfilePage() {
                     )}
                   </div>
                 </div>
-                  {row.compositions.length > 0 && (
-                    <ul className="mt-2 space-y-1">
-                      {row.compositions.map((entry) => (
-                        <li key={`${row.player.id}-${entry.teamName}-${entry.number}`} className="text-xs text-neutral-300">
-                          {entry.teamName} - #{entry.number} ({entry.role})
-                          {entry.isCaptain && (
-                            <span className="ml-1 text-sky-300">
-                              <FontAwesomeIcon icon={faCrown} className="mr-1" />
-                              Capitaine
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                {row.compositions.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {row.compositions.map((entry) => (
+                      <li
+                        key={`${row.player.id}-${entry.teamName}-${entry.number}`}
+                        className="text-xs text-neutral-300"
+                      >
+                        {entry.teamName} - #{entry.number} ({entry.role})
+                        {entry.isCaptain && (
+                          <span className="ml-1 text-sky-300">
+                            <FontAwesomeIcon icon={faCrown} className="mr-1" />
+                            Capitaine
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
