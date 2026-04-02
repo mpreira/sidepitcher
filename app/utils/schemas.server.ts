@@ -272,6 +272,92 @@ export const liveMatchUpdateSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// CRUD — Players
+// ---------------------------------------------------------------------------
+
+export const playerCreateApiSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  number: z.number().nullable().optional(),
+  positions: z.array(z.string()).nullable().optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+});
+
+export const playerUpdateApiSchema = z.object({
+  name: z.string().min(1).optional(),
+  number: z.number().nullable().optional(),
+  positions: z.array(z.string()).nullable().optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+});
+
+// ---------------------------------------------------------------------------
+// CRUD — Coaches
+// ---------------------------------------------------------------------------
+
+export const coachCreateApiSchema = z.object({
+  name: z.string().min(1),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
+});
+
+export const coachUpdateApiSchema = z.object({
+  name: z.string().min(1).optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
+});
+
+// ---------------------------------------------------------------------------
+// CRUD — Presidents
+// ---------------------------------------------------------------------------
+
+export const presidentCreateApiSchema = z.object({
+  name: z.string().min(1),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
+});
+
+export const presidentUpdateApiSchema = z.object({
+  name: z.string().min(1).optional(),
+  photoUrl: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
+});
+
+// ---------------------------------------------------------------------------
+// CRUD — Competitions
+// ---------------------------------------------------------------------------
+
+export const competitionCreateApiSchema = z.object({
+  name: z.string().min(1),
+});
+
+export const competitionUpdateApiSchema = z.object({
+  name: z.string().min(1),
+});
+
+// ---------------------------------------------------------------------------
+// CRUD — Titles
+// ---------------------------------------------------------------------------
+
+export const titleCreateApiSchema = z.object({
+  rosterId: z.string().min(1),
+  competition: z.string().min(1),
+  ranking: z.string().nullable().optional(),
+  year: z.number(),
+});
+
+export const titleUpdateApiSchema = z.object({
+  competition: z.string().min(1).optional(),
+  ranking: z.string().nullable().optional(),
+  year: z.number().optional(),
+});
+
+// ---------------------------------------------------------------------------
 // Helper: parse with Zod and return a formatted error response or parsed data
 // ---------------------------------------------------------------------------
 
