@@ -344,7 +344,7 @@ export default function RosterProfilePage() {
                   <div key={index} className="flex items-center gap-2">
                     <input
                       className="sp-input-control text-sm flex-1"
-                      placeholder="Comp\u00e9tition"
+                      placeholder="Compétition"
                       value={title.competition}
                       onChange={(e) => updateTitleDraft(index, "competition", e.target.value)}
                     />
@@ -359,7 +359,7 @@ export default function RosterProfilePage() {
                     <input
                       type="number"
                       className="sp-input-control text-sm w-20"
-                      placeholder="Ann\u00e9e"
+                      placeholder="Année"
                       value={title.year}
                       onChange={(e) => updateTitleDraft(index, "year", parseInt(e.target.value, 10) || 0)}
                     />
