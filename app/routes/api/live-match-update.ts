@@ -2,6 +2,7 @@ import type { ActionFunction } from "react-router";
 import type { LiveSnapshot } from "~/types/live";
 import { updateLiveMatchState } from "~/utils/database.server";
 import { publishLiveMatch } from "~/utils/live-broker.server";
+import { liveMatchUpdateSchema, parsePayload } from "~/utils/schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (request.method !== "PATCH") {
@@ -15,15 +16,14 @@ export const action: ActionFunction = async ({ request, params }) => {
     return { ok: false, error: "missing credentials" };
   }
 
-  const payload = (await request.json()) as { state?: LiveSnapshot };
-  if (!payload.state) {
-    return { ok: false, error: "state is required" };
-  }
+  const raw = await request.json();
+  const parsed = parsePayload(liveMatchUpdateSchema, raw);
+  if (!parsed.success) return parsed.response;
 
   const updated = await updateLiveMatchState({
     matchId,
     adminToken,
-    state: payload.state,
+    state: parsed.data.state as LiveSnapshot,
   });
 
   if (!updated.record) {

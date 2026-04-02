@@ -3,15 +3,18 @@ import path from "path";
 import crypto from "crypto";
 import { Pool } from "pg";
 import type { LiveSnapshot } from "~/types/live";
+import type { Roster, Team } from "~/types/tracker";
+import { rosterStatePayloadSchema } from "~/utils/schemas.server";
 
 type Sport = "Rugby" | "Football";
 type Championship = "Top 14" | "Pro D2";
 
 export interface RosterStatePayload {
-  rosters: unknown;
-  teams: unknown;
+  rosters: Roster[];
+  teams: Team[];
   activeRosterId: string | null;
   matchDay?: string;
+  season?: string;
   sport?: Sport;
   championship?: Championship;
 }
@@ -656,12 +659,8 @@ async function syncRosterDataToTables(
 ): Promise<void> {
   if (isAnonymousScopeId(accountId)) return;
 
-  const rosters = Array.isArray(payload.rosters)
-    ? (payload.rosters as Record<string, unknown>[])
-    : [];
-  const teams = Array.isArray(payload.teams)
-    ? (payload.teams as Record<string, unknown>[])
-    : [];
+  const rosters = Array.isArray(payload.rosters) ? payload.rosters : [];
+  const teams = Array.isArray(payload.teams) ? payload.teams : [];
   const nowIso = new Date().toISOString();
 
   const client = await pool.connect();
@@ -671,12 +670,11 @@ async function syncRosterDataToTables(
     // 1. Collect all unique competition names (from category + titles)
     const competitionNames = new Set<string>();
     for (const r of rosters) {
-      if (r.category && typeof r.category === "string") {
+      if (r.category) {
         competitionNames.add(r.category);
       }
-      const rTitles = Array.isArray(r.titles) ? (r.titles as Record<string, unknown>[]) : [];
-      for (const t of rTitles) {
-        if (t.competition && typeof t.competition === "string") {
+      for (const t of r.titles ?? []) {
+        if (t.competition) {
           competitionNames.add(t.competition);
         }
       }
@@ -692,7 +690,7 @@ async function syncRosterDataToTables(
     const coachIdMap = new Map<string, number>();
     for (const r of rosters) {
       const coachName = r.coach;
-      if (coachName && typeof coachName === "string" && !coachIdMap.has(coachName)) {
+      if (coachName && !coachIdMap.has(coachName)) {
         const res = await client.query<{ id: number }>(
           `INSERT INTO coaches (name, last_modified_by)
            VALUES ($1, $2)
@@ -708,7 +706,7 @@ async function syncRosterDataToTables(
     const presidentIdMap = new Map<string, number>();
     for (const r of rosters) {
       const presName = r.president;
-      if (presName && typeof presName === "string" && !presidentIdMap.has(presName)) {
+      if (presName && !presidentIdMap.has(presName)) {
         const res = await client.query<{ id: number }>(
           `INSERT INTO presidents (name, last_modified_by)
            VALUES ($1, $2)
@@ -729,16 +727,14 @@ async function syncRosterDataToTables(
 
     // 5. Insert stored_rosters
     for (const r of rosters) {
-      const rid = r.id as string | undefined;
-      const rname = r.name as string | undefined;
-      if (!rid || !rname) continue;
+      if (!r.id || !r.name) continue;
 
-      const coachName = typeof r.coach === "string" ? r.coach : null;
-      const presName = typeof r.president === "string" ? r.president : null;
+      const coachName = r.coach ?? null;
+      const presName = r.president ?? null;
       const coachId = coachName ? coachIdMap.get(coachName) ?? null : null;
       const presidentId = presName ? presidentIdMap.get(presName) ?? null : null;
-      const rPlayers = Array.isArray(r.players) ? r.players : [];
-      const rTitles = Array.isArray(r.titles) ? r.titles : [];
+      const rPlayers = r.players ?? [];
+      const rTitles = r.titles ?? [];
 
       await client.query(
         `INSERT INTO stored_rosters
@@ -747,16 +743,16 @@ async function syncRosterDataToTables(
           coach_id, president_id)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13,$14,$15,$16)`,
         [
-          rid,
+          r.id,
           accountId,
-          rname,
-          (r.nickname as string) ?? null,
-          (r.color as string) ?? null,
-          (r.logo as string) ?? null,
+          r.name,
+          r.nickname ?? null,
+          r.color ?? null,
+          r.logo ?? null,
           coachName,
           presName,
-          (r.category as string) ?? null,
-          typeof r.founded_in === "number" ? r.founded_in : null,
+          r.category ?? null,
+          r.founded_in ?? null,
           JSON.stringify(rPlayers),
           JSON.stringify(rTitles),
           nowIso,
@@ -767,10 +763,8 @@ async function syncRosterDataToTables(
       );
 
       // 6. Insert players from this roster
-      for (const p of rPlayers as Record<string, unknown>[]) {
-        const pid = p.id as string | undefined;
-        const pname = p.name as string | undefined;
-        if (!pid || !pname) continue;
+      for (const p of rPlayers) {
+        if (!p.id || !p.name) continue;
 
         await client.query(
           `INSERT INTO players
@@ -785,21 +779,20 @@ async function syncRosterDataToTables(
              nationality = EXCLUDED.nationality,
              updated_at = EXCLUDED.updated_at`,
           [
-            pid,
+            p.id,
             accountId,
-            pname,
-            typeof p.number === "number" ? p.number : null,
-            JSON.stringify(Array.isArray(p.positions) ? p.positions : []),
-            (p.photoUrl as string) ?? null,
-            (p.nationality as string) ?? null,
+            p.name,
+            p.number ?? null,
+            JSON.stringify(p.positions ?? []),
+            p.photoUrl ?? null,
+            p.nationality ?? null,
             nowIso,
             accountId,
           ]
         );
 
         // 7. Insert player_stats if present
-        const stats = p.stats as Record<string, unknown> | undefined;
-        if (stats && typeof stats === "object") {
+        if (p.stats) {
           await client.query(
             `INSERT INTO player_stats
              (account_id, player_id, points, essais, pied, taux_transfo,
@@ -817,15 +810,15 @@ async function syncRosterDataToTables(
                updated_at = EXCLUDED.updated_at`,
             [
               accountId,
-              pid,
-              typeof stats.points === "number" ? stats.points : 0,
-              typeof stats.essais === "number" ? stats.essais : 0,
-              typeof stats.pied === "number" ? stats.pied : 0,
-              typeof stats.tauxTransfo === "number" ? stats.tauxTransfo : 0,
-              typeof stats.cartons === "number" ? stats.cartons : 0,
-              typeof stats.drops === "number" ? stats.drops : 0,
-              typeof stats.matchs2526 === "number" ? stats.matchs2526 : 0,
-              typeof stats.titularisations2526 === "number" ? stats.titularisations2526 : 0,
+              p.id,
+              p.stats.points,
+              p.stats.essais,
+              p.stats.pied,
+              p.stats.tauxTransfo,
+              p.stats.cartons,
+              p.stats.drops,
+              p.stats.matchs2526,
+              p.stats.titularisations2526,
               nowIso,
             ]
           );
@@ -833,10 +826,8 @@ async function syncRosterDataToTables(
       }
 
       // 8. Insert titles from this roster
-      for (const t of rTitles as Record<string, unknown>[]) {
-        const comp = t.competition as string | undefined;
-        const yr = t.year as number | undefined;
-        if (!comp || typeof yr !== "number") continue;
+      for (const t of rTitles) {
+        if (!t.competition || typeof t.year !== "number") continue;
 
         await client.query(
           `INSERT INTO titles
@@ -845,16 +836,14 @@ async function syncRosterDataToTables(
            ON CONFLICT (account_id, roster_id, competition, year) DO UPDATE SET
              ranking = EXCLUDED.ranking,
              last_modified_by = EXCLUDED.last_modified_by`,
-          [accountId, rid, comp, (t.ranking as string) ?? null, yr, accountId]
+          [accountId, r.id, t.competition, t.ranking ?? null, t.year, accountId]
         );
       }
     }
 
     // 9. Insert stored_teams
-    for (const team of teams as Record<string, unknown>[]) {
-      const tid = team.id as string | undefined;
-      const tname = team.name as string | undefined;
-      if (!tid || !tname) continue;
+    for (const team of teams) {
+      if (!team.id || !team.name) continue;
 
       await client.query(
         `INSERT INTO stored_teams
@@ -863,16 +852,16 @@ async function syncRosterDataToTables(
           created_at, updated_at, last_modified_by)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12)`,
         [
-          tid,
+          team.id,
           accountId,
-          (team.rosterId as string) ?? null,
-          tname,
-          (team.nickname as string) ?? null,
-          (team.color as string) ?? null,
-          (team.logo as string) ?? null,
-          (team.captainPlayerId as string) ?? null,
-          JSON.stringify(Array.isArray(team.starters) ? team.starters : []),
-          JSON.stringify(Array.isArray(team.substitutes) ? team.substitutes : []),
+          team.rosterId ?? null,
+          team.name,
+          team.nickname ?? null,
+          team.color ?? null,
+          team.logo ?? null,
+          team.captainPlayerId ?? null,
+          JSON.stringify(team.starters ?? []),
+          JSON.stringify(team.substitutes ?? []),
           nowIso,
           accountId,
         ]
@@ -1114,7 +1103,12 @@ async function backfillStructuredTables(pool: Pool): Promise<void> {
   for (const row of rostersRows.rows) {
     const parsed = parseJsonOrNull<RosterStatePayload>(row.payload);
     if (!parsed) continue;
-    await syncRosterDataToTables(pool, row.account_id, parsed);
+    const validated = rosterStatePayloadSchema.safeParse(parsed);
+    if (!validated.success) {
+      console.warn(`[backfill] Skipping invalid roster blob for account ${row.account_id}:`, validated.error.issues);
+      continue;
+    }
+    await syncRosterDataToTables(pool, row.account_id, validated.data as RosterStatePayload);
   }
 
   console.log("[backfill] Syncing existing summary blobs to structured tables…");

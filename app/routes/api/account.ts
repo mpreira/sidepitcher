@@ -14,6 +14,7 @@ import {
   sendAccountPendingValidationEmail,
   sendNewAccountNotificationEmail,
 } from "~/utils/mailer.server";
+import { accountActionSchema, parsePayload } from "~/utils/schemas.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const connectedAccount = await getConnectedAccountFromRequest(request);
@@ -24,19 +25,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const body = (await request.json()) as {
-    intent?: "create" | "login" | "rename" | "update-profile" | "forgot-password" | "reset-password" | "logout";
-    name?: string;
-    email?: string;
-    currentPassword?: string;
-    password?: string;
-    token?: string;
-  };
+  const raw = await request.json();
+  const parsed = parsePayload(accountActionSchema, raw);
+  if (!parsed.success) return parsed.response;
+  const body = parsed.data;
 
   if (body.intent === "create") {
-    if (!body.name?.trim() || !body.email?.trim() || !body.password) {
-      return Response.json({ ok: false, error: "missing-fields" }, { status: 400 });
-    }
 
     let created;
     try {
@@ -99,10 +93,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (body.intent === "login") {
-    if (!body.email?.trim() || !body.password) {
-      return Response.json({ ok: false, error: "missing-credentials" }, { status: 400 });
-    }
-
     const logged = await authenticateAndAssignAccount({
       email: body.email,
       password: body.password,
@@ -132,10 +122,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (body.intent === "rename") {
-    if (!body.name?.trim()) {
-      return Response.json({ ok: false, error: "missing-name" }, { status: 400 });
-    }
-
     const connectedAccount = await getConnectedAccountFromRequest(request);
     if (!connectedAccount) {
       return Response.json({ ok: false, error: "not-connected" }, { status: 401 });
@@ -150,9 +136,6 @@ export const action: ActionFunction = async ({ request }) => {
     const connectedAccount = await getConnectedAccountFromRequest(request);
     if (!connectedAccount) {
       return Response.json({ ok: false, error: "not-connected" }, { status: 401 });
-    }
-    if (!body.email?.trim()) {
-      return Response.json({ ok: false, error: "missing-email" }, { status: 400 });
     }
 
     try {
@@ -169,10 +152,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (body.intent === "forgot-password") {
-    if (!body.email?.trim()) {
-      return Response.json({ ok: false, error: "missing-email" }, { status: 400 });
-    }
-
     try {
       await requestPasswordReset(body.email);
       // Always return success to avoid account enumeration.
@@ -183,10 +162,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (body.intent === "reset-password") {
-    if (!body.token?.trim() || !body.password) {
-      return Response.json({ ok: false, error: "missing-fields" }, { status: 400 });
-    }
-
     try {
       const updated = await resetPasswordFromToken({
         token: body.token,

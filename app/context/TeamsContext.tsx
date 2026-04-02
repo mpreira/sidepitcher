@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { Team, Player, Roster } from "~/types/tracker";
+import { CURRENT_SEASON } from "~/types/tracker";
 import { v4 as uuidv4 } from "uuid";
 import { useAccount } from "~/context/AccountContext";
 
@@ -8,12 +9,14 @@ interface TeamsContextValue {
     teams: Team[]; // all teams across rosters
     activeRosterId: string | null;
     matchDay: string;
+    season: string;
     sport: 'Rugby' | 'Football';
     championship: 'Top 14' | 'Pro D2';
     setRosters: React.Dispatch<React.SetStateAction<Roster[]>>;
     setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
     setActiveRosterId: React.Dispatch<React.SetStateAction<string | null>>;
     setMatchDay: React.Dispatch<React.SetStateAction<string>>;
+    setSeason: React.Dispatch<React.SetStateAction<string>>;
     setSport: React.Dispatch<React.SetStateAction<'Rugby' | 'Football'>>;
     setChampionship: React.Dispatch<React.SetStateAction<'Top 14' | 'Pro D2'>>;
 }
@@ -26,6 +29,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
     const [teams, setTeams] = useState<Team[]>([]);
     const [activeRosterId, setActiveRosterId] = useState<string | null>(null);
     const [matchDay, setMatchDay] = useState<string>('');
+    const [season, setSeason] = useState<string>(CURRENT_SEASON);
     const [sport, setSport] = useState<'Rugby' | 'Football'>('Rugby');
     const [championship, setChampionship] = useState<'Top 14' | 'Pro D2'>('Top 14');
 
@@ -34,6 +38,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         teams: Team[];
         activeId: string | null;
         matchDay: string;
+        season: string;
         sport: 'Rugby' | 'Football';
         championship: 'Top 14' | 'Pro D2';
     } | null>(null);
@@ -50,6 +55,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             setTeams(data.teams || []);
             setActiveRosterId(data.activeRosterId || null);
             setMatchDay(data.matchDay || '');
+            setSeason(data.season || CURRENT_SEASON);
             setSport(data.sport || 'Rugby');
             setChampionship(data.championship || 'Top 14');
         })
@@ -69,6 +75,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         teams.length === 0 &&
         activeRosterId == null &&
         matchDay === '' &&
+        season === CURRENT_SEASON &&
         sport === 'Rugby' &&
         championship === 'Top 14'
         ) {
@@ -78,6 +85,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         lastSent.current &&
         lastSent.current.activeId === activeRosterId &&
         lastSent.current.matchDay === matchDay &&
+        lastSent.current.season === season &&
         lastSent.current.sport === sport &&
         lastSent.current.championship === championship &&
         JSON.stringify(lastSent.current.rosters) === JSON.stringify(rosters) &&
@@ -94,24 +102,30 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             teams,
             activeRosterId,
             matchDay,
+            season,
             sport,
             championship,
         }),
         })
-        .catch(() => {
-            // ignore
+        .then((res) => {
+            if (res.ok) {
+                lastSent.current = {
+                    rosters,
+                    teams,
+                    activeId: activeRosterId,
+                    matchDay,
+                    season,
+                    sport,
+                    championship,
+                };
+            } else {
+                res.json().then((data) => console.warn("[TeamsContext] sync rejected:", data)).catch(() => {});
+            }
         })
-        .finally(() => {
-            lastSent.current = {
-            rosters,
-            teams,
-            activeId: activeRosterId,
-            matchDay,
-            sport,
-            championship,
-            };
+        .catch((err) => {
+            console.warn("[TeamsContext] sync failed:", err);
         });
-    }, [rosters, teams, activeRosterId, matchDay, sport, championship, accountLoading]);
+    }, [rosters, teams, activeRosterId, matchDay, season, sport, championship, accountLoading]);
 
     return (
         <TeamsContext.Provider
@@ -120,12 +134,14 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
             teams,
             activeRosterId,
             matchDay,
+            season,
             sport,
             championship,
             setRosters,
             setTeams,
             setActiveRosterId,
             setMatchDay,
+            setSeason,
             setSport,
             setChampionship,
         }}
