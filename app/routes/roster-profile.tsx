@@ -671,7 +671,7 @@ export default function RosterProfilePage() {
             Aucun joueur dans cette catégorie.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className={`space-y-2 ${filteredPlayerRows.length > 10 ? "max-h-[32rem] overflow-y-auto pr-1" : ""}`}>
             {filteredPlayerRows.map((row) => (
               <li
                 key={row.player.id}
