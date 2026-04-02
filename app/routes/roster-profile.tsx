@@ -141,17 +141,55 @@ export default function RosterProfilePage() {
 
   const [isEditingCoach, setIsEditingCoach] = useState(false);
   const [coachInput, setCoachInput] = useState("");
+  const [isEditingPresident, setIsEditingPresident] = useState(false);
+  const [presidentInput, setPresidentInput] = useState("");
 
   function saveCoach() {
     if (!roster) return;
+    const name = coachInput.trim() || undefined;
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
-          ? { ...item, coach: coachInput.trim() || undefined }
-          : item
-      )
+          ? {
+              ...item,
+              coach: name,
+              coachData: name
+                ? { ...(item.coachData ?? {}), name }
+                : undefined,
+            }
+          : item,
+      ),
     );
     setIsEditingCoach(false);
+  }
+
+  function savePresident() {
+    if (!roster) return;
+    const name = presidentInput.trim() || undefined;
+    setRosters((current) =>
+      current.map((item) =>
+        item.id === roster.id
+          ? {
+              ...item,
+              president: name,
+              presidentData: name
+                ? { ...(item.presidentData ?? {}), name }
+                : undefined,
+            }
+          : item,
+      ),
+    );
+    setIsEditingPresident(false);
+  }
+
+  function getCoachProfilePath(): string {
+    if (!rosterId) return "#";
+    return `/r/${toShortId(rosterId)}/coach`;
+  }
+
+  function getPresidentProfilePath(): string {
+    if (!rosterId) return "#";
+    return `/r/${toShortId(rosterId)}/president`;
   }
 
   const backPath = getRosterBackPath(rosterId);
@@ -215,7 +253,12 @@ export default function RosterProfilePage() {
               />
             ) : (
               <p className="text-sm text-neutral-200">
-                <strong>Entraineur :</strong> {seasonCoach || "Non renseigné"}
+                <strong>Entraineur :</strong>{" "}
+                {seasonCoach ? (
+                  <Link to={getCoachProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                    {seasonCoach}
+                  </Link>
+                ) : "Non renseigné"}
               </p>
             )}
             {isCurrentSeason && !isEditingCoach && (
@@ -232,9 +275,44 @@ export default function RosterProfilePage() {
               </button>
             )}
           </div>
-          <p className="text-sm text-neutral-200">
-            <strong>Président :</strong> {roster.president || "Non renseigné"}
-          </p>
+          <div className="flex items-center justify-between">
+            {isCurrentSeason && isEditingPresident ? (
+              <input
+                type="text"
+                className="sp-input-control flex-1 text-sm"
+                autoFocus
+                value={presidentInput}
+                onChange={(e) => setPresidentInput(e.target.value)}
+                onBlur={savePresident}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") savePresident();
+                  if (e.key === "Escape") setIsEditingPresident(false);
+                }}
+              />
+            ) : (
+              <p className="text-sm text-neutral-200">
+                <strong>Président :</strong>{" "}
+                {roster.president ? (
+                  <Link to={getPresidentProfilePath()} className="hover:text-sky-300 underline-offset-2 hover:underline">
+                    {roster.president}
+                  </Link>
+                ) : "Non renseigné"}
+              </p>
+            )}
+            {isCurrentSeason && !isEditingPresident && (
+              <button
+                type="button"
+                className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                onClick={() => {
+                  setPresidentInput(roster.president || "");
+                  setIsEditingPresident(true);
+                }}
+                aria-label="Modifier le président"
+              >
+                <FontAwesomeIcon icon={faPenToSquareRegular} />
+              </button>
+            )}
+          </div>
           <p className="text-sm text-neutral-200">
             <strong>Joueurs dans l'effectif:</strong> {seasonPlayers.length}
           </p>
