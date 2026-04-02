@@ -479,8 +479,7 @@ async function initializeSchema(pool: Pool) {
       nickname TEXT,
       color TEXT,
       logo TEXT,
-      coach TEXT,
-      coaches JSONB NOT NULL DEFAULT '[]',
+      coach TEXT[] NOT NULL DEFAULT '{}',
       president TEXT,
       category TEXT,
       founded_in INTEGER,
@@ -490,14 +489,10 @@ async function initializeSchema(pool: Pool) {
       updated_at TIMESTAMPTZ NOT NULL,
       last_modified_by TEXT,
       coach_id INTEGER,
-      coach_ids INTEGER[] NOT NULL DEFAULT '{}',
       president_id INTEGER,
       PRIMARY KEY (account_id, id)
     );
 
-    -- Migration: add multi-coach columns to existing stored_rosters --
-    ALTER TABLE stored_rosters ADD COLUMN IF NOT EXISTS coaches JSONB NOT NULL DEFAULT '[]';
-    ALTER TABLE stored_rosters ADD COLUMN IF NOT EXISTS coach_ids INTEGER[] NOT NULL DEFAULT '{}';
 
     CREATE TABLE IF NOT EXISTS stored_teams (
       id TEXT NOT NULL,
@@ -626,8 +621,7 @@ async function initializeSchema(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_titles_account_competition ON titles(account_id, competition);
     CREATE INDEX IF NOT EXISTS idx_titles_account_year ON titles(account_id, year DESC);
     CREATE INDEX IF NOT EXISTS idx_stored_rosters_account_category ON stored_rosters(account_id, category);
-    CREATE INDEX IF NOT EXISTS idx_stored_rosters_coach_id ON stored_rosters(coach_id);
-    CREATE INDEX IF NOT EXISTS idx_stored_rosters_coach_ids ON stored_rosters USING gin(coach_ids);
+    CREATE INDEX IF NOT EXISTS idx_stored_rosters_coach ON stored_rosters USING gin(coach);
     CREATE INDEX IF NOT EXISTS idx_stored_rosters_president_id ON stored_rosters(president_id);
     CREATE INDEX IF NOT EXISTS idx_matches_account_id ON matches(account_id);
     CREATE INDEX IF NOT EXISTS idx_matches_championship ON matches(championship);
@@ -796,11 +790,7 @@ async function syncRosterDataToTables(
       const coachNames = coachStr
         ? coachStr.split(",").map((n: string) => n.trim()).filter(Boolean)
         : [];
-      const coachIds = coachNames
-        .map((n: string) => coachIdMap.get(n))
-        .filter((id): id is number => id != null);
-      const coachesJson = JSON.stringify(coachNames);
-      const firstCoachId = coachIds[0] ?? null;
+      const firstCoachId = coachNames[0] ? coachIdMap.get(coachNames[0]) ?? null : null;
       const presName = r.president ?? null;
       const presidentId = presName ? presidentIdMap.get(presName) ?? null : null;
       const rPlayers = r.players ?? [];
@@ -808,10 +798,10 @@ async function syncRosterDataToTables(
 
       await client.query(
         `INSERT INTO stored_rosters
-         (id, account_id, name, nickname, color, logo, coach, coaches, president, category,
+         (id, account_id, name, nickname, color, logo, coach, president, category,
           founded_in, players, titles, created_at, updated_at, last_modified_by,
-          coach_id, coach_ids, president_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15,$16,$17,$18)`,
+          coach_id, president_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13,$14,$15,$16)`,
         [
           r.id,
           accountId,
@@ -819,8 +809,7 @@ async function syncRosterDataToTables(
           r.nickname ?? null,
           r.color ?? null,
           r.logo ?? null,
-          coachStr,
-          coachesJson,
+          coachNames,
           presName,
           r.category ?? null,
           r.founded_in ?? null,
@@ -829,7 +818,6 @@ async function syncRosterDataToTables(
           nowIso,
           accountId,
           firstCoachId,
-          coachIds,
           presidentId,
         ]
       );
