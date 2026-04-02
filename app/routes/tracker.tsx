@@ -46,6 +46,7 @@ const COMMAND_TYPES = [
 ];
 
 const TRACKER_ACTION_TAB_STORAGE_KEY = "sidepitcher.tracker.actionTab";
+const TRACKER_REFEREE_STORAGE_KEY = "sidepitcher.tracker.referee";
 
 export default function Tracker() {
     const { account } = useAccount();
@@ -90,8 +91,14 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [actionTab, setActionTab] = useState<"events" | "stats" | "teams"| "notes" >("events");
-    const [referee, setReferee] = useState<string>("");
-    const [refereeInput, setRefereeInput] = useState<string>("");
+    const [referee, setReferee] = useState<string>(() => {
+        if (typeof window === "undefined") return "";
+        return window.localStorage.getItem(TRACKER_REFEREE_STORAGE_KEY) || "";
+    });
+    const [refereeInput, setRefereeInput] = useState<string>(() => {
+        if (typeof window === "undefined") return "";
+        return window.localStorage.getItem(TRACKER_REFEREE_STORAGE_KEY) || "";
+    });
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const contextInitializedRef = useRef(false);
@@ -162,11 +169,14 @@ export default function Tracker() {
         if (knownRef && knownRef !== referee) {
             setReferee(knownRef);
             setRefereeInput(knownRef);
+            window.localStorage.setItem(TRACKER_REFEREE_STORAGE_KEY, knownRef);
         }
     }, [events, referee]);
 
     function applyReferee() {
-        setReferee(refereeInput.trim());
+        const value = refereeInput.trim();
+        setReferee(value);
+        window.localStorage.setItem(TRACKER_REFEREE_STORAGE_KEY, value);
     }
 
     // Charge la sélection d'équipes sauvegardée pour le championnat + la journée en cours.
@@ -210,6 +220,9 @@ export default function Tracker() {
         resetStats();
         clearLiveState();
         setSavedTrackingSignature(null);
+        setReferee("");
+        setRefereeInput("");
+        window.localStorage.removeItem(TRACKER_REFEREE_STORAGE_KEY);
     }
 
     // Détecte un changement de contexte (championnat / journée / sport) après le premier rendu.
