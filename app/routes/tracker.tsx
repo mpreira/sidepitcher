@@ -91,14 +91,8 @@ export default function Tracker() {
     const [team2Id, setTeam2Id] = useState<string>("");
     const [activeCommand, setActiveCommand] = useState<string | null>(null);
     const [actionTab, setActionTab] = useState<"events" | "stats" | "teams"| "notes" >("events");
-    const [referee, setReferee] = useState<string>(() => {
-        if (typeof window === "undefined") return "";
-        return window.localStorage.getItem(TRACKER_REFEREE_STORAGE_KEY) || "";
-    });
-    const [refereeInput, setRefereeInput] = useState<string>(() => {
-        if (typeof window === "undefined") return "";
-        return window.localStorage.getItem(TRACKER_REFEREE_STORAGE_KEY) || "";
-    });
+    const [referee, setReferee] = useState<string>("");
+    const [refereeInput, setRefereeInput] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [savedTrackingSignature, setSavedTrackingSignature] = useState<string | null>(null);
     const contextInitializedRef = useRef(false);
@@ -163,6 +157,14 @@ export default function Tracker() {
     useEffect(() => {
         window.localStorage.setItem(TRACKER_ACTION_TAB_STORAGE_KEY, actionTab);
     }, [actionTab]);
+
+    useEffect(() => {
+        const stored = window.localStorage.getItem(TRACKER_REFEREE_STORAGE_KEY);
+        if (stored) {
+            setReferee(stored);
+            setRefereeInput(stored);
+        }
+    }, []);
 
     useEffect(() => {
         const knownRef = events.find((event) => event.ref)?.ref;
