@@ -479,7 +479,7 @@ async function initializeSchema(pool: Pool) {
       nickname TEXT,
       color TEXT,
       logo TEXT,
-      coach TEXT,
+      coach TEXT[] NOT NULL DEFAULT '{}',
       president TEXT,
       category TEXT,
       founded_in INTEGER,
@@ -492,6 +492,7 @@ async function initializeSchema(pool: Pool) {
       president_id INTEGER,
       PRIMARY KEY (account_id, id)
     );
+
 
     CREATE TABLE IF NOT EXISTS stored_teams (
       id TEXT NOT NULL,
@@ -620,7 +621,7 @@ async function initializeSchema(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_titles_account_competition ON titles(account_id, competition);
     CREATE INDEX IF NOT EXISTS idx_titles_account_year ON titles(account_id, year DESC);
     CREATE INDEX IF NOT EXISTS idx_stored_rosters_account_category ON stored_rosters(account_id, category);
-    CREATE INDEX IF NOT EXISTS idx_stored_rosters_coach_id ON stored_rosters(coach_id);
+    CREATE INDEX IF NOT EXISTS idx_stored_rosters_coach ON stored_rosters USING gin(coach);
     CREATE INDEX IF NOT EXISTS idx_stored_rosters_president_id ON stored_rosters(president_id);
     CREATE INDEX IF NOT EXISTS idx_matches_account_id ON matches(account_id);
     CREATE INDEX IF NOT EXISTS idx_matches_championship ON matches(championship);
@@ -738,19 +739,23 @@ async function syncRosterDataToTables(
       );
     }
 
-    // 2. Upsert coaches → collect name→id
+    // 2. Upsert coaches → collect name→id (support multi-coach comma-separated)
     const coachIdMap = new Map<string, number>();
     for (const r of rosters) {
-      const coachName = r.coach;
-      if (coachName && !coachIdMap.has(coachName)) {
-        const res = await client.query<{ id: number }>(
-          `INSERT INTO coaches (name, last_modified_by)
-           VALUES ($1, $2)
-           ON CONFLICT (name) DO UPDATE SET last_modified_by = EXCLUDED.last_modified_by
-           RETURNING id`,
-          [coachName, accountId]
-        );
-        coachIdMap.set(coachName, res.rows[0].id);
+      const coachNames = r.coach
+        ? r.coach.split(",").map((n: string) => n.trim()).filter(Boolean)
+        : [];
+      for (const coachName of coachNames) {
+        if (!coachIdMap.has(coachName)) {
+          const res = await client.query<{ id: number }>(
+            `INSERT INTO coaches (name, last_modified_by)
+             VALUES ($1, $2)
+             ON CONFLICT (name) DO UPDATE SET last_modified_by = EXCLUDED.last_modified_by
+             RETURNING id`,
+            [coachName, accountId]
+          );
+          coachIdMap.set(coachName, res.rows[0].id);
+        }
       }
     }
 
@@ -781,9 +786,12 @@ async function syncRosterDataToTables(
     for (const r of rosters) {
       if (!r.id || !r.name) continue;
 
-      const coachName = r.coach ?? null;
+      const coachStr = r.coach ?? null;
+      const coachNames = coachStr
+        ? coachStr.split(",").map((n: string) => n.trim()).filter(Boolean)
+        : [];
+      const firstCoachId = coachNames[0] ? coachIdMap.get(coachNames[0]) ?? null : null;
       const presName = r.president ?? null;
-      const coachId = coachName ? coachIdMap.get(coachName) ?? null : null;
       const presidentId = presName ? presidentIdMap.get(presName) ?? null : null;
       const rPlayers = r.players ?? [];
       const rTitles = r.titles ?? [];
@@ -801,7 +809,7 @@ async function syncRosterDataToTables(
           r.nickname ?? null,
           r.color ?? null,
           r.logo ?? null,
-          coachName,
+          coachNames,
           presName,
           r.category ?? null,
           r.founded_in ?? null,
@@ -809,7 +817,7 @@ async function syncRosterDataToTables(
           JSON.stringify(rTitles),
           nowIso,
           accountId,
-          coachId,
+          firstCoachId,
           presidentId,
         ]
       );
