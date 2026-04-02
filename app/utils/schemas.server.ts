@@ -1,6 +1,15 @@
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
+// Safe string — strips HTML tags to prevent stored-XSS
+// ---------------------------------------------------------------------------
+
+const STRIP_HTML = /<[^>]*>/g;
+
+/** z.string() that strips HTML tags on parse. Use for user-visible text fields. */
+export const safeString = () => z.string().transform((v) => v.replace(STRIP_HTML, "").trim());
+
+// ---------------------------------------------------------------------------
 // Primitives & reusable atoms
 // ---------------------------------------------------------------------------
 
