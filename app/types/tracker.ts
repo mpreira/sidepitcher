@@ -58,6 +58,13 @@ export interface Title {
     year: number;
 }
 
+export interface SeasonData {
+    players: Player[];
+    coach?: string;
+}
+
+export const CURRENT_SEASON = "2025/2026";
+
 export interface Roster {
     id: string;
     name: string;
@@ -66,7 +73,8 @@ export interface Roster {
     logo?: string;
     coach?: Coach["name"];
     president?: President["name"];
-    players: Player[]; // effectif global
+    players: Player[]; // effectif global (mirrors current season)
+    seasons?: Record<string, SeasonData>;
     category?: 'Top 14' | 'Pro D2';
     founded_in?: number; // year of creation
     titles?: Title[]; // list of titles won
