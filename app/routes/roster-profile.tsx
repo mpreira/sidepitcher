@@ -337,7 +337,7 @@ export default function RosterProfilePage() {
   function addLastFiveRow() {
     setLastFiveDraft((prev) => [
       ...prev,
-      { victory: false, defeat: false, draw: false, resultText: "", opponent: "" },
+      { outcome: "victory", resultText: "", opponent: "" },
     ]);
   }
 
@@ -345,20 +345,9 @@ export default function RosterProfilePage() {
     setLastFiveDraft((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function updateLastFiveDraft(index: number, field: keyof Result, value: string | boolean) {
+  function updateLastFiveDraft(index: number, field: keyof Result, value: string) {
     setLastFiveDraft((prev) =>
-      prev.map((r, i) => {
-        if (i !== index) return r;
-        if (field === "victory" || field === "defeat" || field === "draw") {
-          return {
-            ...r,
-            victory: field === "victory" ? true : false,
-            defeat: field === "defeat" ? true : false,
-            draw: field === "draw" ? true : false,
-          };
-        }
-        return { ...r, [field]: value };
-      }),
+      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)),
     );
   }
 
@@ -736,18 +725,18 @@ export default function RosterProfilePage() {
                   <strong>Série (5 derniers matchs):</strong>{" "}
                   {roster.lastFiveMatches && roster.lastFiveMatches.length > 0
                     ? (() => {
-                        const v = roster.lastFiveMatches.filter((r) => r.victory).length;
-                        const d = roster.lastFiveMatches.filter((r) => r.defeat).length;
-                        const n = roster.lastFiveMatches.filter((r) => r.draw).length;
+                        const v = roster.lastFiveMatches.filter((r) => r.outcome === "victory").length;
+                        const d = roster.lastFiveMatches.filter((r) => r.outcome === "defeat").length;
+                        const n = roster.lastFiveMatches.filter((r) => r.outcome === "draw").length;
                         return (
                           <>
                             {roster.lastFiveMatches.map((r, i) => (
                               <span
                                 key={i}
-                                className={`inline-block w-5 h-5 rounded text-center text-xs font-bold leading-5 mr-0.5 ${r.victory ? "bg-emerald-600 text-white" : r.defeat ? "bg-red-600 text-white" : "bg-neutral-500 text-white"}`}
+                                className={`inline-block w-5 h-5 rounded text-center text-xs font-bold leading-5 mr-0.5 ${r.outcome === "victory" ? "bg-emerald-600 text-white" : r.outcome === "defeat" ? "bg-red-600 text-white" : "bg-neutral-500 text-white"}`}
                                 title={r.resultText || r.opponent}
                               >
-                                {r.victory ? "V" : r.defeat ? "D" : "N"}
+                                {r.outcome === "victory" ? "V" : r.outcome === "defeat" ? "D" : "N"}
                               </span>
                             ))}
                             <span className="ml-2 text-neutral-400 text-xs">{v}V {d}D {n}N</span>
@@ -776,8 +765,8 @@ export default function RosterProfilePage() {
                   <div key={index} className="flex items-center gap-2">
                     <select
                       className="sp-input-control text-sm w-28"
-                      value={result.victory ? "victory" : result.defeat ? "defeat" : "draw"}
-                      onChange={(e) => updateLastFiveDraft(index, e.target.value as "victory" | "defeat" | "draw", true)}
+                      value={result.outcome}
+                      onChange={(e) => updateLastFiveDraft(index, "outcome", e.target.value)}
                     >
                       <option value="victory">Victoire</option>
                       <option value="defeat">Défaite</option>

@@ -60,9 +60,7 @@ export interface Title {
 }
 
 export interface Result {
-    victory: boolean;
-    defeat: boolean;
-    draw: boolean;
+    outcome: "victory" | "defeat" | "draw";
     resultText: string; // e.g. "Victoire 28-14", "Défaite 10-12", "Nul 21-21"
     opponent: string;
     competition?: string;
