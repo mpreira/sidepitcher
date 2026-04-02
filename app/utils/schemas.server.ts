@@ -24,6 +24,7 @@ const playerSchema = z.object({
   positions: z.array(playerPositionSchema).nullable().optional(),
   photoUrl: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
   stats: playerStatsSchema.nullable().optional(),
 }).passthrough();
 
@@ -296,6 +297,7 @@ export const playerCreateApiSchema = z.object({
   positions: z.array(z.string()).nullable().optional(),
   photoUrl: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
 });
 
 export const playerUpdateApiSchema = z.object({
@@ -304,6 +306,7 @@ export const playerUpdateApiSchema = z.object({
   positions: z.array(z.string()).nullable().optional(),
   photoUrl: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
+  club: z.string().nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------

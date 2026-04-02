@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (method === "DELETE") {
     if (!id) return Response.json({ error: "missing id query param" }, { status: 400 });
-    const deleted = await deletePresident(Number(id));
+    const deleted = await deletePresident(Number(id), scope.scopeId);
     if (!deleted) return Response.json({ error: "not-found" }, { status: 404 });
     return Response.json({ ok: true });
   }
