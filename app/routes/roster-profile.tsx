@@ -438,7 +438,7 @@ export default function RosterProfilePage() {
         <section className="sp-panel space-y-3 md:col-span-2">
           <h2 className="font-semibold">Informations</h2>
           <p className="text-sm text-neutral-200">
-            <strong>Championnat:</strong> {roster.category || "Non renseigné"}
+            <strong>Championnat:</strong> <span className="text-neutral-400">{roster.category || "Non renseigné"}</span>
           </p>
           <div className="flex items-center justify-between">
             {isEditingFoundedIn ? (
@@ -459,7 +459,7 @@ export default function RosterProfilePage() {
             ) : (
               <p className="text-sm text-neutral-200">
                 <strong>Création :</strong>{" "}
-                {roster.founded_in || "Non renseigné"}
+                <span className="text-neutral-400">{roster.founded_in || "Non renseigné"}</span>
               </p>
             )}
             {!isEditingFoundedIn && (
@@ -481,7 +481,7 @@ export default function RosterProfilePage() {
               {!isEditingTitles ? (
                 <p className="text-sm text-neutral-200">
                   <strong>Palmarès :</strong>{" "}
-                  {roster.titles && roster.titles.length > 0
+                  <span className="text-neutral-400">{roster.titles && roster.titles.length > 0
                     ? (() => {
                         const grouped = new Map<string, string[]>();
                         for (const t of roster.titles) {
@@ -494,7 +494,7 @@ export default function RosterProfilePage() {
                           .map(([key, years]) => `${key} (${years.join(", ")})`)
                           .join(", ");
                       })()
-                    : "Non renseigné"}
+                    : "Non renseigné"}</span>
                 </p>
               ) : (
                 <p className="text-sm text-neutral-200 font-semibold">
@@ -601,7 +601,7 @@ export default function RosterProfilePage() {
             ) : (
               <p className="text-sm text-neutral-200">
                 <strong>Entraineur :</strong>{" "}
-                {seasonCoach
+                <span className="text-neutral-400">{seasonCoach
                   ? (() => {
                       const names = seasonCoach
                         .split(",")
@@ -612,14 +612,14 @@ export default function RosterProfilePage() {
                           {idx > 0 && ", "}
                           <Link
                             to={getCoachProfilePath(idx)}
-                            className="hover:text-sky-300 underline-offset-2 hover:underline"
+                            className="text-neutral-400 hover:text-sky-300 underline-offset-2 hover:font-bold"
                           >
                             {name}
                           </Link>
                         </span>
                       ));
                     })()
-                  : "Non renseigné"}
+                  : <span className="text-neutral-400">Non renseigné</span>}</span>
               </p>
             )}
             {isCurrentSeason && !isEditingCoach && (
@@ -656,12 +656,12 @@ export default function RosterProfilePage() {
                 {roster.president ? (
                   <Link
                     to={getPresidentProfilePath()}
-                    className="hover:text-sky-300 underline-offset-2 hover:underline"
+                    className="text-neutral-400 hover:text-sky-300 underline-offset-2 hover:font-bold"
                   >
                     {roster.president}
                   </Link>
                 ) : (
-                  "Non renseigné"
+                  <span className="text-neutral-400">Non renseigné</span>
                 )}
               </p>
             )}
@@ -725,8 +725,8 @@ export default function RosterProfilePage() {
             ) : (
               <p className="text-sm text-neutral-200">
                 <strong>Classement:</strong>{" "}
-                {roster.currentRanking != null ? `${roster.currentRanking}e` : "Non renseigné"}{" "}
-                ({roster.currentPoints != null ? `${roster.currentPoints} pts` : "X pts"})
+                <span className="text-neutral-400 font-semibold text-base">{roster.currentRanking != null ? `${roster.currentRanking}e` : "Non renseigné"}</span>{" "}
+                <span className="text-neutral-400">({roster.currentPoints != null ? `${roster.currentPoints} pts` : "X pts"})</span>
               </p>
             )}
             {!isEditingRanking && (
@@ -907,7 +907,7 @@ export default function RosterProfilePage() {
               <p className="text-sm text-neutral-200">
                 <strong>Matchs:</strong>{" "}
                 {roster.seasonRecord
-                  ? <span className="text-neutral-400 text-xs">{roster.seasonRecord.victories}V {roster.seasonRecord.defeats}D {roster.seasonRecord.draws}N</span>
+                  ? <span className="text-neutral-400 text-base">{roster.seasonRecord.victories}V {roster.seasonRecord.defeats}D {roster.seasonRecord.draws}N</span>
                   : "Non renseigné"}
               </p>
             )}
