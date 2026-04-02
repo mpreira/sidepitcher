@@ -543,11 +543,14 @@ async function initializeSchema(pool: Pool) {
       positions JSONB DEFAULT '[]',
       photo_url TEXT,
       nationality VARCHAR,
+      club TEXT,
       created_at TIMESTAMPTZ NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL,
       last_modified_by TEXT,
       PRIMARY KEY (account_id, id)
     );
+
+    ALTER TABLE players ADD COLUMN IF NOT EXISTS club TEXT;
 
     CREATE TABLE IF NOT EXISTS player_stats (
       id SERIAL PRIMARY KEY,
@@ -884,15 +887,16 @@ async function syncRosterDataToTables(
 
         await client.query(
           `INSERT INTO players
-           (id, account_id, name, number, positions, photo_url, nationality,
+           (id, account_id, name, number, positions, photo_url, nationality, club,
             created_at, updated_at, last_modified_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8,$9)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9,$10)
            ON CONFLICT (account_id, id) DO UPDATE SET
              name = EXCLUDED.name,
              number = EXCLUDED.number,
              positions = EXCLUDED.positions,
              photo_url = EXCLUDED.photo_url,
              nationality = EXCLUDED.nationality,
+             club = COALESCE(EXCLUDED.club, players.club),
              updated_at = EXCLUDED.updated_at`,
           [
             p.id,
@@ -902,6 +906,7 @@ async function syncRosterDataToTables(
             JSON.stringify(p.positions ?? []),
             p.photoUrl ?? null,
             p.nationality ?? null,
+            p.club ?? r.name,
             nowIso,
             accountId,
           ]
@@ -2188,6 +2193,7 @@ export interface DbPlayer {
   positions: string[];
   photoUrl: string | null;
   nationality: string | null;
+  club: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -2214,6 +2220,7 @@ function mapPlayerRow(row: Record<string, unknown>): DbPlayer {
     positions: Array.isArray(row.positions) ? row.positions : JSON.parse((row.positions as string) || "[]"),
     photoUrl: (row.photo_url as string) ?? null,
     nationality: (row.nationality as string) ?? null,
+    club: (row.club as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -2259,17 +2266,17 @@ export async function getPlayerById(accountId: string, playerId: string): Promis
 
 export async function createPlayer(accountId: string, input: {
   id: string; name: string; number?: number | null; positions?: string[] | null;
-  photoUrl?: string | null; nationality?: string | null;
+  photoUrl?: string | null; nationality?: string | null; club?: string | null;
 }): Promise<DbPlayer> {
   await ensureInitialized();
   const pool = getPool();
   const now = new Date().toISOString();
   const result = await pool.query(
-    `INSERT INTO players (id, account_id, name, number, positions, photo_url, nationality, created_at, updated_at, last_modified_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8,$9)
+    `INSERT INTO players (id, account_id, name, number, positions, photo_url, nationality, club, created_at, updated_at, last_modified_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9,$10)
      RETURNING *`,
     [input.id, accountId, input.name, input.number ?? null, JSON.stringify(input.positions ?? []),
-     input.photoUrl ?? null, input.nationality ?? null, now, accountId]
+     input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, now, accountId]
   );
   const player = mapPlayerRow(result.rows[0]);
   await insertAuditLog(pool, { tableName: "players", rowId: input.id, action: "INSERT", by: accountId, after: player as unknown as Record<string, unknown> });
@@ -2278,7 +2285,7 @@ export async function createPlayer(accountId: string, input: {
 
 export async function updatePlayer(accountId: string, playerId: string, input: {
   name?: string; number?: number | null; positions?: string[] | null;
-  photoUrl?: string | null; nationality?: string | null;
+  photoUrl?: string | null; nationality?: string | null; club?: string | null;
 }): Promise<DbPlayer | null> {
   await ensureInitialized();
   const pool = getPool();
@@ -2291,12 +2298,13 @@ export async function updatePlayer(accountId: string, playerId: string, input: {
        positions = COALESCE($5, positions),
        photo_url = CASE WHEN $6::text IS NULL THEN photo_url ELSE $6 END,
        nationality = CASE WHEN $7::text IS NULL THEN nationality ELSE $7 END,
-       updated_at = $8
+       club = CASE WHEN $8::text IS NULL THEN club ELSE $8 END,
+       updated_at = $9
      WHERE account_id = $1 AND id = $2
      RETURNING *`,
     [accountId, playerId, input.name ?? null, input.number ?? null,
      input.positions ? JSON.stringify(input.positions) : null,
-     input.photoUrl ?? null, input.nationality ?? null, now]
+     input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, now]
   );
   const row = result.rows[0];
   if (!row) return null;
