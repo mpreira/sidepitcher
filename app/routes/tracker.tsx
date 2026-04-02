@@ -230,6 +230,8 @@ export default function Tracker() {
     // Détecte un changement de contexte (championnat / journée / sport) après le premier rendu.
     // On utilise des refs pour comparer les valeurs précédentes sans déclencher de boucle.
     // Si le contexte change, on remet à zéro tous les événements, la minuterie et les stats.
+    // On ignore la transition initiale (valeurs par défaut → valeurs chargées du serveur)
+    // pour ne pas effacer les données persistées en localStorage (ex. arbitre).
     useEffect(() => {
         if (!contextInitializedRef.current) {
             // Premier rendu : on mémorise le contexte initial sans réinitialiser
@@ -249,7 +251,9 @@ export default function Tracker() {
             prev.championship !== championship ||
             prev.sport !== sport;
 
-        if (contextChanged) {
+        // Si matchDay précédent est vide, c'est le chargement initial depuis le serveur,
+        // pas un vrai changement de contexte de l'utilisateur.
+        if (contextChanged && prev.matchDay !== "") {
             resetTrackerInfos();
         }
 
