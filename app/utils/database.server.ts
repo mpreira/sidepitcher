@@ -2044,3 +2044,471 @@ export function getLiveAvailability(record: LiveMatchRecord): "active" | "expire
   if (isLiveMatchExpired(record.expiresAt)) return "expired";
   return "active";
 }
+
+// ---------------------------------------------------------------------------
+// CRUD — Players (structured tables)
+// ---------------------------------------------------------------------------
+
+export interface DbPlayer {
+  id: string;
+  accountId: string;
+  name: string;
+  number: number | null;
+  positions: string[];
+  photoUrl: string | null;
+  nationality: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DbPlayerWithStats extends DbPlayer {
+  stats: {
+    points: number;
+    essais: number;
+    pied: number;
+    tauxTransfo: number;
+    cartons: number;
+    drops: number;
+    matchs2526: number;
+    titularisations2526: number;
+  } | null;
+}
+
+function mapPlayerRow(row: Record<string, unknown>): DbPlayer {
+  return {
+    id: row.id as string,
+    accountId: row.account_id as string,
+    name: row.name as string,
+    number: (row.number as number) ?? null,
+    positions: Array.isArray(row.positions) ? row.positions : JSON.parse((row.positions as string) || "[]"),
+    photoUrl: (row.photo_url as string) ?? null,
+    nationality: (row.nationality as string) ?? null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function listPlayers(accountId: string): Promise<DbPlayer[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "SELECT * FROM players WHERE account_id = $1 ORDER BY name",
+    [accountId]
+  );
+  return result.rows.map(mapPlayerRow);
+}
+
+export async function getPlayerById(accountId: string, playerId: string): Promise<DbPlayerWithStats | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `SELECT p.*, ps.points, ps.essais, ps.pied, ps.taux_transfo, ps.cartons,
+            ps.drops, ps.matchs_2526, ps.titularisations_2526
+     FROM players p
+     LEFT JOIN player_stats ps ON ps.account_id = p.account_id AND ps.player_id = p.id
+     WHERE p.account_id = $1 AND p.id = $2`,
+    [accountId, playerId]
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    ...mapPlayerRow(row),
+    stats: row.points != null ? {
+      points: row.points,
+      essais: row.essais,
+      pied: row.pied,
+      tauxTransfo: row.taux_transfo,
+      cartons: row.cartons,
+      drops: row.drops,
+      matchs2526: row.matchs_2526,
+      titularisations2526: row.titularisations_2526,
+    } : null,
+  };
+}
+
+export async function createPlayer(accountId: string, input: {
+  id: string; name: string; number?: number | null; positions?: string[] | null;
+  photoUrl?: string | null; nationality?: string | null;
+}): Promise<DbPlayer> {
+  await ensureInitialized();
+  const pool = getPool();
+  const now = new Date().toISOString();
+  const result = await pool.query(
+    `INSERT INTO players (id, account_id, name, number, positions, photo_url, nationality, created_at, updated_at, last_modified_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8,$9)
+     RETURNING *`,
+    [input.id, accountId, input.name, input.number ?? null, JSON.stringify(input.positions ?? []),
+     input.photoUrl ?? null, input.nationality ?? null, now, accountId]
+  );
+  return mapPlayerRow(result.rows[0]);
+}
+
+export async function updatePlayer(accountId: string, playerId: string, input: {
+  name?: string; number?: number | null; positions?: string[] | null;
+  photoUrl?: string | null; nationality?: string | null;
+}): Promise<DbPlayer | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const now = new Date().toISOString();
+  const result = await pool.query(
+    `UPDATE players SET
+       name = COALESCE($3, name),
+       number = CASE WHEN $4::integer IS NULL THEN number ELSE $4 END,
+       positions = COALESCE($5, positions),
+       photo_url = CASE WHEN $6::text IS NULL THEN photo_url ELSE $6 END,
+       nationality = CASE WHEN $7::text IS NULL THEN nationality ELSE $7 END,
+       updated_at = $8
+     WHERE account_id = $1 AND id = $2
+     RETURNING *`,
+    [accountId, playerId, input.name ?? null, input.number ?? null,
+     input.positions ? JSON.stringify(input.positions) : null,
+     input.photoUrl ?? null, input.nationality ?? null, now]
+  );
+  const row = result.rows[0];
+  return row ? mapPlayerRow(row) : null;
+}
+
+export async function deletePlayer(accountId: string, playerId: string): Promise<boolean> {
+  await ensureInitialized();
+  const pool = getPool();
+  await pool.query("DELETE FROM player_stats WHERE account_id = $1 AND player_id = $2", [accountId, playerId]);
+  const result = await pool.query(
+    "DELETE FROM players WHERE account_id = $1 AND id = $2",
+    [accountId, playerId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function searchPlayers(accountId: string, query: string): Promise<DbPlayer[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "SELECT * FROM players WHERE account_id = $1 AND name ILIKE $2 ORDER BY name LIMIT 50",
+    [accountId, `%${query}%`]
+  );
+  return result.rows.map(mapPlayerRow);
+}
+
+// ---------------------------------------------------------------------------
+// CRUD — Coaches
+// ---------------------------------------------------------------------------
+
+export interface DbCoach {
+  id: number;
+  name: string;
+  photoUrl: string | null;
+  nationality: string | null;
+  club: string | null;
+}
+
+function mapCoachRow(row: Record<string, unknown>): DbCoach {
+  return {
+    id: row.id as number,
+    name: row.name as string,
+    photoUrl: (row.photo_url as string) ?? null,
+    nationality: (row.nationality as string) ?? null,
+    club: (row.club as string) ?? null,
+  };
+}
+
+export async function listCoaches(): Promise<DbCoach[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM coaches ORDER BY name");
+  return result.rows.map(mapCoachRow);
+}
+
+export async function getCoachById(id: number): Promise<DbCoach | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM coaches WHERE id = $1", [id]);
+  const row = result.rows[0];
+  return row ? mapCoachRow(row) : null;
+}
+
+export async function createCoach(input: {
+  name: string; photoUrl?: string | null; nationality?: string | null; club?: string | null;
+}, modifiedBy?: string): Promise<DbCoach> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `INSERT INTO coaches (name, photo_url, nationality, club, last_modified_by)
+     VALUES ($1,$2,$3,$4,$5)
+     RETURNING *`,
+    [input.name, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
+  );
+  return mapCoachRow(result.rows[0]);
+}
+
+export async function updateCoach(id: number, input: {
+  name?: string; photoUrl?: string | null; nationality?: string | null; club?: string | null;
+}, modifiedBy?: string): Promise<DbCoach | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `UPDATE coaches SET
+       name = COALESCE($2, name),
+       photo_url = COALESCE($3, photo_url),
+       nationality = COALESCE($4, nationality),
+       club = COALESCE($5, club),
+       last_modified_by = COALESCE($6, last_modified_by)
+     WHERE id = $1
+     RETURNING *`,
+    [id, input.name ?? null, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
+  );
+  const row = result.rows[0];
+  return row ? mapCoachRow(row) : null;
+}
+
+export async function deleteCoach(id: number): Promise<boolean> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("DELETE FROM coaches WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function searchCoaches(query: string): Promise<DbCoach[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "SELECT * FROM coaches WHERE name ILIKE $1 ORDER BY name LIMIT 50",
+    [`%${query}%`]
+  );
+  return result.rows.map(mapCoachRow);
+}
+
+// ---------------------------------------------------------------------------
+// CRUD — Presidents
+// ---------------------------------------------------------------------------
+
+export interface DbPresident {
+  id: number;
+  name: string;
+  photoUrl: string | null;
+  nationality: string | null;
+  club: string | null;
+}
+
+function mapPresidentRow(row: Record<string, unknown>): DbPresident {
+  return {
+    id: row.id as number,
+    name: row.name as string,
+    photoUrl: (row.photo_url as string) ?? null,
+    nationality: (row.nationality as string) ?? null,
+    club: (row.club as string) ?? null,
+  };
+}
+
+export async function listPresidents(): Promise<DbPresident[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM presidents ORDER BY name");
+  return result.rows.map(mapPresidentRow);
+}
+
+export async function getPresidentById(id: number): Promise<DbPresident | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM presidents WHERE id = $1", [id]);
+  const row = result.rows[0];
+  return row ? mapPresidentRow(row) : null;
+}
+
+export async function createPresident(input: {
+  name: string; photoUrl?: string | null; nationality?: string | null; club?: string | null;
+}, modifiedBy?: string): Promise<DbPresident> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `INSERT INTO presidents (name, photo_url, nationality, club, last_modified_by)
+     VALUES ($1,$2,$3,$4,$5)
+     RETURNING *`,
+    [input.name, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
+  );
+  return mapPresidentRow(result.rows[0]);
+}
+
+export async function updatePresident(id: number, input: {
+  name?: string; photoUrl?: string | null; nationality?: string | null; club?: string | null;
+}, modifiedBy?: string): Promise<DbPresident | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `UPDATE presidents SET
+       name = COALESCE($2, name),
+       photo_url = COALESCE($3, photo_url),
+       nationality = COALESCE($4, nationality),
+       club = COALESCE($5, club),
+       last_modified_by = COALESCE($6, last_modified_by)
+     WHERE id = $1
+     RETURNING *`,
+    [id, input.name ?? null, input.photoUrl ?? null, input.nationality ?? null, input.club ?? null, modifiedBy ?? null]
+  );
+  const row = result.rows[0];
+  return row ? mapPresidentRow(row) : null;
+}
+
+export async function deletePresident(id: number): Promise<boolean> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("DELETE FROM presidents WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function searchPresidents(query: string): Promise<DbPresident[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "SELECT * FROM presidents WHERE name ILIKE $1 ORDER BY name LIMIT 50",
+    [`%${query}%`]
+  );
+  return result.rows.map(mapPresidentRow);
+}
+
+// ---------------------------------------------------------------------------
+// CRUD — Competitions
+// ---------------------------------------------------------------------------
+
+export interface DbCompetition {
+  id: number;
+  name: string;
+}
+
+function mapCompetitionRow(row: Record<string, unknown>): DbCompetition {
+  return { id: row.id as number, name: row.name as string };
+}
+
+export async function listCompetitions(): Promise<DbCompetition[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM competitions ORDER BY name");
+  return result.rows.map(mapCompetitionRow);
+}
+
+export async function getCompetitionById(id: number): Promise<DbCompetition | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM competitions WHERE id = $1", [id]);
+  const row = result.rows[0];
+  return row ? mapCompetitionRow(row) : null;
+}
+
+export async function createCompetition(name: string): Promise<DbCompetition> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "INSERT INTO competitions (name) VALUES ($1) RETURNING *",
+    [name]
+  );
+  return mapCompetitionRow(result.rows[0]);
+}
+
+export async function updateCompetition(id: number, name: string): Promise<DbCompetition | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "UPDATE competitions SET name = $2 WHERE id = $1 RETURNING *",
+    [id, name]
+  );
+  const row = result.rows[0];
+  return row ? mapCompetitionRow(row) : null;
+}
+
+export async function deleteCompetition(id: number): Promise<boolean> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("DELETE FROM competitions WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+// ---------------------------------------------------------------------------
+// CRUD — Titles
+// ---------------------------------------------------------------------------
+
+export interface DbTitle {
+  id: number;
+  accountId: string | null;
+  rosterId: string | null;
+  competition: string | null;
+  ranking: string | null;
+  year: number | null;
+}
+
+function mapTitleRow(row: Record<string, unknown>): DbTitle {
+  return {
+    id: row.id as number,
+    accountId: (row.account_id as string) ?? null,
+    rosterId: (row.roster_id as string) ?? null,
+    competition: (row.competition as string) ?? null,
+    ranking: (row.ranking as string) ?? null,
+    year: (row.year as number) ?? null,
+  };
+}
+
+export async function listTitles(accountId: string): Promise<DbTitle[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "SELECT * FROM titles WHERE account_id = $1 ORDER BY year DESC, competition",
+    [accountId]
+  );
+  return result.rows.map(mapTitleRow);
+}
+
+export async function getTitleById(id: number): Promise<DbTitle | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("SELECT * FROM titles WHERE id = $1", [id]);
+  const row = result.rows[0];
+  return row ? mapTitleRow(row) : null;
+}
+
+export async function createTitle(accountId: string, input: {
+  rosterId: string; competition: string; ranking?: string | null; year: number;
+}): Promise<DbTitle> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `INSERT INTO titles (account_id, roster_id, competition, ranking, year, last_modified_by)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     RETURNING *`,
+    [accountId, input.rosterId, input.competition, input.ranking ?? null, input.year, accountId]
+  );
+  return mapTitleRow(result.rows[0]);
+}
+
+export async function updateTitle(id: number, input: {
+  competition?: string; ranking?: string | null; year?: number;
+}, modifiedBy?: string): Promise<DbTitle | null> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    `UPDATE titles SET
+       competition = COALESCE($2, competition),
+       ranking = COALESCE($3, ranking),
+       year = COALESCE($4, year),
+       last_modified_by = COALESCE($5, last_modified_by)
+     WHERE id = $1
+     RETURNING *`,
+    [id, input.competition ?? null, input.ranking ?? null, input.year ?? null, modifiedBy ?? null]
+  );
+  const row = result.rows[0];
+  return row ? mapTitleRow(row) : null;
+}
+
+export async function deleteTitle(id: number): Promise<boolean> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query("DELETE FROM titles WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function searchTitlesByCompetition(accountId: string, competition: string): Promise<DbTitle[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query(
+    "SELECT * FROM titles WHERE account_id = $1 AND competition ILIKE $2 ORDER BY year DESC LIMIT 50",
+    [accountId, `%${competition}%`]
+  );
+  return result.rows.map(mapTitleRow);
+}
