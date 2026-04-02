@@ -310,12 +310,18 @@ export default function RosterProfilePage() {
                 <p className="text-sm text-neutral-200">
                   <strong>Palmarès :</strong>{" "}
                   {roster.titles && roster.titles.length > 0
-                    ? roster.titles
-                        .map(
-                          (title) =>
-                            `${title.ranking} ${title.competition} (${title.year})`,
-                        )
-                        .join(", ")
+                    ? (() => {
+                        const grouped = new Map<string, string[]>();
+                        for (const t of roster.titles) {
+                          const key = `${t.competition} - ${t.ranking}`;
+                          const years = grouped.get(key) ?? [];
+                          years.push(t.year);
+                          grouped.set(key, years);
+                        }
+                        return Array.from(grouped.entries())
+                          .map(([key, years]) => `${key} (${years.join(", ")})`)
+                          .join(", ");
+                      })()
                     : "Non renseigné"}
                 </p>
               ) : (
