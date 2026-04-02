@@ -36,4 +36,5 @@ export default [
     route("api/competitions", "routes/api/competitions.ts"),
     route("api/titles", "routes/api/titles.ts"),
     route("api/search", "routes/api/search.ts"),
+    route("api/admin/db-stats", "routes/api/admin-db-stats.ts"),
 ] satisfies RouteConfig;
