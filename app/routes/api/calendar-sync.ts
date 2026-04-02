@@ -5,6 +5,7 @@ import {
   saveRostersStateForAccount,
 } from "~/utils/database.server";
 import { buildCalendarForTeam } from "~/utils/ical.server";
+import { validateIcsUrl } from "~/utils/url-validation";
 import { CURRENT_SEASON } from "~/types/tracker";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -27,29 +28,10 @@ export const action: ActionFunction = async ({ request }) => {
     );
   }
 
-  // SSRF protection: only allow https:// and webcal:// URLs
-  try {
-    const parsed = new URL(icsUrl);
-    if (!["https:", "webcal:"].includes(parsed.protocol)) {
-      return Response.json({ error: "Only https:// and webcal:// URLs are allowed" }, { status: 400 });
-    }
-    // Block private/internal IPs
-    const host = parsed.hostname;
-    if (
-      host === "localhost" ||
-      host === "127.0.0.1" ||
-      host === "[::1]" ||
-      host.startsWith("10.") ||
-      host.startsWith("192.168.") ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
-      host.endsWith(".local") ||
-      host === "0.0.0.0" ||
-      host === "169.254.169.254"
-    ) {
-      return Response.json({ error: "Internal URLs are not allowed" }, { status: 400 });
-    }
-  } catch {
-    return Response.json({ error: "Invalid URL" }, { status: 400 });
+  // SSRF protection
+  const urlCheck = validateIcsUrl(icsUrl);
+  if (!urlCheck.ok) {
+    return Response.json({ error: urlCheck.reason }, { status: 400 });
   }
 
   const targetSeason = season || CURRENT_SEASON;
