@@ -146,6 +146,28 @@ function getPool(): Pool {
     ssl,
   });
 
+  // Log slow queries
+  const SLOW_QUERY_MS = Number(process.env.SLOW_QUERY_MS) || 200;
+  singletonPool.on("connect", (client) => {
+    const origQuery = client.query.bind(client);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (client as any).query = (...args: any[]) => {
+      const start = performance.now();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (origQuery as any)(...args);
+      if (result && typeof result.then === "function") {
+        (result as Promise<unknown>).then(() => {
+          const ms = performance.now() - start;
+          if (ms >= SLOW_QUERY_MS) {
+            const text = typeof args[0] === "string" ? args[0] : (args[0] as { text?: string })?.text ?? "?";
+            console.warn(`[slow-query] ${ms.toFixed(1)}ms — ${text.slice(0, 120)}`);
+          }
+        }).catch(() => {});
+      }
+      return result;
+    };
+  });
+
   return singletonPool;
 }
 
@@ -592,7 +614,37 @@ async function initializeSchema(pool: Pool) {
     CREATE INDEX IF NOT EXISTS idx_event_log_event_type ON event_log(event_type);
     CREATE INDEX IF NOT EXISTS idx_event_log_match_id ON event_log(match_id);
     CREATE INDEX IF NOT EXISTS idx_event_log_occurred_at ON event_log(occurred_at);
+
+    -- Composite indexes for frequent query patterns --
+    CREATE INDEX IF NOT EXISTS idx_players_account_name ON players(account_id, name);
+    CREATE INDEX IF NOT EXISTS idx_titles_account_competition ON titles(account_id, competition);
+    CREATE INDEX IF NOT EXISTS idx_titles_account_year ON titles(account_id, year DESC);
+    CREATE INDEX IF NOT EXISTS idx_stored_rosters_account_category ON stored_rosters(account_id, category);
+    CREATE INDEX IF NOT EXISTS idx_stored_rosters_coach_id ON stored_rosters(coach_id);
+    CREATE INDEX IF NOT EXISTS idx_stored_rosters_president_id ON stored_rosters(president_id);
+    CREATE INDEX IF NOT EXISTS idx_matches_account_id ON matches(account_id);
+    CREATE INDEX IF NOT EXISTS idx_matches_championship ON matches(championship);
+    CREATE INDEX IF NOT EXISTS idx_event_log_actor ON event_log(actor_account_id);
+    CREATE INDEX IF NOT EXISTS idx_event_log_correlation ON event_log(correlation_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_log_table_row ON audit_log(table_name, row_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_log_at ON audit_log("at" DESC);
+    CREATE INDEX IF NOT EXISTS idx_account_rosters_state_updated ON account_rosters_state(updated_at);
   `);
+
+  // ---- GIN trigram indexes for ILIKE %...% searches ----
+  // pg_trgm is needed; silently skip if the extension is unavailable
+  try {
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_players_name_trgm ON players USING gin (name gin_trgm_ops);
+      CREATE INDEX IF NOT EXISTS idx_coaches_name_trgm ON coaches USING gin (name gin_trgm_ops);
+      CREATE INDEX IF NOT EXISTS idx_presidents_name_trgm ON presidents USING gin (name gin_trgm_ops);
+      CREATE INDEX IF NOT EXISTS idx_titles_competition_trgm ON titles USING gin (competition gin_trgm_ops);
+      CREATE INDEX IF NOT EXISTS idx_competitions_name_trgm ON competitions USING gin (name gin_trgm_ops);
+    `);
+  } catch {
+    // pg_trgm not available — ILIKE searches will use sequential scans (acceptable at current scale)
+  }
 
   // Add FK constraints (ignore if they already exist)
   await addForeignKeyIfMissing(pool, "fk_stored_rosters_account", "stored_rosters", "FOREIGN KEY (account_id) REFERENCES accounts(id)");
@@ -2511,4 +2563,114 @@ export async function searchTitlesByCompetition(accountId: string, competition: 
     [accountId, `%${competition}%`]
   );
   return result.rows.map(mapTitleRow);
+}
+
+// ---------------------------------------------------------------------------
+// Performance monitoring — pg_stat_statements & index usage
+// ---------------------------------------------------------------------------
+
+export interface SlowQueryStat {
+  query: string;
+  calls: number;
+  totalTimeMs: number;
+  meanTimeMs: number;
+  minTimeMs: number;
+  maxTimeMs: number;
+  rows: number;
+}
+
+export async function getSlowQueries(limit = 20): Promise<SlowQueryStat[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  try {
+    await pool.query("CREATE EXTENSION IF NOT EXISTS pg_stat_statements");
+    const result = await pool.query<{
+      query: string; calls: string; total_exec_time: string;
+      mean_exec_time: string; min_exec_time: string; max_exec_time: string; rows: string;
+    }>(
+      `SELECT query, calls, total_exec_time, mean_exec_time, min_exec_time, max_exec_time, rows
+       FROM pg_stat_statements
+       WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
+       ORDER BY mean_exec_time DESC
+       LIMIT $1`,
+      [limit]
+    );
+    return result.rows.map((r) => ({
+      query: r.query,
+      calls: Number(r.calls),
+      totalTimeMs: Math.round(Number(r.total_exec_time) * 100) / 100,
+      meanTimeMs: Math.round(Number(r.mean_exec_time) * 100) / 100,
+      minTimeMs: Math.round(Number(r.min_exec_time) * 100) / 100,
+      maxTimeMs: Math.round(Number(r.max_exec_time) * 100) / 100,
+      rows: Number(r.rows),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export interface IndexUsageStat {
+  table: string;
+  index: string;
+  indexScans: number;
+  tableSize: string;
+  indexSize: string;
+}
+
+export async function getIndexUsage(): Promise<IndexUsageStat[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query<{
+    relname: string; indexrelname: string; idx_scan: string;
+    pg_size_pretty_table: string; pg_size_pretty_index: string;
+  }>(
+    `SELECT
+       s.relname,
+       s.indexrelname,
+       s.idx_scan,
+       pg_size_pretty(pg_relation_size(s.relid)) AS pg_size_pretty_table,
+       pg_size_pretty(pg_relation_size(s.indexrelid)) AS pg_size_pretty_index
+     FROM pg_stat_user_indexes s
+     JOIN pg_index i ON s.indexrelid = i.indexrelid
+     WHERE s.schemaname = 'public'
+     ORDER BY s.idx_scan ASC, pg_relation_size(s.indexrelid) DESC`
+  );
+  return result.rows.map((r) => ({
+    table: r.relname,
+    index: r.indexrelname,
+    indexScans: Number(r.idx_scan),
+    tableSize: r.pg_size_pretty_table,
+    indexSize: r.pg_size_pretty_index,
+  }));
+}
+
+export interface TableSizeStat {
+  table: string;
+  rowEstimate: number;
+  totalSize: string;
+  indexSize: string;
+}
+
+export async function getTableSizes(): Promise<TableSizeStat[]> {
+  await ensureInitialized();
+  const pool = getPool();
+  const result = await pool.query<{
+    relname: string; n_live_tup: string; total_size: string; index_size: string;
+  }>(
+    `SELECT
+       c.relname,
+       s.n_live_tup,
+       pg_size_pretty(pg_total_relation_size(c.oid)) AS total_size,
+       pg_size_pretty(pg_indexes_size(c.oid)) AS index_size
+     FROM pg_class c
+     JOIN pg_stat_user_tables s ON c.relname = s.relname
+     WHERE c.relkind = 'r' AND s.schemaname = 'public'
+     ORDER BY pg_total_relation_size(c.oid) DESC`
+  );
+  return result.rows.map((r) => ({
+    table: r.relname,
+    rowEstimate: Number(r.n_live_tup),
+    totalSize: r.total_size,
+    indexSize: r.index_size,
+  }));
 }
