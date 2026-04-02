@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
 import { toShortId, findFullId } from "~/utils/shortId";
-import { PLAYER_POSITIONS, CURRENT_SEASON, type PlayerPosition, type Team, type SeasonData } from "~/types/tracker";
+import { PLAYER_POSITIONS, CURRENT_SEASON, type PlayerPosition, type Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
     createPlayerFromNames,
@@ -109,7 +109,6 @@ export default function RosterDetailPage() {
     const [isRosterPlayersExpanded, setIsRosterPlayersExpanded] = useState(false);
     const [isEditingCoach, setIsEditingCoach] = useState(false);
     const [coachInput, setCoachInput] = useState("");
-    const [selectedSeason, setSelectedSeason] = useState(CURRENT_SEASON);
 
     function saveCoach() {
         if (!roster) return;
@@ -143,29 +142,6 @@ export default function RosterDetailPage() {
         [rosters, rosterId]
     );
 
-    // Available seasons for the roster, sorted descending
-    const availableSeasons = useMemo(() => {
-        if (!roster) return [CURRENT_SEASON];
-        const keys = Object.keys(roster.seasons ?? {});
-        if (!keys.includes(CURRENT_SEASON)) keys.push(CURRENT_SEASON);
-        return keys.sort().reverse();
-    }, [roster]);
-
-    const isCurrentSeason = selectedSeason === CURRENT_SEASON;
-
-    // Players for the selected season
-    const seasonPlayers = useMemo(() => {
-        if (!roster) return [];
-        if (isCurrentSeason) return roster.players;
-        return roster.seasons?.[selectedSeason]?.players ?? [];
-    }, [roster, selectedSeason, isCurrentSeason]);
-
-    const seasonCoach = useMemo(() => {
-        if (!roster) return undefined;
-        if (isCurrentSeason) return roster.coach;
-        return roster.seasons?.[selectedSeason]?.coach;
-    }, [roster, selectedSeason, isCurrentSeason]);
-
     const rosterTeams = useMemo(
         () => (teams || []).filter((team) => team.rosterId === roster?.id),
         [teams, roster?.id]
@@ -184,8 +160,8 @@ export default function RosterDetailPage() {
     const sortedRosterPlayers = useMemo(() => {
         if (!roster) return [];
 
-        return [...seasonPlayers].sort(comparePlayersByPositionThenName);
-    }, [roster, seasonPlayers]);
+        return [...roster.players].sort(comparePlayersByPositionThenName);
+    }, [roster]);
 
     const compositionName = matchDay ? `${roster?.name} J${matchDay}` : null;
     const hasCompositionForDay = Boolean(
@@ -562,32 +538,12 @@ export default function RosterDetailPage() {
                 </div>
             </div>
 
-            {/* Season tabs */}
-            <nav className="flex gap-1 border-b border-neutral-700 pb-0">
-                {availableSeasons.map((season) => (
-                    <button
-                        key={season}
-                        className={`px-4 py-2 text-sm font-semibold transition-colors ${
-                            selectedSeason === season
-                                ? "border-b-2 border-sky-500 text-sky-400"
-                                : "text-neutral-400 hover:text-neutral-200"
-                        }`}
-                        onClick={() => setSelectedSeason(season)}
-                    >
-                        {season}
-                    </button>
-                ))}
-            </nav>
-
             <section className="space-y-2">
                 <h2 className="font-semibold">Compositions</h2>
                 <p className="text-sm font-light text-white">
-                    Entraineur : {seasonCoach || "Non renseigné"}
+                    Entraineur : {roster.coach || "Non renseigné"}
                 </p>
-                {!isCurrentSeason && (
-                    <p className="text-sm text-neutral-500 italic">Saison archivée — consultation uniquement.</p>
-                )}
-                {isCurrentSeason && compositionEditTeamId && compositionEditTeam && roster && (
+                {compositionEditTeamId && compositionEditTeam && roster && (
                     <div
                         className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 pb-28 md:py-8 md:pb-10"
                         onClick={closeCompositionEditor}
@@ -695,8 +651,6 @@ export default function RosterDetailPage() {
                         </div>
                     </div>
                 )}
-                {isCurrentSeason && (
-                <>
                 {rosterTeams.length === 0 ? (
                     <p className="text-sm text-gray-600">Aucune composition disponible</p>
                 ) : (
@@ -814,8 +768,6 @@ export default function RosterDetailPage() {
                         <FontAwesomeIcon icon={faCircleCheck} className="mr-1" />
                         {compositionMessage}
                     </p>
-                )}
-                </>
                 )}
             </section>
 
@@ -1120,22 +1072,20 @@ export default function RosterDetailPage() {
                                                     </p>
                                                 )}
                                             </div>
-                                            {isCurrentSeason && (
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="sp-button sp-button-yellow sp-button-icon"
-                                                        onClick={() => startEditPlayer(player)}
-                                                    >
-                                                        <FontAwesomeIcon icon={faPenToSquare} />
-                                                    </button>
-                                                    <button
-                                                        className="sp-button sp-button-red sp-button-icon"
-                                                        onClick={() => deletePlayer(player.id, player.name)}
-                                                    >
-                                                        <FontAwesomeIcon icon={faTrashCan} />
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    className="sp-button sp-button-yellow sp-button-icon"
+                                                    onClick={() => startEditPlayer(player)}
+                                                >
+                                                    <FontAwesomeIcon icon={faPenToSquare} />
+                                                </button>
+                                                <button
+                                                    className="sp-button sp-button-red sp-button-icon"
+                                                    onClick={() => deletePlayer(player.id, player.name)}
+                                                >
+                                                    <FontAwesomeIcon icon={faTrashCan} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </li>
                                 ))}
@@ -1143,15 +1093,13 @@ export default function RosterDetailPage() {
                         )}
                     </>
                 )}
-                {isCurrentSeason && (
-                    <button
-                        className="sp-button sp-button-sm sp-button-indigo mt-6"
-                        onClick={() => setShowAddPlayerForm((value) => !value)}
-                    >
-                        <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                        Ajouter un joueur à l'effectif
-                    </button>
-                )}
+                <button
+                    className="sp-button sp-button-sm sp-button-indigo mt-6"
+                    onClick={() => setShowAddPlayerForm((value) => !value)}
+                >
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    Ajouter un joueur à l'effectif
+                </button>
                 {playerMessage && (
                     <p className="text-sm text-green-700">
                         <FontAwesomeIcon icon={faCircleCheck} className="mr-1" />
