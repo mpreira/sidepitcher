@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router";
 import type { Route } from "./+types/roster-detail";
 import { useTeams } from "~/context/TeamsContext";
 import { toShortId, findFullId } from "~/utils/shortId";
-import { PLAYER_POSITIONS, type PlayerPosition, type Team } from "~/types/tracker";
+import { PLAYER_POSITIONS, CURRENT_SEASON, type PlayerPosition, type Team } from "~/types/tracker";
 import {
     addPlayerToRosterList,
     createPlayerFromNames,
@@ -113,8 +113,22 @@ export default function RosterDetailPage() {
     function saveCoach() {
         if (!roster) return;
         const updatedRoster = { ...roster, coach: coachInput.trim() || undefined };
-        setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        const synced = syncRosterCurrentSeason(updatedRoster);
+        setRosters(rosters.map((r) => (r.id === roster.id ? synced : r)));
         setIsEditingCoach(false);
+    }
+
+    function syncRosterCurrentSeason(r: typeof rosters[number]) {
+        return {
+            ...r,
+            seasons: {
+                ...r.seasons,
+                [CURRENT_SEASON]: {
+                    players: r.players,
+                    coach: r.coach,
+                },
+            },
+        };
     }
 
     // Convert short ID to full ID
@@ -396,7 +410,7 @@ export default function RosterDetailPage() {
         );
         const updatedRoster = addPlayerToRosterList(roster, player);
 
-        setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        setRosters(rosters.map((r) => (r.id === roster.id ? syncRosterCurrentSeason(updatedRoster) : r)));
         closeAddPlayerForm();
         setPlayerMessage("Joueur ajouté à l'effectif.");
     }
@@ -455,7 +469,7 @@ export default function RosterDetailPage() {
             photoUrl: editingPlayerPhotoUrl,
             nationality: editingPlayerNationality || undefined,
         });
-        setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        setRosters(rosters.map((r) => (r.id === roster.id ? syncRosterCurrentSeason(updatedRoster) : r)));
         cancelEditPlayer();
         setPlayerMessage("Joueur modifié.");
     }
@@ -467,7 +481,7 @@ export default function RosterDetailPage() {
         );
         if (!confirmed) return;
         const updatedRoster = deletePlayerFromRoster(roster, playerId);
-        setRosters(rosters.map((r) => (r.id === roster.id ? updatedRoster : r)));
+        setRosters(rosters.map((r) => (r.id === roster.id ? syncRosterCurrentSeason(updatedRoster) : r)));
         if (editingPlayerId === playerId) {
             cancelEditPlayer();
         }
@@ -489,6 +503,14 @@ export default function RosterDetailPage() {
     useEffect(() => {
         setActiveRosterId(roster.id);
     }, [roster.id, setActiveRosterId]);
+
+    // Migrate: populate seasons from players if not present
+    useEffect(() => {
+        if (!roster.seasons || !roster.seasons[CURRENT_SEASON]) {
+            const migrated = syncRosterCurrentSeason(roster);
+            setRosters((prev) => prev.map((r) => (r.id === roster.id ? migrated : r)));
+        }
+    }, [roster.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         document.title = roster.name;
