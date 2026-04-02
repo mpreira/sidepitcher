@@ -2699,10 +2699,10 @@ export async function updateTitle(id: number, input: {
   return row ? mapTitleRow(row) : null;
 }
 
-export async function deleteTitle(id: number): Promise<boolean> {
+export async function deleteTitle(id: number, accountId: string): Promise<boolean> {
   await ensureInitialized();
   const pool = getPool();
-  const result = await pool.query("DELETE FROM titles WHERE id = $1", [id]);
+  const result = await pool.query("DELETE FROM titles WHERE id = $1 AND account_id = $2", [id, accountId]);
   return (result.rowCount ?? 0) > 0;
 }
 

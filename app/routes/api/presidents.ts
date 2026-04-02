@@ -16,6 +16,7 @@ import {
 // GET /api/presidents        → list all presidents
 // GET /api/presidents?id=xxx → get a single president by ID
 export const loader: LoaderFunction = async ({ request }) => {
+  await resolveDataScopeFromRequest(request);
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
