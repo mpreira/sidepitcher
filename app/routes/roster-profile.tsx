@@ -765,7 +765,6 @@ export default function RosterProfilePage() {
                                 {r.outcome === "victory" ? "V" : r.outcome === "defeat" ? "D" : "N"}
                               </span>
                             ))}
-                            <span className="ml-2 text-neutral-400 text-xs">{v}V {d}D {n}N</span>
                           </>
                         );
                       })()
