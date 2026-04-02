@@ -315,7 +315,7 @@ export default function RosterProfilePage() {
                         for (const t of roster.titles) {
                           const key = `${t.competition} - ${t.ranking}`;
                           const years = grouped.get(key) ?? [];
-                          years.push(t.year);
+                          years.push(String(t.year));
                           grouped.set(key, years);
                         }
                         return Array.from(grouped.entries())
