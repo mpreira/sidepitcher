@@ -3,13 +3,15 @@ import path from "path";
 import crypto from "crypto";
 import { Pool } from "pg";
 import type { LiveSnapshot } from "~/types/live";
+import type { Roster, Team } from "~/types/tracker";
+import { rosterStatePayloadSchema } from "~/utils/schemas.server";
 
 type Sport = "Rugby" | "Football";
 type Championship = "Top 14" | "Pro D2";
 
 export interface RosterStatePayload {
-  rosters: unknown;
-  teams: unknown;
+  rosters: Roster[];
+  teams: Team[];
   activeRosterId: string | null;
   matchDay?: string;
   sport?: Sport;
@@ -656,12 +658,8 @@ async function syncRosterDataToTables(
 ): Promise<void> {
   if (isAnonymousScopeId(accountId)) return;
 
-  const rosters = Array.isArray(payload.rosters)
-    ? (payload.rosters as Record<string, unknown>[])
-    : [];
-  const teams = Array.isArray(payload.teams)
-    ? (payload.teams as Record<string, unknown>[])
-    : [];
+  const rosters = Array.isArray(payload.rosters) ? payload.rosters : [];
+  const teams = Array.isArray(payload.teams) ? payload.teams : [];
   const nowIso = new Date().toISOString();
 
   const client = await pool.connect();
@@ -1114,7 +1112,12 @@ async function backfillStructuredTables(pool: Pool): Promise<void> {
   for (const row of rostersRows.rows) {
     const parsed = parseJsonOrNull<RosterStatePayload>(row.payload);
     if (!parsed) continue;
-    await syncRosterDataToTables(pool, row.account_id, parsed);
+    const validated = rosterStatePayloadSchema.safeParse(parsed);
+    if (!validated.success) {
+      console.warn(`[backfill] Skipping invalid roster blob for account ${row.account_id}:`, validated.error.issues);
+      continue;
+    }
+    await syncRosterDataToTables(pool, row.account_id, validated.data);
   }
 
   console.log("[backfill] Syncing existing summary blobs to structured tables…");

@@ -5,6 +5,7 @@ import {
     listMatchDaySelections,
     saveMatchDaySelection,
 } from "~/utils/database.server";
+import { matchDayTeamsSchema, parsePayload } from "~/utils/schemas.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
     const scope = await resolveDataScopeFromRequest(request);
@@ -53,29 +54,17 @@ export const action: ActionFunction = async ({ request }) => {
     const scope = await resolveDataScopeFromRequest(request);
 
     if (request.method === "POST") {
-        const payload = (await request.json()) as {
-            championship?: string;
-            matchDay?: number | string;
-            team1Id?: string;
-            team2Id?: string;
-        };
-
-        const normalizedMatchDay = Number(payload.matchDay);
-        if (
-            !payload.championship ||
-            !payload.team1Id ||
-            !payload.team2Id ||
-            Number.isNaN(normalizedMatchDay)
-        ) {
-            return { ok: false };
-        }
+        const raw = await request.json();
+        const parsed = parsePayload(matchDayTeamsSchema, raw);
+        if (!parsed.success) return parsed.response;
+        const body = parsed.data;
 
         await saveMatchDaySelection({
             accountId: scope.scopeId,
-            championship: payload.championship,
-            matchDay: normalizedMatchDay,
-            team1Id: payload.team1Id,
-            team2Id: payload.team2Id,
+            championship: body.championship,
+            matchDay: body.matchDay,
+            team1Id: body.team1Id,
+            team2Id: body.team2Id,
         });
         if (!scope.setCookieHeader) {
             return { ok: true };
