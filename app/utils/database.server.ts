@@ -493,6 +493,24 @@ async function initializeSchema(pool: Pool) {
       PRIMARY KEY (account_id, id)
     );
 
+    -- Migration: coach TEXT → TEXT[] (idempotent) --
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'stored_rosters' AND column_name = 'coach' AND data_type = 'text'
+      ) THEN
+        ALTER TABLE stored_rosters ALTER COLUMN coach TYPE TEXT[]
+          USING CASE WHEN coach IS NULL OR TRIM(coach) = '' THEN '{}'::TEXT[]
+                ELSE string_to_array(coach, ', ') END;
+        ALTER TABLE stored_rosters ALTER COLUMN coach SET NOT NULL;
+        ALTER TABLE stored_rosters ALTER COLUMN coach SET DEFAULT '{}';
+      END IF;
+    END $$;
+
+    -- Cleanup: drop legacy multi-coach columns if they exist --
+    ALTER TABLE stored_rosters DROP COLUMN IF EXISTS coaches;
+    ALTER TABLE stored_rosters DROP COLUMN IF EXISTS coach_ids;
 
     CREATE TABLE IF NOT EXISTS stored_teams (
       id TEXT NOT NULL,
@@ -745,19 +763,39 @@ async function syncRosterDataToTables(
       const coachNames = r.coach
         ? r.coach.split(",").map((n: string) => n.trim()).filter(Boolean)
         : [];
+      // Build a map of name → Coach details from coachesData (if available)
+      const detailsByName = new Map<string, { photoUrl?: string; nationality?: string; club?: string }>();
+      if (r.coachesData) {
+        for (const cd of r.coachesData) {
+          if (cd.name) detailsByName.set(cd.name, cd);
+        }
+      } else if (r.coachData && coachNames[0]) {
+        detailsByName.set(coachNames[0], r.coachData);
+      }
       for (const coachName of coachNames) {
         if (!coachIdMap.has(coachName)) {
+          const details = detailsByName.get(coachName);
           const res = await client.query<{ id: number }>(
-            `INSERT INTO coaches (name, last_modified_by)
-             VALUES ($1, $2)
-             ON CONFLICT (name) DO UPDATE SET last_modified_by = EXCLUDED.last_modified_by
+            `INSERT INTO coaches (name, photo_url, nationality, club, last_modified_by)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (name) DO UPDATE SET
+               photo_url = COALESCE(EXCLUDED.photo_url, coaches.photo_url),
+               nationality = COALESCE(EXCLUDED.nationality, coaches.nationality),
+               club = COALESCE(EXCLUDED.club, coaches.club),
+               last_modified_by = EXCLUDED.last_modified_by
              RETURNING id`,
-            [coachName, accountId]
+            [coachName, details?.photoUrl ?? null, details?.nationality ?? null, details?.club ?? null, accountId]
           );
           coachIdMap.set(coachName, res.rows[0].id);
         }
       }
     }
+
+    // 2b. Cleanup stale combined-string coach entries (legacy: "A, B" instead of individual "A" and "B")
+    await client.query(
+      `DELETE FROM coaches WHERE name LIKE '%,%' AND last_modified_by = $1`,
+      [accountId]
+    );
 
     // 3. Upsert presidents → collect name→id
     const presidentIdMap = new Map<string, number>();
