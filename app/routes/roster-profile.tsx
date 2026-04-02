@@ -287,7 +287,7 @@ export default function RosterProfilePage() {
               />
             ) : (
               <p className="text-sm text-neutral-200">
-                <strong>Cr\u00e9ation :</strong> {roster.founded_in || "Non renseign\u00e9"}
+                <strong>Création :</strong> {roster.founded_in || "Non renseigné"}
               </p>
             )}
             {!isEditingFoundedIn && (
@@ -298,7 +298,7 @@ export default function RosterProfilePage() {
                   setFoundedInInput(roster.founded_in?.toString() ?? "");
                   setIsEditingFoundedIn(true);
                 }}
-                aria-label="Modifier l'ann\u00e9e de cr\u00e9ation"
+                aria-label="Modifier l'année de création"
               >
                 <FontAwesomeIcon icon={faPenToSquareRegular} />
               </button>
@@ -308,7 +308,7 @@ export default function RosterProfilePage() {
             <div className="flex items-center justify-between">
               {!isEditingTitles ? (
                 <p className="text-sm text-neutral-200">
-                  <strong>Palmar\u00e8s :</strong>{" "}
+                  <strong>Palmarès :</strong>{" "}
                   {roster.titles && roster.titles.length > 0
                     ? roster.titles
                         .map(
@@ -316,17 +316,17 @@ export default function RosterProfilePage() {
                             `${title.ranking} ${title.competition} (${title.year})`,
                         )
                         .join(", ")
-                    : "Non renseign\u00e9"}
+                    : "Non renseigné"}
                 </p>
               ) : (
-                <p className="text-sm text-neutral-200 font-semibold">Palmar\u00e8s</p>
+                <p className="text-sm text-neutral-200 font-semibold">Palmarès</p>
               )}
               {!isEditingTitles && (
                 <button
                   type="button"
                   className="ml-2 text-neutral-500 hover:text-neutral-300 transition-colors"
                   onClick={startEditingTitles}
-                  aria-label="Modifier le palmar\u00e8s"
+                  aria-label="Modifier le palmarès"
                 >
                   <FontAwesomeIcon icon={faPenToSquareRegular} />
                 </button>
