@@ -774,10 +774,15 @@ async function syncRosterDataToTables(
       const detailsByName = new Map<string, { photoUrl?: string; nationality?: string; club?: string }>();
       if (r.coachesData) {
         for (const cd of r.coachesData) {
-          if (cd.name) detailsByName.set(cd.name, cd);
+          if (cd.name) detailsByName.set(cd.name, { ...cd, club: cd.club || r.name });
         }
       } else if (r.coachData && coachNames[0]) {
-        detailsByName.set(coachNames[0], r.coachData);
+        detailsByName.set(coachNames[0], { ...r.coachData, club: r.coachData.club || r.name });
+      } else {
+        // No coachData at all — still default club to roster name
+        for (const cn of coachNames) {
+          detailsByName.set(cn, { club: r.name });
+        }
       }
       for (const coachName of coachNames) {
         if (!coachIdMap.has(coachName)) {
@@ -809,12 +814,18 @@ async function syncRosterDataToTables(
     for (const r of rosters) {
       const presName = r.president;
       if (presName && !presidentIdMap.has(presName)) {
+        const presDetails: { photoUrl?: string; nationality?: string; club?: string } = r.presidentData ?? {};
+        const presClub = presDetails.club || r.name;
         const res = await client.query<{ id: number }>(
-          `INSERT INTO presidents (name, last_modified_by)
-           VALUES ($1, $2)
-           ON CONFLICT (name) DO UPDATE SET last_modified_by = EXCLUDED.last_modified_by
+          `INSERT INTO presidents (name, photo_url, nationality, club, last_modified_by)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (name) DO UPDATE SET
+             photo_url = COALESCE(EXCLUDED.photo_url, presidents.photo_url),
+             nationality = COALESCE(EXCLUDED.nationality, presidents.nationality),
+             club = COALESCE(EXCLUDED.club, presidents.club),
+             last_modified_by = EXCLUDED.last_modified_by
            RETURNING id`,
-          [presName, accountId]
+          [presName, presDetails.photoUrl ?? null, presDetails.nationality ?? null, presClub, accountId]
         );
         presidentIdMap.set(presName, res.rows[0].id);
       }

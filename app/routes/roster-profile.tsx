@@ -205,6 +205,7 @@ export default function RosterProfilePage() {
     if (!roster) return;
     const name = coachInput.trim() || undefined;
     const names = name ? name.split(",").map((n) => n.trim()).filter(Boolean) : [];
+    const rosterClub = roster.name;
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
@@ -212,12 +213,13 @@ export default function RosterProfilePage() {
               ...item,
               coach: name,
               coachData: names[0]
-                ? { ...(item.coachData ?? {}), name: names[0] }
+                ? { ...(item.coachData ?? {}), name: names[0], club: (item.coachData?.club || rosterClub) }
                 : undefined,
               coachesData: names.length > 1
                 ? names.map((n, i) => ({
                     ...(item.coachesData?.[i] ?? {}),
                     name: n,
+                    club: (item.coachesData?.[i]?.club || rosterClub),
                   }))
                 : undefined,
             }
@@ -230,6 +232,7 @@ export default function RosterProfilePage() {
   function savePresident() {
     if (!roster) return;
     const name = presidentInput.trim() || undefined;
+    const rosterClub = roster.name;
     setRosters((current) =>
       current.map((item) =>
         item.id === roster.id
@@ -237,7 +240,7 @@ export default function RosterProfilePage() {
               ...item,
               president: name,
               presidentData: name
-                ? { ...(item.presidentData ?? {}), name }
+                ? { ...(item.presidentData ?? {}), name, club: (item.presidentData?.club || rosterClub) }
                 : undefined,
             }
           : item,
