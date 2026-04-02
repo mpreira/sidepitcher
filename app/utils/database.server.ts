@@ -14,6 +14,7 @@ export interface RosterStatePayload {
   teams: Team[];
   activeRosterId: string | null;
   matchDay?: string;
+  season?: string;
   sport?: Sport;
   championship?: Championship;
 }

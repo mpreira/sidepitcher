@@ -106,6 +106,7 @@ export const rosterStatePayloadSchema = z.object({
   teams: z.array(teamSchema),
   activeRosterId: z.string().nullable(),
   matchDay: z.string().optional(),
+  season: z.string().optional(),
   sport: z.enum(["Rugby", "Football"]).optional(),
   championship: z.enum(["Top 14", "Pro D2"]).optional(),
 });
