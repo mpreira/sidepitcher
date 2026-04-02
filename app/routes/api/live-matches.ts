@@ -3,6 +3,7 @@ import type { ActionFunction } from "react-router";
 import type { LiveSnapshot } from "~/types/live";
 import { createLiveMatch } from "~/utils/database.server";
 import { liveMatchCreateSchema, parsePayload } from "~/utils/schemas.server";
+import { resolveDataScopeFromRequest } from "~/utils/account.server";
 
 function createPublicSlug() {
   return crypto.randomBytes(10).toString("hex");
@@ -21,6 +22,8 @@ export const action: ActionFunction = async ({ request }) => {
   if (request.method !== "POST") {
     return { ok: false };
   }
+
+  await resolveDataScopeFromRequest(request);
 
   const raw = await request.json();
   const parsed = parsePayload(liveMatchCreateSchema, raw);

@@ -39,8 +39,10 @@ export default function PresidentProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<President>({ name: "" });
+  const [formMessage, setFormMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   function startEditing() {
+    setFormMessage(null);
     setDraft({
       name: presidentData?.name ?? "",
       photoUrl: presidentData?.photoUrl ?? "",
@@ -53,7 +55,10 @@ export default function PresidentProfilePage() {
   function save() {
     if (!roster) return;
     const trimmedName = draft.name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName) {
+      setFormMessage({ type: "error", text: "Le nom est obligatoire." });
+      return;
+    }
     const updated: President = {
       name: trimmedName,
       photoUrl: draft.photoUrl?.trim() || undefined,
@@ -68,6 +73,8 @@ export default function PresidentProfilePage() {
       ),
     );
     setIsEditing(false);
+    setFormMessage({ type: "success", text: "Président mis à jour." });
+    setTimeout(() => setFormMessage(null), 3000);
   }
 
   async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -201,11 +208,16 @@ export default function PresidentProfilePage() {
                 <button
                   type="button"
                   className="sp-button sp-button-xs sp-button-light"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => { setIsEditing(false); setFormMessage(null); }}
                 >
                   Annuler
                 </button>
               </div>
+              {formMessage && (
+                <p className={`text-sm ${formMessage.type === "error" ? "text-red-400" : "text-emerald-400"}`}>
+                  {formMessage.text}
+                </p>
+              )}
             </div>
           ) : (
             <>
