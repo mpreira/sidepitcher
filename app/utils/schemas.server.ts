@@ -64,7 +64,7 @@ const titleSchema = z.object({
 
 const seasonDataSchema = z.object({
   players: z.array(playerSchema),
-  coach: z.string().optional(),
+  coach: z.string().nullable().optional(),
 });
 
 const rosterSchema = z.object({
