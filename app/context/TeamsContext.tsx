@@ -108,23 +108,22 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
         }),
         })
         .then((res) => {
-            if (!res.ok) {
+            if (res.ok) {
+                lastSent.current = {
+                    rosters,
+                    teams,
+                    activeId: activeRosterId,
+                    matchDay,
+                    season,
+                    sport,
+                    championship,
+                };
+            } else {
                 res.json().then((data) => console.warn("[TeamsContext] sync rejected:", data)).catch(() => {});
             }
         })
         .catch((err) => {
             console.warn("[TeamsContext] sync failed:", err);
-        })
-        .finally(() => {
-            lastSent.current = {
-            rosters,
-            teams,
-            activeId: activeRosterId,
-            matchDay,
-            season,
-            sport,
-            championship,
-            };
         });
     }, [rosters, teams, activeRosterId, matchDay, season, sport, championship, accountLoading]);
 

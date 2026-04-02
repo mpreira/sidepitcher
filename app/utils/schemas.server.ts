@@ -4,17 +4,7 @@ import { z } from "zod";
 // Primitives & reusable atoms
 // ---------------------------------------------------------------------------
 
-const playerPositionSchema = z.enum([
-  "première ligne",
-  "talonneur",
-  "deuxième ligne",
-  "troisième ligne",
-  "demi de mêlée",
-  "demi d'ouverture",
-  "centre",
-  "ailier",
-  "arrière",
-]);
+const playerPositionSchema = z.string();
 
 const playerStatsSchema = z.object({
   points: z.number(),
@@ -25,7 +15,7 @@ const playerStatsSchema = z.object({
   drops: z.number(),
   matchs2526: z.number(),
   titularisations2526: z.number(),
-});
+}).partial().passthrough();
 
 const playerSchema = z.object({
   id: z.string().min(1),
@@ -40,32 +30,32 @@ const playerSchema = z.object({
 const compositionEntrySchema = z.object({
   player: playerSchema,
   number: z.number(),
-});
+}).passthrough();
 
 const coachSchema = z.object({
   name: z.string().min(1),
   photoUrl: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
   club: z.string().nullable().optional(),
-});
+}).passthrough();
 
 const presidentSchema = z.object({
   name: z.string().min(1),
   photoUrl: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
   club: z.string().nullable().optional(),
-});
+}).passthrough();
 
 const titleSchema = z.object({
   competition: z.string().min(1),
   ranking: z.string().min(1),
   year: z.number(),
-});
+}).passthrough();
 
 const seasonDataSchema = z.object({
   players: z.array(playerSchema),
   coach: z.string().nullable().optional(),
-});
+}).passthrough();
 
 const rosterSchema = z.object({
   id: z.string().min(1),
@@ -79,7 +69,7 @@ const rosterSchema = z.object({
   presidentData: presidentSchema.nullable().optional(),
   players: z.array(playerSchema),
   seasons: z.record(z.string(), seasonDataSchema).nullable().optional(),
-  category: z.enum(["Top 14", "Pro D2"]).nullable().optional(),
+  category: z.string().nullable().optional(),
   founded_in: z.number().nullable().optional(),
   titles: z.array(titleSchema).nullable().optional(),
 }).passthrough();
@@ -300,6 +290,7 @@ export function parsePayload<T>(
   const issues = result.error.issues.map(
     (i) => `${i.path.join(".")}: ${i.message}`
   );
+  console.error("[parsePayload] Validation failed:", issues);
   return {
     success: false,
     response: Response.json(
