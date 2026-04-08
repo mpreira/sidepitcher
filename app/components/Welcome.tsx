@@ -13,7 +13,7 @@ export function Welcome() {
   const [accountMessage, setAccountMessage] = useState("");
 
   const sportOptions = ["Rugby", "Football"] as const;
-  const championshipOptions = ["Top 14", "Pro D2"] as const;
+  const championshipOptions = ["Top 14", "Pro D2", "W6N"] as const;
   const seasonOptions = ["2025/2026", "2024/2025", "2023/2024"] as const;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
