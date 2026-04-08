@@ -7,12 +7,19 @@ import { importTeamsFromSportsDb } from "~/utils/thesportsdb-import.server";
 //
 // Fetches teams + players from TheSportsDB and upserts them
 // into stored_rosters, players, and competitions tables.
+// Requires an authenticated account (not anonymous).
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== "POST") {
     return Response.json({ error: "method-not-allowed" }, { status: 405 });
   }
 
   const scope = await resolveDataScopeFromRequest(request);
+  if (scope.isAnonymous) {
+    return Response.json(
+      { error: "auth_required", message: "You must be logged in to import data." },
+      { status: 401 }
+    );
+  }
   const body = await request.json().catch(() => ({}));
   const leagues: string[] = Array.isArray(body.leagues)
     ? body.leagues
