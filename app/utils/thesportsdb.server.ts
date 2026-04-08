@@ -67,6 +67,7 @@ export interface SdbTeam {
   strWebsite: string;
   strFacebook: string;
   strInstagram: string;
+  intFormedYear: string;
   strDescriptionEN: string | null;
   strDescriptionFR: string | null;
   strCountry: string;

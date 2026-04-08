@@ -41,4 +41,5 @@ export default [
 
     // TheSportsDB – Top 14 & Pro D2
     route("api/sportsdb", "routes/api/sportsdb.ts"),
+    route("api/sportsdb-import", "routes/api/sportsdb-import.ts"),
 ] satisfies RouteConfig;
