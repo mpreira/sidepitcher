@@ -140,6 +140,9 @@ export async function getSeasonEvents(
 }
 
 /* ---------- Standings / Table ---------- */
+// NOTE: lookuptable is limited to featured soccer leagues on the free tier.
+// For rugby it may return an empty response. Keep the function for use with
+// a premium API key (set THESPORTSDB_API_KEY env var).
 
 export interface SdbTableEntry {
   idStanding: string;
