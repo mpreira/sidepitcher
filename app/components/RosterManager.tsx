@@ -50,10 +50,10 @@ export default function RosterManager({
     const [newRosterPresident, setNewRosterPresident] = useState("");
     const [newRosterFoundedIn, setNewRosterFoundedIn] = useState("");
     const [newRosterTitles, setNewRosterTitles] = useState("");
-    const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2'>('Top 14');
-    const championshipOptions = ['Top 14', 'Pro D2'] as const;
+    const [newRosterCategory, setNewRosterCategory] = useState<'Top 14' | 'Pro D2' | 'W6N'>('Top 14');
+    const championshipOptions = ['Top 14', 'Pro D2', 'W6N'] as const;
     const [showCreateRosterForm, setShowCreateRosterForm] = useState(false);
-    const [activeCategoryTab, setActiveCategoryTab] = useState<'Top 14' | 'Pro D2'>('Top 14');
+    const [activeCategoryTab, setActiveCategoryTab] = useState<'Top 14' | 'Pro D2' | 'W6N'>('Top 14');
     const [rosterFeedbackMessage, setRosterFeedbackMessage] = useState("");
     const [newPlayerFirst, setNewPlayerFirst] = useState("");
     const [newPlayerLast, setNewPlayerLast] = useState("");
@@ -438,6 +438,16 @@ export default function RosterManager({
                 >
                     Pro D2
                 </button>
+                <button
+                    className={`px-3 py-2 rounded border text-sm font-medium transition-colors ${
+                        activeCategoryTab === 'W6N'
+                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                            : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                    }`}
+                    onClick={() => setActiveCategoryTab('W6N')}
+                >
+                    Women's 6 Nations
+                </button>
             </div>
             <button
                 className="sp-button sp-button-sm sp-button-indigo"
@@ -465,7 +475,7 @@ export default function RosterManager({
                                 id="newRosterCategory"
                                 className="sp-input-control"
                                 value={newRosterCategory}
-                                onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2')}
+                                onChange={(e) => setNewRosterCategory(e.target.value as 'Top 14' | 'Pro D2' | 'W6N')}
                             >
                                 {championshipOptions.map((option) => (
                                     <option key={option} value={option}>

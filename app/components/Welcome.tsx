@@ -112,7 +112,7 @@ export function Welcome() {
                 className="sp-input-control"
                 value={championship}
                 onChange={(e) =>
-                  setChampionship(e.target.value as "Top 14" | "Pro D2")
+                  setChampionship(e.target.value as "Top 14" | "Pro D2" | "W6N")
                 }
               >
                 {championshipOptions.map((option) => (

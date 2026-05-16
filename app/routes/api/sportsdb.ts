@@ -24,7 +24,7 @@ function resolveLeagueId(param: string): string | null {
 }
 
 // GET /api/sportsdb/leagues
-//     → returns info for Top 14 + Pro D2
+//     → returns info for Top 14 + Pro D2 + W6N
 //
 // GET /api/sportsdb/leagues?league=top_14
 //     → returns info for a single league
@@ -87,12 +87,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       );
     }
 
-    // Default: return both leagues
-    const [top14, proD2] = await Promise.all([
+    // Default: return all leagues
+    const [top14, proD2, w6n] = await Promise.all([
       buildLeagueResponse(LEAGUE_IDS.TOP_14, includes, season),
       buildLeagueResponse(LEAGUE_IDS.PRO_D2, includes, season),
+      buildLeagueResponse(LEAGUE_IDS.W6N, includes, season),
     ]);
-    return Response.json({ top14, proD2 }, { headers: cacheHeaders() });
+    return Response.json({ top14, proD2, w6n }, { headers: cacheHeaders() });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "unknown error";
     console.error("[sportsdb]", message);

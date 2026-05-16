@@ -54,7 +54,7 @@ export interface President {
 }
 
 export interface Title {
-    competition: 'Top 14' | 'Pro D2 | Coupe d\'Europe' | 'Challenge Cup' | string;
+    competition: 'Top 14' | 'Pro D2 | Coupe d\'Europe' | 'Challenge Cup' | 'Six Nations' | 'World Series' | string;
     ranking: 'Vainqueur' | 'Finaliste' | string;
     year: number;
 }
@@ -101,7 +101,7 @@ export interface Roster {
     presidentData?: President;
     players: Player[]; // effectif global (mirrors current season)
     seasons?: Record<string, SeasonData>;
-    category?: 'Top 14' | 'Pro D2';
+    category?: 'Top 14' | 'Pro D2' | 'W6N';
     founded_in?: number; // year of creation
     titles?: Title[]; // list of titles won
     currentRanking?: number; // current league ranking

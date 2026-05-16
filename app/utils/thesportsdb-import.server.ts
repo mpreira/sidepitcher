@@ -45,7 +45,7 @@ export async function importTeamsFromSportsDb(
 
   // 2. Fetch teams (and players) per league
   for (const { key, id } of resolvedIds) {
-    const category = key === "TOP_14" ? "Top 14" : "Pro D2";
+    const category = key === "TOP_14" ? "Top 14" : key === "PRO_D2" ? "Pro D2" : "W6N";
     const sdbTeams = await getTeamsByLeague(id);
 
     for (const sdbTeam of sdbTeams) {
@@ -94,7 +94,7 @@ export async function importTeamsFromSportsDb(
 
 function mapRoster(
   sdbTeam: SdbTeam,
-  category: "Top 14" | "Pro D2",
+  category: "Top 14" | "Pro D2" | "W6N",
   players: Player[],
   existing?: Roster
 ): Roster {

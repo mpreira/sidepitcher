@@ -7,7 +7,7 @@ import type { Roster, Team } from "~/types/tracker";
 import { rosterStatePayloadSchema } from "~/utils/schemas.server";
 
 type Sport = "Rugby" | "Football";
-type Championship = "Top 14" | "Pro D2";
+type Championship = "Top 14" | "Pro D2" | "W6N";
 
 export interface RosterStatePayload {
   rosters: Roster[];

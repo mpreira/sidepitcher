@@ -9,6 +9,7 @@ const API_KEY = process.env.THESPORTSDB_API_KEY ?? "123";
 export const LEAGUE_IDS = {
   TOP_14: "4430",
   PRO_D2: "5172",
+  W6N: "6277",
 } as const;
 
 export type LeagueKey = keyof typeof LEAGUE_IDS;
