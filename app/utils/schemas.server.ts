@@ -60,6 +60,7 @@ const titleSchema = z.object({
   competition: z.string().min(1),
   ranking: z.string().min(1),
   year: z.number(),
+  grandSlam: z.boolean().nullable().optional(),
 }).passthrough();
 
 const matchFixtureSchema = z.object({

@@ -55,8 +55,9 @@ export interface President {
 
 export interface Title {
     competition: 'Top 14' | 'Pro D2 | Coupe d\'Europe' | 'Challenge Cup' | 'Six Nations' | 'World Series' | string;
-    ranking: 'Vainqueur' | 'Finaliste' | string;
+    ranking: 'Champion.ne' | 'Vice-Champion.ne' | '3e' | string;
     year: number;
+    grandSlam?: boolean;
 }
 
 export interface Result {

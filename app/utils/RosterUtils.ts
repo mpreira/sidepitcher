@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { Team, Player, CompositionEntry, Roster, PlayerPosition } from "~/types/tracker";
+import type { Team, Player, CompositionEntry, Roster, PlayerPosition, Title } from "~/types/tracker";
 
 function sortEntriesByNumber(entries: CompositionEntry[]): CompositionEntry[] {
     return [...entries].sort((firstEntry, secondEntry) => firstEntry.number - secondEntry.number);
@@ -15,7 +15,7 @@ export function createNewRoster(
     coach?: string,
     president?: string,
     founded_in?: number,
-    titlesText?: string
+    titles?: Title[]
 ): Roster {
     return {
         id: uuidv4(),
@@ -28,17 +28,7 @@ export function createNewRoster(
         players: [],
         category,
         founded_in,
-        titles: titlesText
-            ? titlesText.split("\n").filter((l) => l.trim()).map((line) => {
-                const parts = line.trim().split(/\s+/);
-                const yearStr = parts[parts.length - 1];
-                const year = parseInt(yearStr, 10);
-                if (parts.length >= 3 && !isNaN(year)) {
-                    return { competition: parts.slice(0, -2).join(" "), ranking: parts[parts.length - 2], year };
-                }
-                return { competition: line.trim(), ranking: "", year: 0 };
-            })
-            : undefined,
+        titles: titles && titles.length > 0 ? titles : undefined,
     };
 }
 
